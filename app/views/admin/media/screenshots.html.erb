@@ -1,0 +1,23 @@
+<h1 class="text-3xl font-bold mb-4">Manage Screenshots</h1>
+<h1>Approved Screenshots</h1>
+<ul>
+<% @approved_screenshots.each do |screenshot| %>
+    <li>
+
+<%= image_tag rails_blob_url(screenshot.file, only_path: false), alt: screenshot.meta_description %>
+
+  <%= link_to 'Delete', admin_medium_path(screenshot), method: :delete, data: { confirm: 'Are you sure?' } %>
+  </li>
+<% end %>
+</ul>
+<h1>Pending Screenshots</h1>
+<ul>
+<% @pending_screenshots.each do |screenshot| %>
+<li>
+      <%= image_tag screenshot.file if screenshot.file.attached? %><br>
+    <%#= image_tag screenshot.file.url, alt: screenshot.meta_description %>
+  <%= link_to 'Approve', approve_admin_medium_path(screenshot), method: :patch %>
+  <%= link_to 'Delete', admin_medium_path(screenshot), method: :delete, data: { confirm: 'Are you sure?' } %>
+  </li>
+  <% end %>
+</ul>

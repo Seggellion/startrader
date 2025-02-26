@@ -1,0 +1,51 @@
+<div class="container mx-auto px-4" data-controller="form-validation">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <!-- Left Column: Title and Subtext -->
+    <div class="flex flex-col justify-center">
+      <h1 class="text-2xl font-bold mb-4">Contact Us</h1>
+      <p class="mb-6">Please fill out and submit the form on this page to contact us. We will get back to you as soon as we can. Note that fields marked with (*) are required fields.</p>
+    </div>
+
+    <!-- Right Column: Form -->
+    <div>
+      <%= form_with model: @contact_message, url: contact_messages_path, local: true, class: "space-y-4", data: { action: "form-validation#submit input->form-validation#validate" }, html: { "data-turbo": "false" } do |form| %>
+        <div data-form-validation-target="form"> 
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <%= form.label :first_name, "First Name *", class: "block text-sm font-medium text-gray-700" %>
+                    <%= form.text_field :first_name, class: "mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm", data: { "form-validation-target": "firstName" } %>
+                </div>
+                <div>
+                    <%= form.label :last_name, "Last Name *", class: "block text-sm font-medium text-gray-700" %>
+                    <%= form.text_field :last_name, class: "mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm", data: { "form-validation-target": "lastName" } %>
+                </div>
+            </div>
+
+            <div>
+            <%= form.label :email, "Email *", class: "block text-sm font-medium text-gray-700" %>
+            <%= form.email_field :email, class: "mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm", data: { "form-validation-target": "email" } %>
+            </div>
+
+            <div>
+            <%= form.label :subject, "Subject *", class: "block text-sm font-medium text-gray-700" %>
+            <%= form.text_field :subject, class: "mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm", data: { "form-validation-target": "subject" } %>
+            </div>
+
+            <div>
+            <%= form.label :body, "Message *", class: "block text-sm font-medium text-gray-700" %>
+            <%= form.text_area :body, class: "mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm", data: { "form-validation-target": "body" } %>
+            </div>
+
+            <div>
+            <%= form.submit "SUBMIT", class: "mt-2 w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500", data: { "form-validation-target": "submitButton" } %>
+            </div>
+        </div>
+      <% end %>
+
+        <div data-form-validation-target="thankYouMessage" class="hidden">
+            <h2 class="text-xl font-bold">Thank you for submitting!</h2>
+            <p>We have received your message and will get back to you shortly.</p>
+        </div>
+    </div>
+  </div>
+</div>

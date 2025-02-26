@@ -1,0 +1,9 @@
+
+<li class="menu-item">
+  <a href="<%= menu_item.url %>" class="block py-2 px-4 hover:bg-gray-200"><%= menu_item.title %></a>
+  <% if menu_item.children.any? %>
+    <ul class="pl-4">
+      <%= render partial: 'menus/menu_item', collection: menu_item.children, as: :menu_item %>
+    </ul>
+  <% end %>
+</li>

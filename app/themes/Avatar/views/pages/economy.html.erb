@@ -1,0 +1,98 @@
+<!-- Main Section -->
+<div class="flex flex-col space-y-8 p-6">
+  <!-- City Economies Section -->
+  <section>
+    <h2>City Economies</h2>
+    <div class="overflow-x-auto border rounded-lg shadow">
+      <table class="min-w-full bg-white border-collapse">
+        <thead class="bg-gray-200">
+          <tr>
+            <th class="py-3 px-4 text-left font-medium text-gray-600">Name</th>
+            <th class="py-3 px-4 text-left font-medium text-gray-600">Population</th>
+            <th class="py-3 px-4 text-left font-medium text-gray-600">Wood Supply</th>
+            <th class="py-3 px-4 text-left font-medium text-gray-600">Metal Supply</th>
+            <th class="py-3 px-4 text-left font-medium text-gray-600">Stone Supply</th>
+            <th class="py-3 px-4 text-left font-medium text-gray-600">Food Supply</th>
+            <th class="py-3 px-4 text-left font-medium text-gray-600">Is Starving</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @cities.each do |city| %>
+          <tr class="even:bg-gray-100">
+            <td class="py-2 px-4 border-t"><%= city.name %></td>
+            <td class="py-2 px-4 border-t"><%= city.population %></td>
+            <td class="py-2 px-4 border-t"><%= city.wood_supply %></td>
+            <td class="py-2 px-4 border-t"><%= city.metal_supply %></td>
+             <td class="py-2 px-4 border-t"><%= city.stone_supply %></td>
+            <td class="py-2 px-4 border-t"><%= city.food_supply %></td>
+            <td class="py-2 px-4 border-t">
+              <%= city.is_starving? ? "Yes" : "No" %>
+            </td>
+          </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+  <h2>NPC DATA</h2>
+  <div class="overflow-x-auto border rounded-lg shadow">
+    <table class="min-w-full bg-white border-collapse">
+      <thead class="bg-gray-200">
+        <tr>
+          <th class="py-3 px-4 text-left font-medium text-gray-600">Name</th>
+          <th class="py-3 px-4 text-left font-medium text-gray-600">ID</th>
+          <th class="py-3 px-4 text-left font-medium text-gray-600">NPC_ID</th>
+          <th class="py-3 px-4 text-left font-medium text-gray-600">NPC Type</th>
+          <th class="py-3 px-4 text-left font-medium text-gray-600">City Name</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @npcs.each do |npc| %>
+        <tr class="even:bg-gray-100">
+          <td class="py-2 px-4 border-t"><%= npc.name %></td>
+          <td class="py-2 px-4 border-t"><%= npc.id %></td>
+          <td class="py-2 px-4 border-t"><%= npc.npc_id %></td>
+          <td class="py-2 px-4 border-t"><%= npc.npc_type %></td>
+           <td class="py-2 px-4 border-t"><%= npc.city_name %></td>
+        </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+  <!-- Leaderboard Section -->
+  <section style="margin-top:20px;">
+    <h2>Leaderboard</h2>
+    <div class="overflow-x-auto border rounded-lg shadow">
+      <table class="min-w-full bg-white border-collapse">
+        <thead class="bg-gray-200">
+          <tr>
+            <th class="py-3 px-4 text-left font-medium text-gray-600">Player</th>
+            <th class="py-3 px-4 text-left font-medium text-gray-600">Commodity Type</th>
+            <th class="py-3 px-4 text-left font-medium text-gray-600">Commodity Name</th>
+            <th class="py-3 px-4 text-left font-medium text-gray-600">Total Contribution</th>
+            <th class="py-3 px-4 text-left font-medium text-gray-600">Biggest Single</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @contributions.each do |row| %>
+          <tr class="even:bg-gray-100">
+            <td class="py-2 px-4 border-t"><%= row.player_name %></td>
+            <td class="py-2 px-4 border-t"><%= row.commodity_type %></td>
+            <td class="py-2 px-4 border-t"><%= row.commodity_name %></td>
+            <td class="py-2 px-4 border-t">
+              <%= row.total_contribution.to_f.round(2) %>
+            </td>
+            <td class="py-2 px-4 border-t">
+              <%= row.biggest_single.to_f.round(2) %>
+            </td>
+          </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

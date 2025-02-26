@@ -1,0 +1,54 @@
+<!-- Second Row for Desktop -->
+<div id="desktop-header-menu" class="w-full">
+<nav class="container  mx-auto px-8 py-4 hidden lg:flex lg:justify-between lg:items-center">
+ <ul class="flex flex-row lg:space-x-4 text-white">
+ <% if @header_menu_items.present? %>
+   <% @header_menu_items.each do |menu_item| %>
+     <li class="relative group">
+             <% if menu_item.item_type == 'page' %>
+              <%= link_to menu_item.title, catch_all_page_path(menu_item.url) %>      
+           <% elsif menu_item.item_type == 'service' %>
+             <%= link_to menu_item.title, service_path(menu_item.url) %>
+           <% else %>
+             <%= link_to menu_item.title, menu_item.url || '#' %>
+           <% end %>
+
+
+       <% if menu_item.children.any? %>
+         <ul class="absolute hidden px-4 py-4 lg:group-hover:block primary-background">
+           <% menu_item.children.each do |child| %>
+             <li class="py-2">
+             <% if child.item_type == 'page' %>
+              <%= link_to child.title, catch_all_page_path(child.url) %>      
+           <% elsif child.item_type == 'service' %>
+             <%= link_to child.title, service_path(child.url) %>
+           <% else %>
+             <%= link_to child.title, child.url || '#' %>
+           <% end %>
+             </li>
+
+           <% end %>
+         </ul>
+       <% end %>
+     </li>
+   <% end %>
+  <% end %>
+ </ul>
+ <div class="text-white flex flex-row">
+ <!-- Google Review Button -->
+ <% if (google_places_id = Setting.get('google_places_id')) %>
+   <div class="ml-auto mr-4">
+     <%= link_to "Leave a Review", "https://search.google.com/local/writereview?placeid=#{google_places_id}", class: "btn text-white px-4 py-2 rounded", target: "_blank", rel: "noopener" %>
+   </div>
+ <% end %>
+
+   <% if Setting.get('telephone').present? %>
+  <%= link_to Setting.get('telephone'), "tel:#{Setting.get('telephone').gsub(/\s+/, '')}", title: "Call Us", aria_label: "Telephone Number #{Setting.get('telephone')}" %>
+<% else %>
+  <!-- You can choose to render nothing or display a fallback message -->
+  <p>Telephone number not available</p>
+<% end %>
+
+ </div>
+</nav>
+</div>

@@ -1,0 +1,90 @@
+<%= form_with(model: event) do |form| %>
+  <% if event.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(event.errors.count, "error") %> prohibited this event from being saved:</h2>
+
+      <ul>
+        <% event.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+  <%= form.hidden_field :organizer, value: 'Player' %>
+  <div class="field">
+    <%= form.label :title, 'Title of the Event (100 character limit):' %>
+    <%= form.text_field :title, maxlength: 100, size: 50 %>
+  </div>
+
+  <div class="field">
+    <%= form.label :location, 'Event/Meeting Location (75 character limit):' %>
+    <%= form.text_field :location, maxlength: 75, size: 50 %>
+  </div>
+
+  <div class="field">
+    <%= form.label :shard, 'Server (Shard):' %>
+    <%= form.select(:shard, options_for_select(["UOSA"])) %>
+  </div>
+  <div class="field">
+    <%= form.label :category, 'Category:' %>
+    <%= form.select(:category, options_for_select(["Meeting","Race", "Contest","Tournament","PVP","Social", "Festival/Holiday", "Misc"])) %>
+  </div>
+  <div class="field">
+    <%= form.label :player_level, 'Player Level (apart of OSI database, maybe managed by admins?):' %>
+    <%= form.select(:player_level, options_for_select(["Beginner","Intermediate","Expert"])) %>
+  </div>
+
+  <div class="field">
+    <%= form.label :start_time, 'Starting Date/Time of Event:' %>
+    <%= form.datetime_select :start_time, :order => [:month, :day, :year, :hour, :minute], ampm: true %>
+  </div>
+  <div class="field">
+    <%= form.label :end_time, 'Starting Date/Time of Event:' %>
+    <%= form.datetime_select :end_time, :order => [:month, :day, :year, :hour, :minute], ampm: true %>
+  </div>
+  <div class="field">
+    <%= form.label :frequency, 'Frequency of Event (Recurrance):' %>
+    <%= form.select(:frequency, options_for_select(["1 Time Only","Daily (M-F)","Weekends","Weekly","Bi-Weekly","Monthly","Annual"])) %>
+  </div>
+
+  <div class="field">
+    <%= form.label :timezone, 'Time Zone of Event:' %>
+    <%= form.time_zone_select(:timezone, ActiveSupport::TimeZone.us_zones) %>
+  </div>
+
+  <div class="field">
+    <%= form.label :sponsor, 'Event Organizer (Sponsor - 50 character limit):' %>
+    <%= form.text_field :sponsor, maxlength: 50, size: 50 %>
+  </div>
+
+  <div class="field">
+    <%= form.label :short_description, 'Short Description of Event (255 character limit):' %>
+    <%= form.text_field :short_description, maxlength: 255, size: 50 %>
+  </div>
+
+  <div class="field">
+    <%= form.label :long_description, 'Long Description of Event (Optional - 2 - 3 paragraphs max):' %>
+    <%= form.text_area :long_description, rows:5, cols:43 %>
+  </div>
+
+  <div class="field">
+    <%= form.label :password, 'Event Organizer Password (10 character limit)***:' %>
+    <small>*** Password is required.
+    Enter a unique, but easy to remember, password. </small>
+    <br />
+    <%= form.text_field :password,  maxlength: 5, size: 10 %>
+  </div>
+
+  <div class="legal">
+
+      <i>NOTE: By submitting this form you agree that all the information above may be posted on the official Ultima Online website, and/or in any other future form as Origin may see fit. You also agree that you are either the party named above or that you are fully authorized to submit this information on their behalf.</i>
+      <br><br>
+      If you have questions about the posting of events or your event, please contact <a href="https://web.archive.org/web/20000125150313/mailto:uo-events@owo.com">uo-events@owo.com</a><br>
+      If you notice an error in the functionality of the calendar, please contact <a href="https://web.archive.org/web/20000125150313/mailto:webmaster@owo.com">webmaster@owo.com</a><br>
+      <br><br>
+    </div>
+
+  <div class="actions">
+    <%= form.submit 'Send Event' %>
+  </div>
+<% end %>

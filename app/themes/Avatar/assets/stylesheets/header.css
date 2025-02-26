@@ -1,0 +1,238 @@
+/* Mixins Variables */
+
+
+.uc_logo {
+  height: 110px;
+  width: 76px;
+  display: inline-block;
+  background-image: url('/assets/uc-logo-cropped.png');
+  z-index: 9000;
+  margin-right: auto;
+  position: absolute;
+  left: -3px;
+  top: 5px;
+  filter: brightness(1.5);
+  background-size: 90%;
+  background-repeat: no-repeat;
+  background-position-x: 9px;
+  background-position-y: 8px;
+}
+@media screen and (max-width: var(--small)) {
+  .uc_logo {
+    display: none;
+  }
+}
+
+header {
+  height: 126px;
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  position: relative;
+}
+
+header .header-content {
+    margin-left: 100px;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  flex-wrap: wrap;
+  position: relative;
+}
+@media screen and (max-width: var(--small)) {
+    header .header-content {
+        margin-left: 10px;
+    }
+}
+
+header .header-content:before {
+  content: '';
+  height: 109%;
+  width: 20px;
+  left: -20px;
+  top: -11px;
+  background-position: left;
+  background-size: cover;
+  position: absolute;
+  z-index: 0;
+  background-image: url('/assets/topleft_c.jpg');
+}
+header:before {
+    content: '';
+    height: 100px;
+    width: 75vw; /* Default width for the smallest screens */
+    top: -9px;
+    right: 0px;
+    background-position: bottom;
+    background-size: contain;
+    position: absolute;
+    z-index: 0;
+    background-image: url(/assets/top-tile.jpg);
+}
+
+/* Small devices (mobile) */
+@media screen and (min-width: 600px) {
+    header:before {
+        width: 82vw;
+    }
+}
+
+/* Medium devices (tablets) */
+@media screen and (min-width: 900px) {
+    header:before {
+        width: 88vw;
+    }
+}
+
+/* Large devices (desktops) */
+@media screen and (min-width: 1300px) {
+    header:before {
+        width: 89vw;
+    }
+}
+
+@media screen and (min-width: 1400px) {
+    header:before {
+        width: 91vw;
+    }
+}
+
+/* Extra-large devices (large desktops) */
+@media screen and (min-width: 1500px) {
+    header:before {
+        width: 91vw;
+    }
+}
+
+header .header-content:after {
+  content: '';
+  height: 113%;
+  width: 12px;
+  right: -12px;
+  top: -14px;
+  background-position: inherit;
+  background-size: cover;
+  position: absolute;
+  z-index: 0;
+  background-image: url('/assets/topright_c.jpg');
+}
+
+header .date {
+  color: white;
+  font-size: 0.7rem;
+  font-style: italic;
+  margin-top: 8px;
+}
+@media screen and (max-width: var(--small)) {
+  header .date {
+    display: none;
+  }
+}
+
+header .page_name {
+  font-family: "CelticHand";
+  text-transform: capitalize;
+  width: 210px;
+  text-align: center;
+  font-size: 1.2rem;
+  color: var(--lightgrey);
+  margin-left: 50px;
+  margin-bottom: -5px;
+  letter-spacing: 2px;
+}
+@media screen and (max-width: var(--small)) {
+  header .page_name {
+    margin-left: 0px;
+  }
+}
+
+header .logo {
+  width: 180px;
+  height: 60px;
+  display: inline-block;
+  margin-left: 50px;
+}
+@media screen and (max-width: var(--small)) {
+  header .logo {
+    margin: 0px auto;
+  }
+}
+
+header .logo h1,
+header .logo span {
+  text-align: center;
+}
+
+header .logo h1 {
+  margin: 9px 0px;
+  display: flex;
+  flex-direction: column;
+  color: var(--burgandy);
+  font-family: "CelticHand";
+}
+
+header .logo .small-header {
+  font-size: 0.96rem;
+  text-transform: capitalize;
+  letter-spacing: 1px;
+}
+
+header .header_bar {
+  color: white;
+  background-color: var(--burgandy);
+  height: 25px;
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 9000;
+  padding-bottom: 9px;
+}
+
+header .header_bar .small-header {
+}
+@media screen and (max-width: var(--small)) {
+  header .header_bar .small-header {
+    display: none;
+  }
+}
+
+header .login-container,
+header .search-container {
+  width: 150px;
+  height: 58px;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+header .login-container input,
+header .search-container input {
+    height: 23px;
+    margin-top: -1px;
+}
+@media screen and (max-width: var(--small)) {
+  header .login-container,
+  header .search-container {
+    height: 24px;
+  }
+}
+
+
+.header-banner{
+    margin:-5px auto 0px auto;
+    display:none;
+}
+
+.header-banner img{
+    width: 510px;
+    margin-top: -6px;
+
+}
+
+@media screen and (min-width: 1040px) {
+    .header-banner{
+        display:block;
+    }
+}

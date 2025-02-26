@@ -1,0 +1,21 @@
+<article>
+
+<h2 class="h1">Login to MyUC</h2>
+<br><br>
+
+<br><br>
+
+<% if @page && @page.content.present? %>
+  <%= @page.content %>
+<% else %>
+  <p>No content available.</p>
+<% end %>
+
+
+
+
+
+</article>
+<% content_for :meta_title, @page&.title %>
+<% content_for :meta_description, meta_description %>
+<% content_for :meta_keywords, meta_keywords %>

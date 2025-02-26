@@ -1,0 +1,8 @@
+<h1 class="text-2xl font-bold mb-4">Upcoming Events</h1>
+<% @events.each do |event| %>
+  <div class="mb-8">
+    <h2 class="text-xl font-bold"><%= link_to event.title, event_path(event) %></h2>
+    <p><%= event.formatted_time %> | <%= event.location %></p>
+    <p><%= truncate(event.description, length: 100) %></p>
+  </div>
+<% end %>

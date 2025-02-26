@@ -1,0 +1,28 @@
+<h1 class="text-3xl font-bold mb-4">Settings</h1>
+<%= link_to 'New Setting', new_admin_setting_path, class: 'bg-blue-500 text-white px-4 py-2 rounded' %>
+
+<table class="min-w-full bg-white mt-4 border">
+  <thead>
+    <tr>
+      <th class="py-2 px-4 border">Key</th>
+      <th class="py-2 px-4 border">Value</th>
+      <th class="py-2 px-4 border">Group</th>
+      <th class="py-2 px-4 border">Type</th>
+      <th class="py-2 px-4 border">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @settings.each do |setting| %>
+      <tr>
+        <td class="py-2 px-4 border"><%= setting.key %></td>
+        <td class="py-2 px-4 border"><%= setting.value.truncate(100) %></td>
+        <td class="py-2 px-4 border"><%= setting.group %></td>
+        <td class="py-2 px-4 border"><%= setting.setting_type %></td>
+        <td class="py-2 px-4 border">
+          <%= link_to 'Edit', edit_admin_setting_path(setting), class: 'text-blue-500 hover:underline' %> |
+          <%= link_to 'Delete', admin_setting_path(setting), method: :delete, data: { confirm: 'Are you sure?' }, class: 'text-red-500 hover:underline' %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

@@ -1,0 +1,77 @@
+<article class="container mx-auto px-4 py-6" data-controller="screenshot"   data-screenshot-staff-screenshots-value="<%= @staff_screenshots.map { |s| { image_url: s.file.url, meta_description: s.meta_description, meta_keywords: s.meta_keywords } }.to_json %>">
+  <h1 class="h1">Screenshots</h1>
+
+  <div class="responsive-grid">
+  <%= render '/pages/community/screenshot_modal' %>
+    <!-- Left Column: Primary Image Display -->
+    <div id="primary-image" class="mb-4" data-screenshot-target="primaryImage">
+      <% if @staff_screenshots.present? %>
+        <% featured_image = @staff_screenshots.first %>
+        <%= image_tag featured_image.file.url, class: "w-full h-auto rounded shadow-lg cursor-pointer", alt: featured_image.meta_description, data: { action: "click->screenshot#openModal" }, "data-meta-keywords": featured_image.meta_keywords %>
+        <div class="mt-2 text-center">
+     
+          <h3 class="hidden"><%= featured_image.meta_description.presence || "Untitled" %></h3>
+          <p class="hidden"><%= featured_image.meta_keywords.presence || "No description available." %></p>
+        </div>
+      <% else %>
+        <p class="text-gray-600">No staff screenshots available.</p>
+      <% end %>
+    </div>
+
+    <!-- Right Column: Selectors and Thumbnails -->
+    <div>
+      <!-- Option Selectors -->
+      <div class="mb-6">
+        <h3>Official Screenshots</h3>
+        <%= select_tag :staff_screenshot,
+        options_for_select(
+          @staff_screenshots.map do |screenshot|
+            [
+              screenshot.meta_description,
+              screenshot.id,
+              {
+                data: {
+                  image_url: screenshot.file.url,
+                  meta_description: screenshot.meta_description,
+                  meta_keywords: screenshot.meta_keywords
+                }
+              }
+            ]
+          end
+        ),
+        prompt: "Select a staff screenshot",
+        class: "w-full border rounded px-4 py-2 mb-4",
+        data: { action: "change->screenshot#updateStaffScreenshot" }
+      %>
+      
+        <h3>User Screenshots</h3>
+        <%= select_tag :username_filter,
+        options_for_select(@usernames),
+        prompt: "Select a username",
+        class: "w-full border rounded px-4 py-2",
+        data: { action: "change->screenshot#updateUserScreenshots" }
+      %>      </div>
+
+      <!-- Thumbnails -->
+      <%= render '/pages/community/thumbnails' %>
+    </div>
+  </div>
+
+  <!-- Static Text -->
+  <div class="mt-8">
+
+    <h3 class="text-xl font-bold mb-2">Submit Your Own Screenshots</h3>
+
+
+  <% if @page && @page.content.present? %>
+  <%= @page.content %>
+<% else %>
+  <p>No content available.</p>
+<% end %>
+
+  <br>
+   <%= render '/pages/community/screenshot_form' %> 
+  </div>
+
+
+</article>

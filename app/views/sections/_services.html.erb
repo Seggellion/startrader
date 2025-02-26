@@ -1,0 +1,16 @@
+<!-- Services Section -->
+<section class="m-4 lg:m-12">
+<%= render '/sections/section_header', section: section %>
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <% @services.each do |service| %>
+      <div>
+        <% if service.images.attached? %>
+          <%= image_tag service.images.first, class: 'w-full' %>
+        <% else %>
+          <%= image_tag 'ericksons-placeholder.jpg', alt: 'Placeholder', class: 'w-full' %>
+        <% end %>
+        <h3 class="text-lg font-bold text-center"><%= service.title %></h3>
+      </div>
+    <% end %>
+  </div>
+</section>

@@ -1,0 +1,44 @@
+<section class="flex flex-col lg:flex-row m-4 lg:m-12">
+<div data-controller="slideshow" data-animation-speed="<%= section.animation_speed %>" class="relative w-full h-screen overflow-hidden">
+  <div class="absolute inset-0 flex transition-transform" data-slideshow-target="slides">
+    <% section.blocks.each_with_index do |block, index| %>
+      <% if block.image? %>
+        <div class="w-full h-full bg-cover bg-center flex-shrink-0" style="transform: translateX(<%= index * 100 %>%); background-image: url('<%= rails_blob_path(block.image, disposition: "attachment") %>');">
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+
+  <button data-action="click->slideshow#prev" class="absolute left-0 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-75 px-4 py-2 rounded-r-md">Prev</button>
+  <button data-action="click->slideshow#next" class="absolute right-0 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-75 px-4 py-2 rounded-l-md">Next</button>
+</div>
+
+
+</section>
+
+<style>
+[data-controller="slideshow"] {
+  position: relative;
+  overflow: hidden;
+}
+
+[data-controller="slideshow"] [data-slideshow-target="slides"] {
+  display: flex;
+  transition: transform 1s ease;
+}
+
+[data-controller="slideshow"] [data-slideshow-target="slides"] > div {
+  min-width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: transform 1s ease;
+}
+
+
+.active-slide {
+  transform: translateX(0%);
+}
+
+</style>

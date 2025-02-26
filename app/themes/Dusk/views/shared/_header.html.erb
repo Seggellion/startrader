@@ -1,0 +1,29 @@
+<header class="bg-white">
+  <!-- First Row -->
+  <div class="w-full">
+  <div class="container mx-auto flex justify-between items-center px-4 lg:px-8 h-24">
+  <div class="h-full w-auto flex items-center justify-center">
+    <% if (logo = Setting.get('logo')) %>
+      <%= link_to root_path do %>
+        <%= image_tag url_for(logo), alt: 'Corporate Logo', class: 'h-24 max-h-[100px] w-auto object-contain' %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <h2 class="text-2xl font-bold mx-auto hidden sm:block">Artificial Eye And Facial Prosthetic Clinic</h2>
+
+  <% if (announcement = Setting.find_by(key: 'announcement-bar')) && announcement.parsed_value.present? %>
+    <div class="announcement-bar text-black text-center py-2">
+      <a href="<%= catch_all_page_path(announcement.parsed_value[1]) %>" class="text-black">
+        <%= announcement.parsed_value[0] %>
+      </a>
+    </div>
+  <% end %>
+
+  <%= render 'menus/header_menu_mobile' %>
+</div>
+
+  </div>
+  <%= render 'menus/header_menu_desktop' %>
+</header>
+

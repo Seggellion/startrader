@@ -1,0 +1,35 @@
+.live_events{
+    display:flex;
+    flex-direction:column;
+    
+}
+
+.section.spotlight .content,
+.section.article .content{
+    margin-top:10px;
+}
+.content-description a{
+    display: inline-block; 
+
+border-bottom: 1px solid transparent;
+}
+.content-description a.header-link:hover{
+       text-decoration:none;
+    border-bottom:1px solid var(--burgandy);
+}
+
+.content-description a {
+    display: inline-block; /* Change from block to inline-block */
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.3s ease; /* Optional: Smooth transition for hover effect */
+}
+
+
+.content-description a:hover {
+    border-bottom:1px solid var(--burgandy); /* Replace #000 with your desired hover color */
+}
+
+
+.headline-container a:hover{
+text-decoration:none;
+}

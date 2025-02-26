@@ -1,0 +1,34 @@
+<!-- app/views/products/cart.html.erb -->
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold mb-6">Your Cart</h1>
+
+  <% if @cart && @cart["lines"]["edges"].any? %>
+    <ul class="divide-y divide-gray-200">
+      <% @cart["lines"]["edges"].each do |line_item| %>
+        <li class="flex items-center py-4">
+          <div class="w-24 h-24 mr-4">
+            <%= image_tag line_item["node"]["merchandise"]["product"]["featuredImage"]["url"], alt: line_item["node"]["merchandise"]["product"]["featuredImage"]["altText"], class: "w-full h-full object-cover" %>
+          </div>
+          <div class="flex-1">
+            <h2 class="text-lg font-semibold"><%= line_item["node"]["merchandise"]["product"]["title"] %></h2>
+            <p class="text-gray-600">Variant: <%= line_item["node"]["merchandise"]["title"] %></p>
+            <p class="text-gray-600">Quantity: <%= line_item["node"]["quantity"] %></p>
+            <p class="text-gray-600">Price: <%= number_to_currency(line_item["node"]["merchandise"]["price"]["amount"], unit: line_item["node"]["merchandise"]["price"]["currencyCode"]) %></p>
+          </div>
+          <div>
+
+            <%= button_to "Remove", remove_from_cart_path(line_item["node"]["id"]), method: :delete, class: "bg-red-500 text-white py-2 px-4 rounded hover:bg-red-700" %>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+
+    <div class="flex justify-between items-center mt-8">
+      <%= link_to "Continue Shopping", products_path, class: "bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-700" %>
+      <%= link_to "Proceed to Checkout", checkout_path, class: "bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700" %>
+    </div>
+  <% else %>
+    <p class="text-gray-600">Your cart is empty.</p>
+    <%= link_to "Continue Shopping", products_path, class: "bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-700 mt-4" %>
+  <% end %>
+</div>

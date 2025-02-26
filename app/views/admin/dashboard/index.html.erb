@@ -1,0 +1,70 @@
+<h1 class="text-3xl font-bold mb-4">Admin Dashboard</h1>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+  <!-- At a Glance Section -->
+  <div class="bg-white p-6 rounded shadow col-span-2">
+    <h2 class="text-xl font-semibold mb-4">At a Glance</h2>
+    <ul>
+      <li class="mb-2"><strong>1</strong> Post</li>
+      <li class="mb-2"><strong>2</strong> Pages</li>
+      <li class="mb-2"><strong>1</strong> Comment</li>
+    </ul>
+
+    <%= button_to "Avatar Theme", set_theme_path(theme: 'Avatar'), method: :post, class: "btn btn-primary" %>
+    <%= button_to "Dusk Theme", set_theme_path(theme: 'Dusk'), method: :post, class: "btn btn-secondary" %>
+    
+
+<div class="data-sync">
+    <%= button_to 'Import Ships', import_ships_admin_data_path, method: :post %>
+
+
+    </div>
+
+  </div>
+
+  <!-- Quick Draft Section -->
+  <div class="bg-white p-6 rounded shadow">
+    <h2 class="text-xl font-semibold mb-4">Quick Draft</h2>
+    <form>
+      <div class="mb-4">
+        <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
+        <input type="text" name="title" id="title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+      </div>
+      <div class="mb-4">
+        <label for="content" class="block text-sm font-medium text-gray-700">What's on your mind?</label>
+        <textarea id="content" name="content" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
+      </div>
+      <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Save Draft</button>
+    </form>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+  <!-- Activity Section -->
+  <div class="bg-white p-6 rounded shadow col-span-2">
+    <h2 class="text-xl font-semibold mb-4">Activity</h2>
+    <div class="mb-4">
+      <h3 class="text-lg font-semibold">Recently Published</h3>
+      <p>Nov 9th, 7:59 am - <a href="#" class="text-blue-500 hover:underline">Hello world!</a></p>
+    </div>
+    <div>
+      <h3 class="text-lg font-semibold">Recent Comments</h3>
+      <p>From <strong>A RailPress Commenter</strong> on <a href="#" class="text-blue-500 hover:underline">Hello world!</a></p>
+      <p>Hi, this is a comment. To get started with moderating, editing, and deleting comments, please visit the Comments screen in the dashboard.</p>
+      <p class="mt-2"><a href="#" class="text-blue-500 hover:underline">All</a> | <a href="#" class="text-blue-500 hover:underline">Pending</a> | <a href="#" class="text-blue-500 hover:underline">Approved</a> | <a href="#" class="text-blue-500 hover:underline">Spam</a> | <a href="#" class="text-blue-500 hover:underline">Trash</a></p>
+    </div>
+  </div>
+
+  <!-- RailPress Events and News Section -->
+  <div class="bg-white p-6 rounded shadow">
+    <h2 class="text-xl font-semibold mb-4">RailPress Events and News</h2>
+    <p>Attend an upcoming event near you.</p>
+    <p>There aren't any events scheduled near you at the moment. Would you like to <a href="#" class="text-blue-500 hover:underline">organize one</a>?</p>
+    <ul class="mt-4">
+      <li class="mb-2"><a href="#" class="text-blue-500 hover:underline">The Month in RailPress: November 2017</a></li>
+      <li class="mb-2"><a href="#" class="text-blue-500 hover:underline">Akismet: Version 4.0.2 of the Akismet RailPress Plugin Is Now Available</a></li>
+      <li class="mb-2"><a href="#" class="text-blue-500 hover:underline">WPTavern: Jetpack 5.6.1 Increases Security of the Contact Form Module</a></li>
+      <li class="mb-2"><a href="#" class="text-blue-500 hover:underline">WPWeekly Episode 297 – WordCamp US 2017 Recap</a></li>
+    </ul>
+  </div>
+</div>

@@ -1,0 +1,15 @@
+<div class="section live_events">
+  <div class="headline-container large">
+    <h2 class="headline">Live Events</h2>
+
+    <small>(<%= @total_events %> of many player run events this {{time period}})</small>
+  </div>
+  <ul>
+    <% @events.each do |event| %>
+    <li>
+<strong>In-Game: </strong>
+<a href="<%= event_path(event) %>"><%= event.title %> (<%= event.location %>-<%= event.start_time.strftime("%b %d") %>)</a>
+    </li>
+    <% end %>
+  </ul>
+</div>

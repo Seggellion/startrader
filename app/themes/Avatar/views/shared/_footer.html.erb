@@ -1,0 +1,28 @@
+<% if current_user && current_user&.username.blank? %>
+
+
+
+<style>
+main{
+    opacity:0 !important;
+}
+</style>
+<div class="uuid-modal">
+<h2 class="h1">Minecraft Username</h2>
+
+<%= form_with(model: current_user, url: update_minecraft_uuid_user_path(current_user), method: :patch, local: true) do |form| %>
+  <div class="field">
+    <%= form.label :username, "Minecraft Username" %>
+    <%= form.text_field :username, required: true %>
+  </div>
+
+  <div class="actions">
+    <%= form.button "Save", class:"pushable button green" %>
+
+    
+
+  </div>
+<% end %>
+
+</div>
+<% end %>

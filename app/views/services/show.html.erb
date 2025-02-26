@@ -1,0 +1,46 @@
+<% content_for :meta_title, @service.title %>
+<% content_for :meta_description, meta_description %>
+<% content_for :meta_keywords, meta_keywords %>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Service",
+  "name": "<%= @service.title %>",
+  "description": "Brief description of the service.",
+  "url": "<%= service_url(@service) %>",
+  "image": "<%= url_for(@service.images.first) if @service.images.attached? %>",
+  "provider": {
+    "@type": "Organization",
+    "name": "Your Organization Name",
+    "url": "https://yourwebsite.com"
+  }
+}
+</script>
+
+
+<article class="container mx-auto my-8 p-4 bg-white rounded shadow">
+<header>
+  <h1 class="text-4xl font-bold mb-6 text-gray-800 text-center"><%= @service.title %></h1>
+</header>
+  <section class="rich-text-content mb-8">
+    <%= @service.content %>
+  </section>
+  
+  <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <% if @service.images.attached? %>
+      <% @service.images.each_with_index do |image, index| %>
+        <div class="flex justify-center">
+          <%= image_tag url_for(image), class: "w-full h-96 object-cover rounded-md", alt: "Before and After Photos" %>
+        <figcaption class="sr-only">Before and After Photos</figcaption>
+        </div>
+      <% end %>
+    <% else %>
+      <p class="col-span-2 text-center text-gray-500">No images available</p>
+    <% end %>
+  </section>
+  
+<p class="my-6">Check out our other <%= link_to 'services', services_path %> for more information.</p>
+</article>
+
+

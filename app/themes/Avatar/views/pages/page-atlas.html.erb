@@ -1,0 +1,53 @@
+<article 
+  class="atlas container mx-auto px-4 py-6" 
+  data-controller="playguide" 
+  data-playguide-current-slug-value="<%= @page.slug %>"
+  data-playguide-atlas-pages-value="<%= @atlas_pages.map { |p| { title: p.title, slug: p.slug } }.to_json %>"
+>
+
+
+<!-- Option Selector -->
+<div class="mb-6 flex items-start flex-col">
+<div class="flex flex-col">
+<div class="breadcrumbs">
+STAR_TRADER : PLAYGUIDE : ATLAS
+</div>
+<div class="playguide-subject-headline">
+<strong>Select A Different Topic:</strong>
+</div>
+</div>
+
+<div class="flex">
+  <%= select_tag :atlas_pages,
+    options_from_collection_for_select(@atlas_pages, :slug, :title, @page.slug),
+    class: "border rounded px-4 py-2",
+    data: { action: "change->playguide#navigateToPage" }
+  %>
+
+  <button 
+    class="px-4 py-2 bg-red-500 text-white rounded"
+    data-action="click->playguide#navigateBackward"
+  >
+    <
+  </button>
+
+  <button 
+    class="px-4 py-2 bg-red-500 text-white rounded ml-4"
+    data-action="click->playguide#navigateForward"
+  >
+    >
+  </button>
+</div>
+
+</div>
+
+
+  <h1 class="h1"><%= @page.title %></h1>
+  <div class="prose">
+    <%= @page.content %>
+  </div>
+
+  <% if @page.images.attached? %>
+  <%= image_tag @page.images.first, class: "rounded-lg shadow-lg mx-auto" %>
+<% end %>
+</article>

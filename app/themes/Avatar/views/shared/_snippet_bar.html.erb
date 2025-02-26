@@ -1,0 +1,65 @@
+<div style="width:150px;" class="w-[150px] flex-shrink-0 h-auto">
+<div>
+
+<div class="snippet_bar">
+  <div class="card">
+    <div class="headline-container">
+      <h2 class="headline">Latest update</h2>
+    </div>
+    <div class="content">
+      <div class="content-description">
+        Related Stories:
+        Julia’s Message to Dupre
+        Joye, Librarian of Britain, Murdered
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="headline-container">
+      <h2 class="headline">Pic of the week</h2>
+    </div>
+    <div class="content">
+      <div class="content-description">
+        <% unless @approved_images.blank? %>
+        <div data-controller="lightbox" class="images lightbox" data-lightbox-options-value='{"loop":true}'>
+          <% @approved_images.each do |screenshot| %>
+          <%= image_tag screenshot.url, size:"125x80",  data: { src: screenshot.url,
+            sub_html: screenshot.title} %>
+            <% end %>
+          </div>
+          <% else %>
+        <img src="<%= asset_path('/images/pic-of-week.jpg')%>">
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="headline-container">
+      <h2 class="headline">Skill of the Day</h2>
+    </div>
+    <div class="content">
+      <div class="content-description">
+        <img src="<%= asset_path('/images/skill.gif')%>">
+        Item Identification
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="headline-container">
+      <h2 class="headline">Todays Hint</h2>
+    </div>
+    <div class="content">
+      <div class="content-description">
+        <span>The world of Britannia is a dangerous place, and those who wish to learn of fighting would be well advised to begin with lesser creatures such as rabbits before engaging more formidable opponents. To do otherwise is to endanger oneself needlessly.</span>
+      </div>
+    </div>
+  </div>
+
+
+</div>
+
+</div>
+</div>

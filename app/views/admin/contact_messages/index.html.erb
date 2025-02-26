@@ -1,0 +1,35 @@
+
+
+
+<h1 class="text-3xl font-bold mb-4">Messages</h1>
+
+<table class="min-w-full bg-white mt-4 border">
+  <thead>
+    <tr>
+      <th class="py-2 px-4 border">Read</th>
+      <th class="py-2 px-4 border">Name</th>
+      <th class="py-2 px-4 border">Email</th>
+      <th class="py-2 px-4 border">Subject</th>
+      <th class="py-2 px-4 border">Received At</th>
+      <th class="py-2 px-4 border">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @contact_messages.each do |message| %>
+      <tr>
+       <td class="py-2 px-4 border"><%= message.read_at.present? ? "Yes" : "No" %></td>
+        <td class="py-2 px-4 border"><%= message.first_name %> <%= message.last_name %></td>
+        <td class="py-2 px-4 border"><%= message.email %></td>
+        <td class="py-2 px-4 border"><%= message.subject %></td>
+        <td class="py-2 px-4 border"><%= message.created_at.strftime('%Y-%m-%d') %></td>
+       
+
+        <td class="py-2 px-4 border"><%= link_to 'View', admin_contact_message_path(message) %>
+        <%= link_to 'Delete', admin_contact_message_path(message), method: :delete, data: { confirm: 'Are you sure?' }, class: 'text-red-500 hover:underline' %>
+
+        </td>
+
+      </tr>
+    <% end %>
+  </tbody>
+</table>

@@ -1,0 +1,17 @@
+<h1 class="text-3xl font-bold mb-4">Add New Category</h1>
+
+<%= form_with model: [:admin, @category], local: true do |form| %>
+  <div class="mb-4">
+    <%= form.label :name, "Name", class: "block text-sm font-medium text-gray-700" %>
+    <%= form.text_field :name, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %>
+  </div>
+
+  <div class="mb-4">
+    <%= form.label :slug, "Slug", class: "block text-sm font-medium text-gray-700" %>
+    <%= form.text_field :slug, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %>
+  </div>
+
+  <div class="mb-4 flex justify-end">
+    <%= form.submit "Create Category", class: "bg-blue-500 text-white px-4 py-2 rounded" %>
+  </div>
+<% end %>

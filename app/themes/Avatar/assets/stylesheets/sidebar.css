@@ -1,0 +1,71 @@
+.home #sidebar, 
+.pages #sidebar, 
+.community #sidebar, 
+.economy #sidebar, 
+.new_player_center #sidebar, 
+.acct_mgmt #sidebar, 
+.content #sidebar {
+    background-image: url('/assets/banner_red.png');
+  }
+
+  .playguide #sidebar{
+    left: 0px;
+    top: 150px;
+    padding-left:15px;
+    background-image: url('/assets/banner_purple.png');
+  }
+  
+  .sub_menu {
+    display: none;
+  }
+  
+  .sub_menu.open {
+    display: block;
+  }
+  
+  #sidebar {
+    width: 168px;
+    height: 410px;
+    transition: all 0.5s;
+    background-size: contain;
+    background-repeat: no-repeat;
+    padding-top: 28px;
+    padding-left: 24px;
+    top: 142px;
+    left: -10px;
+    position: absolute;
+    z-index: 9000;
+  }
+  
+  @media screen and (max-width: 640px) { /* Replace $small with 640px */
+    #sidebar {
+      left: -130px;
+      top: 122px;
+    }
+  }
+  
+  #sidebar ul, #sidebar li {
+    list-style: none;
+    line-height: 15px;
+    padding: 0px;
+  }
+  
+  #sidebar a, #sidebar a:visited {
+    color: #FFCC33;
+    font-weight: 900;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    text-decoration: none;
+  }
+  
+  #sidebar a:hover {
+    color: yellow;
+  }
+  
+  #sidebar .sub_menu a {
+    padding: 0px;
+    font-size: 0.65rem;
+    font-weight: 100;
+    text-transform: none;
+  }
+  

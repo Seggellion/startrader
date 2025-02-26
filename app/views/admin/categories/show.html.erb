@@ -1,0 +1,6 @@
+<h1 class="text-3xl font-bold mb-4"><%= @category.name %></h1>
+
+<p class="mb-4"><strong>Slug:</strong> <%= @category.slug %></p>
+
+<%= link_to 'Edit', edit_admin_category_path(@category), class: 'bg-blue-500 text-white px-4 py-2 rounded' %>
+<%= link_to 'Back to Categories', admin_categories_path, class: 'bg-gray-500 text-white px-4 py-2 rounded ml-2' %>

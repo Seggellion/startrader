@@ -1,0 +1,28 @@
+<h1>Sections</h1>
+<%= link_to 'New Section', new_admin_section_path, class: 'bg-blue-500 text-white px-4 py-2 rounded' %>
+<table class="min-w-full bg-white mt-4 border">
+  <thead>
+    <tr>
+      <th class="py-2 px-4 border">Name</th>
+      <th class="py-2 px-4 border">Template</th>
+      <th class="py-2 px-4 border">Position</th>
+      <th class="py-2 px-4 border">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @sections.each do |section| %>
+      <tr>
+        <td class="py-2 px-4 border"><%= section.name %></td>
+        <td class="py-2 px-4 border"><%= section.template %></td>
+        <td class="py-2 px-4 border"><%= section.position %></td>
+        <td class="py-2 px-4 border">
+          <%= link_to 'Show', admin_section_path(section), class: 'text-blue-500 hover:underline' %> |
+          <%= link_to 'Edit', edit_admin_section_path(section), class: 'text-blue-500 hover:underline' %> |
+          <%= link_to 'Delete', admin_section_path(section), method: :delete, data: { confirm: 'Are you sure?' }, class: 'text-red-500 hover:underline' %> |
+          <%= link_to 'Up', move_up_admin_section_path(section), method: :patch, class: 'text-green-500 hover:underline' %> |
+          <%= link_to 'Down', move_down_admin_section_path(section), method: :patch, class: 'text-orange-500 hover:underline' %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

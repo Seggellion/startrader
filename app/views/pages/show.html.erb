@@ -1,0 +1,44 @@
+<article class="container mx-auto my-8 p-4 bg-white rounded shadow">
+  <header class="text-center">
+    <h1 class="text-4xl font-bold mb-6 text-gray-800"><%= @page.title %></h1>
+  </header>
+
+  <section class="rich-text-content mb-8 text-center">
+  <%= @page.content %>
+</section>
+  
+<% if @page.images.attached? %>
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+    <% @page.images.each_with_index do |image, index| %>
+      <div class="flex justify-center">
+        <%= image_tag url_for(image), class: "w-full h-96 object-cover rounded-md", alt: "Page content image" %>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <p class="col-span-2 text-center text-gray-500">No images available</p>
+<% end %>
+
+
+</article>
+
+
+<% content_for :meta_title, @page.title %>
+<% content_for :meta_description, meta_description %>
+<% content_for :meta_keywords, meta_keywords %>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Page",
+  "name": "<%= @page.title %>",
+  "description": "Brief description of the page.",
+  "url": "<%= page_url(@page) %>",
+  "image": "<%= url_for(@page.images.first) if @page.images.attached? %>",
+  "provider": {
+    "@type": "Organization",
+    "name": "Your Organization Name",
+    "url": "https://yourwebsite.com"
+  }
+}
+</script>

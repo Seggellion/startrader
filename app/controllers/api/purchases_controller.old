@@ -1,0 +1,40 @@
+
+module Api
+    class PurchasesController < ApplicationController
+      protect_from_forgery with: :null_session
+      before_action :authenticate_api!
+  
+      def create
+        city_name = params[:city_name]
+        item_key = params[:item_key]
+        quantity = params[:quantity].to_i
+        price_per_unit = params[:price_per_unit].to_f
+  
+        city = City.find_by(name: city_name)
+        return render json: { error: "City not found" }, status: :unprocessable_entity unless city
+  
+        commodity = city.city_commodities.find_by("LOWER(item_name) = ?", item_key.downcase)
+        return render json: { error: "Commodity not found" }, status: :unprocessable_entity unless commodity
+  
+        total_price = price_per_unit * quantity
+  
+        purchase = city.purchases.create!(
+          item_key: item_key,
+          quantity: quantity,
+          total_price: total_price
+        )
+  
+        render json: { success: true, purchase_id: purchase.id, total_price: total_price }
+      end
+  
+      private
+  
+      def authenticate_api!
+        token = request.headers["Authorization"]&.split(" ")&.last
+        valid_token = Setting.get("britannia_api_token")
+  
+        render json: { error: "Unauthorized" }, status: :unauthorized unless token == valid_token
+      end
+    end
+  end
+  

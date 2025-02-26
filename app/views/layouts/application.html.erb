@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <%= render '/layouts/google_tag' %>
+  <%= render '/layouts/metadata' %>
+
+  <%= favicon_link_tag favicon_url, rel: 'shortcut icon', type: 'image/x-icon' %>
+
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= stylesheet_link_tag "tailwind", "inter-font", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "#{Rails.application.config.active_theme}", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "application.tailwind", "data-turbo-track": "reload" %>
+<%#= stylesheet_link_tag "/themes/default/assets/stylesheets/application.css", "data-turbo-track": "reload" %>
+
+<%#= stylesheet_link_tag "themes/#{Rails.application.config.active_theme}/assets/stylesheets/application", "data-turbo-track": "reload" %>
+<%#= javascript_include_tag "themes/#{Rails.application.config.active_theme}application", "data-turbo-track": "reload" %>
+
+    <%= javascript_importmap_tags %>
+
+
+      <%= stylesheet_link_tag 'https://unpkg.com/trix@2.1.1/dist/trix.css' %>
+
+  <script src="https://maps.googleapis.com/maps/api/js?key=<%= Setting.get('google_maps_api') %>" async defer></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=<%= Setting.get('header-font') %>&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=<%= Setting.get('body-font') %>&display=swap" rel="stylesheet">
+
+<% if (headerFontColor = Setting.get('header-font-color')) && 
+      (primaryColor = Setting.get('primary-color')) %>
+<style>
+  :root {
+    --header-font-color: <%= headerFontColor %>;
+    --primary_color: <%= primaryColor %>;
+    --secondary_color: <%= Setting.get('secondary-color') || '#808080' %>; /* Default to grey if not set */
+  }
+
+  /* Applying the colors to your elements */
+  header #desktop-header-menu{
+    background-color: var(--primary_color);
+  }
+
+  footer {
+    background-color: var(--primary_color);
+    color: var(--header-font-color);
+  }
+
+  h1,h2,h3,h4,h5,h6 {
+    color: var(--header-font-color);
+  }
+
+  .primary-background{
+  background-color: var(--primary_color);
+  }
+  button, .btn {
+    background-color: var(--secondary_color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  button.secondary {
+    background-color: var(--primary_color);
+    color: white;
+  }
+</style>
+<% end %>
+
+
+  </head>
+  <body class="flex flex-col min-h-screen <%= controller.controller_name %>">
+
+
+
+<%= render "#{current_theme}/views/shared/header" %>
+
+
+<style>
+
+@font-face {
+  font-family: "<%= Setting.get('header-font') %>", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "<%= Setting.get('body-font') %>", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+h2,h1{
+  font-family: "<%= Setting.get('header-font') %>", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  color: var(--header-font-color);
+}
+</style>
+  <main class="flex flex-grow">
+    <% unless current_page?(root_path) %>
+    <section class="flex flex-col lg:flex-row mx-4 lg:mx-4">
+    <div class="content-container w-full p-4">
+      <%= yield %>
+    </div>  
+    </section>
+<% end %>
+
+
+    <% if current_page?(root_path) %>
+<%= render "#{current_theme}/views/layouts/home" %>
+  <% end %>
+
+  </main>
+  
+
+<%= render "#{current_theme}/views/shared/footer" %>
+
+
+  </body>
+</html>

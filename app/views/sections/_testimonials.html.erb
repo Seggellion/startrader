@@ -1,0 +1,17 @@
+<section class="m-4 lg:m-12">
+<%= render '/sections/section_header', section: section %>
+  <div class="relative overflow-hidden">
+
+      <% @testimonials.each do |testimonial| %>
+        <div class="testimonial-slide p-4 my-4 flex-none w-full">
+        
+          <div class="py-6">
+            <%= testimonial.content %>
+          </div>
+          <p>- <%= testimonial.title %></p>
+          <hr class="mt-6">
+        </div>
+      <% end %>
+
+  </div>
+</section>

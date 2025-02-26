@@ -1,0 +1,57 @@
+<%= form_with model: [:admin, @setting], local: true, html: { multipart: true }, data: { controller: "settings-form" } do |form| %>
+  <div class="mb-4">
+    <%= form.label :key, "Key", class: "block text-sm font-medium text-gray-700" %>
+    <%= form.text_field :key, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %>
+  </div>
+
+  <div class="mb-4">
+    <%= form.label :setting_type, "Type", class: "block text-sm font-medium text-gray-700" %>
+    <select name="setting[setting_type]" id="setting_setting_type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" data-action="settings-form#toggleFields" data-settings-form-target="settingType">
+      <option value="text" <%= 'selected' if @setting.setting_type == 'text' %>>Text</option>
+      <option value="checkbox" <%= 'selected' if @setting.setting_type == 'checkbox' %>>Checkbox</option>
+      <option value="radio" <%= 'selected' if @setting.setting_type == 'radio' %>>Radio</option>
+      <option value="image" <%= 'selected' if @setting.setting_type == 'image' %>>Image</option>
+      <option value="video" <%= 'selected' if @setting.setting_type == 'video' %>>Video</option>
+      <option value="json" <%= 'selected' if @setting.setting_type == 'json' %>>JSON</option>
+      <option value="color" <%= 'selected' if @setting.setting_type == 'color' %>>Color</option>
+    </select>
+  </div>
+
+  <div class="mb-4" data-settings-form-target="valueField" style="<%= @setting.setting_type == 'color' ? 'display:none;' : '' %>">
+    <%= form.label :value, "Value", class: "block text-sm font-medium text-gray-700" %>
+    <% if @setting.setting_type == 'json' %>
+      <%= form.text_area :value, rows: 10, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm", value: @setting.value.present? ? JSON.pretty_generate(JSON.parse(@setting.value)) : '', name: 'setting[value]' %>
+    <% else %>
+      <%= form.text_area :value, rows: 5, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm", name: 'setting[value]' %>
+    <% end %>
+  </div>
+
+  <div class="mb-4" data-settings-form-target="uploadField" style="<%= @setting.setting_type == 'image' ? '' : 'display:none;' %>">
+    <%= form.label :image, "image", class: "block text-sm font-medium text-gray-700" %>
+    <%= form.file_field :image,  class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"%>
+
+    <% if @setting.image.attached? %>
+      <div class="mt-2">
+        <%= image_tag url_for(@setting.image), class: "w-32 h-32 rounded-md border-gray-300 shadow-sm" %>
+
+      </div>
+    <% end %>
+
+    </div>
+
+  <div class="mb-4" data-settings-form-target="colorField" style="<%= @setting.setting_type == 'color' ? '' : 'display:none;' %>">
+    <%= form.label :value, "Color", class: "block text-sm font-medium text-gray-700" %>
+    <%= form.color_field :value, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm", data: { controller: "color-picker", action: "input->color-picker#updateColor", target: "color-picker.input" } %>
+  </div>
+
+  
+
+  <div class="mb-4">
+    <%= form.label :group, "Group", class: "block text-sm font-medium text-gray-700" %>
+    <%= form.text_field :group, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %>
+  </div>
+
+  <div class="mb-4 flex justify-end">
+    <%= form.submit class: "bg-blue-500 text-white px-4 py-2 rounded" %>
+  </div>
+<% end %>

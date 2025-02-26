@@ -1,0 +1,25 @@
+<h1 class="text-3xl font-bold mb-4">Media Library</h1>
+<%#= link_to 'Upload New File', new_admin_media_path, class: 'bg-blue-500 text-white px-4 py-2 rounded' %>
+
+<table class="min-w-full bg-white mt-4 border">
+  <thead>
+    <tr>
+      <th class="py-2 px-4 border">File Name</th>
+      <th class="py-2 px-4 border">Content Type</th>
+      <th class="py-2 px-4 border">Size</th>
+      <th class="py-2 px-4 border">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @pending_files.each do |file| %>
+      <tr>
+        <td class="py-2 px-4 border"><%= file.filename %></td>
+        <td class="py-2 px-4 border"><%= file.content_type %></td>
+        <td class="py-2 px-4 border"><%= number_to_human_size(file.byte_size) %></td>
+        <td class="py-2 px-4 border">
+          <%= link_to 'Delete', admin_media_path(file), method: :delete, data: { confirm: 'Are you sure?' }, class: 'text-red-500 hover:underline' %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

@@ -1,0 +1,27 @@
+<%= form_with model: [:admin, @section], local: true do |form| %>
+    <div class="mb-4">
+      <%= form.label :name, "Name", class: "block text-sm font-medium text-gray-700" %>
+      <%= form.text_field :name, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %>
+    </div>
+  
+    <div class="mb-4">
+      <%= form.label :template, "Template", class: "block text-sm font-medium text-gray-700" %>
+  <%= form.select :template, options_for_select(Dir.glob("app/views/sections/_*.html.erb").map { |path| [File.basename(path, ".html.erb")[1..-1], File.basename(path, ".html.erb")[1..-1]] }, @section.template), class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %>
+    </div>
+  
+    <div class="mb-4">
+      <%= form.label :animation_speed, "Animation Speed (ms)", class: "block text-sm font-medium text-gray-700" %>
+      <%= form.number_field :animation_speed, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %>
+      <small>Recommended 1000 minimum</small>
+    </div>
+  
+    <div class="mb-4">
+      <%= form.label :position, "Position", class: "block text-sm font-medium text-gray-700" %>
+      <%= form.number_field :position, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %>
+    </div>
+  
+    <div class="mb-4 flex justify-end">
+      <%= form.submit class: "bg-blue-500 text-white px-4 py-2 rounded" %>
+    </div>
+  <% end %>
+  

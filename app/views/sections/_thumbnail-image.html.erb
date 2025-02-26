@@ -1,0 +1,62 @@
+<!-- Thumbnail Section -->
+<section class="m-4 lg:m-12">
+<%= render '/sections/section_header', section: section %>
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+<% section.blocks.each_with_index do |block, index| %>
+<%# translation = block.translations.find { |t| t.language == I18n.locale.to_s } %>
+
+<div class="bg-gray-800 text-white">
+    <div class="container mx-auto px-4 md:px-20 py-10">
+        <div class="grid md:grid-cols-2 gap-10">
+            <% if index.even? %>
+                <div class="flex justify-center items-center" style="height:100%;">
+
+                    <% if block.image.attached? %>
+                    <img src="<%= block.image.url %>" alt="Descriptive text for image" class="w-full h-full object-cover">
+                  <% else %>
+                    <p>No image available</p>
+                  <% end %>
+                  
+                </div>
+                <div>
+                    <h2 class="text-3xl font-bold mb-4">
+                    <% if defined?(translation) %>
+                    <%= translation.title %>
+                    <% else %>
+                    <%#= block.title %>
+                    <% end %>
+                    </h2>
+                    <p class="text-lg">
+                    <% if defined?(translation) %>
+                    <%= translation.content %>
+                    <% else %>
+                    <%= block.content %>
+                    <% end %>
+                    </p>
+                </div>
+            <% else %>
+                <div>
+                    <h2 class="text-3xl font-bold mb-4">
+                    <% if defined?(translation) %>
+                    <%= translation.title %>
+                    <% end %>
+                    </h2>
+                    <p class="text-lg">
+                    <% if defined?(translation) %>
+                    <%= translation.description %>
+                    <% else %>
+                    <%= block.content %>
+                    <% end %>
+                    </p>
+                </div>
+                <div class="flex justify-center items-center" style="height:100%;">
+                    <img src="<%= block.image.url %>" alt="Descriptive text for image" class="w-full h-full object-cover">
+                </div>
+            <% end %>
+        </div>
+    </div>
+</div>
+
+<% end %>
+</div>
+</section>

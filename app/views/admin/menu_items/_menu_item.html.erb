@@ -1,0 +1,24 @@
+<li data-id="<%= menu_item.id %>" class="mb-2">
+  <div class="flex justify-between items-center">
+    <span class="flex-1"><%= menu_item.title %></span>
+    <div class="flex space-x-2">
+      <%= link_to 'Edit', edit_admin_menu_menu_item_path(menu_item.menu, menu_item), class: 'btn btn-sm btn-secondary' %>
+      <%= link_to 'Delete', admin_menu_menu_item_path(menu_item.menu, menu_item), method: :delete, data: { confirm: 'Are you sure?' }, class: 'btn btn-sm btn-danger' %>
+      <%= link_to 'Up', move_up_admin_menu_menu_item_path(menu_item.menu, menu_item), method: :patch, class: 'btn btn-sm btn-secondary' %>
+      <%= link_to 'Down', move_down_admin_menu_menu_item_path(menu_item.menu, menu_item), method: :patch, class: 'btn btn-sm btn-secondary' %>
+    </div>
+  </div>
+  <div class="mt-2 ml-4">
+
+  <%= form_with model: [:admin, menu_item.menu, menu_item], local: true, data: { turbo_frame: "_top" } do |form| %>
+
+      <%= form.label :parent_id, "Parent Menu Item", class: 'block text-gray-700' %>
+      <%= form.select :parent_id, options_for_select(@menu_items_options, selected: menu_item.parent_id), { include_blank: true }, class: 'form-select mt-1 block w-full', data: { action: "change->menu-items#updateParent", menu_item_id: menu_item.id } %>
+    <% end %>
+  </div>
+  <% if menu_item.children.any? %>
+    <ul class="ml-4 mt-2">
+      <%= render partial: 'admin/menu_items/menu_item', collection: menu_item.children, as: :menu_item %>
+    </ul>
+  <% end %>
+</li>

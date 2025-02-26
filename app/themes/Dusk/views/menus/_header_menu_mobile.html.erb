@@ -1,0 +1,56 @@
+<div data-controller="mobilemenu" class="lg:hidden">
+  <button data-action="click->mobilemenu#toggle" class="text-black focus:outline-none">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+    </svg>
+  </button>
+  <!-- Mobile Menu -->
+  <nav class="fixed inset-0 primary-background bg-opacity-95 px-8 py-4 hidden" data-mobilemenu-target="menu">
+    <button data-action="click->mobilemenu#toggle" class="text-white focus:outline-none mb-4">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </button>
+    <ul class="flex flex-col space-y-4 text-white">
+     <% if @header_menu_items.present? %>
+      <% @header_menu_items.each do |menu_item| %>
+        <li class="relative group">
+          <% if menu_item.children.any? %>
+            <a href="#" data-action="click->mobilemenu#toggleSubmenu" class="block">
+              <%= menu_item.title %>
+              <svg class="w-4 h-4 inline-block ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </a>
+            <ul class="ml-4 mt-2 hidden" data-mobilemenu-target="submenu">
+              <% menu_item.children.each do |child| %>
+                <li>
+                <% if child.item_type == 'page' %>
+                 <%= link_to child.title, catch_all_page_path(child.url), class: 'block' %>      
+              <% elsif child.item_type == 'service' %>
+                <%= link_to child.title, service_path(child.url), class: 'block' %>
+              <% else %>
+                <%= link_to child.title, child.url || '#', class: 'block' %>
+              <% end %>
+                </li>
+
+              <% end %>
+            </ul>
+          <% else %>
+            <%= link_to menu_item.title, menu_item.url, class: 'block' %>
+          <% end %>
+        </li>
+      <% end %>
+    <% end %>
+      <li class="text-white mt-4">
+        <span><%= Setting.get('telephone') %></span>
+      </li>
+    </ul>
+    <% if (google_places_id = Setting.get('google_places_id')) %>
+    <div class="ml-auto  mt-4">
+      <%= link_to "Leave a Review", "https://search.google.com/local/writereview?placeid=#{google_places_id}", class: "btn text-white px-4 py-2 rounded", target: "_blank", rel: "noopener" %>
+    </div>
+  <% end %>
+  </nav>
+
+</div>

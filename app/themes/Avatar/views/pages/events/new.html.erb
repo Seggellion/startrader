@@ -1,0 +1,30 @@
+<article>
+<%= render 'events-nav' %>
+  <h2 class="h1">Event Submission form</h2>
+
+
+
+  Please use this form to submit your event for posting on the UO Events Calendar.<br>
+  Your event will be considered for posting only if:
+  <br><br>
+
+  1. You fill out the form completely.<br>
+  2. The event is in good roleplaying taste.<br>
+  3. You submit the event at least 2 days in advance.
+  <br><br>
+
+
+  <%= render 'form', event: @event %>
+
+  <div class="copyright">
+    ©2000 ORIGIN Systems, Inc.<br/>
+
+    Ultima, the Ultima Online logo, Are You With Us?, ORIGIN, the ORIGIN logo and We
+    create worlds are trademarks or registered trademarks of ORIGIN Systems, Inc. in the
+    U.S. and/or other countries. All rights reserved. ORIGIN is an Electronic Arts™ company.
+  </div>
+</article>
+
+
+
+<%= link_to 'Back', events_path %>

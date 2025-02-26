@@ -1,0 +1,14 @@
+<section id="home" class="flex">
+
+<div class="flex flex-col">
+<% if current_page?(root_path) %>
+<% @sections.each do |section| %>
+  <%= render_section(section) %>
+<% end %>
+<% end %>
+</div>
+  
+      <%= render 'shared/snippet_bar' %>
+
+</section>
+

@@ -1,0 +1,75 @@
+<article>
+  <%= render 'events-nav' %>
+
+  <h2 class="h1">Calendar of Events</h2>
+  <span class="subtext">(Displayed: Up to 5 Events Across All Shards of 23 events in Mar)</span>
+
+  <% @events.each do |event| %>
+  <div class="event-card">
+    <h2 class="h4"><%= event.title %></h2>
+    <table cellspacing="1" cellpadding="2">
+      <tbody>
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Player level</th>
+            <th>Organized By</th>
+            <th>Shard</th>
+          </tr>
+        </thead>
+        <tr>
+          <td>
+            <%= event.category %>
+          </td>
+          <td>
+            <%= event.player_level %>
+          </td>
+          <td>
+            <%= event.organizer %>
+          </td>
+          <td>
+            <%= event.shard %>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="event-info">
+      <div class="event-details">
+        <div class="headers">
+          <strong class="small">Sponsor:</strong>
+          <strong class="small">Locations:</strong>
+          <strong class="small">Start Date:</strong>
+          <strong class="small">End Date:</strong>
+          <strong class="small">Recurrance:</strong>
+        </div>
+        <div class="event-detail-details">
+          <small class="not-italic"><%= event.user_id || 'null' %></small>
+          <small class="not-italic"><%= event.location || 'null' %></small>
+          <small class="not-italic"><%= event.start_time || 'null' %></small>
+          <small class="not-italic"><%= event.end_time || 'null' %></small>
+          <small class="not-italic"><%= event.frequency || 'null' %></small>
+        </div>
+      </div>
+      <div class="event-image">
+        <%= image_tag("shard_badges/sicon_0.jpg") %>
+      </div>
+    </div>
+
+
+    <div class="event-card-description">
+  <%= event.short_description || 'null' %>
+      <span class="event-card-footer"><strong class="small">For more details:</strong><%= link_to 'Full story', event, class:'small' %></span>
+    </div>
+
+    <div style="display:none">
+      <%= link_to 'Edit', edit_event_path(event) %>
+    <%= link_to 'Destroy', event, method: :delete, data: { confirm: 'Are you sure?' } %>
+      </div>
+  </div>
+  <% end %>
+
+                      <br>
+
+                      <%= link_to 'New Event', new_event_path %>
+                    </article>

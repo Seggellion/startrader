@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin</title>
+  <%= stylesheet_link_tag 'application.tailwind', media: 'all', 'data-turbo-track': 'reload' %>
+  <%= stylesheet_link_tag "tailwind", "inter-font", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+      <%= favicon_link_tag 'railpress.png', rel: 'shortcut icon', type: 'image/x-icon' %>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <%= stylesheet_link_tag 'https://unpkg.com/trix@2.1.1/dist/trix.css' %>
+  <%= javascript_include_tag 'application', 'data-turbo-track': 'reload' %>
+  <%= csrf_meta_tags %>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+
+
+<%= render 'admin/shared/top_bar' %>
+
+  <div class="flex flex-1">
+<%= render 'admin/shared/side_bar' %>
+  
+  <!-- Main Content -->
+  <div class="flex-1 p-6">
+    <%= yield %>
+  </div>
+  </div>
+
+
+
+</body>
+</html>

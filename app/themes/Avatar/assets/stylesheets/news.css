@@ -1,0 +1,21 @@
+.news-header{
+    width: 100%;
+    background-color:  rgb(141, 0, 0);
+    display: flex;
+    color:white;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 0px 10px;
+    }
+    
+.news-header .title{
+    font-weight:900;
+}
+
+.news main section{
+    width:100%;
+}
+
+.news{
+    margin-top: 20px;
+}

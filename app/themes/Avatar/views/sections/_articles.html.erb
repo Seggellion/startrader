@@ -1,0 +1,77 @@
+<section class="py-7">
+
+<% section_slug = section.name.parameterize %>
+<% recent_issue = Article.joins(:category).where(categories: {slug: "issues"}).order(created_at: :desc).first %>
+<% server_issue = Article.joins(:category).where(categories: {slug: "server-issues"}).order(created_at: :desc).first %>
+<% recent_article = Article.joins(:category).where(categories: { slug: section_slug }).order(created_at: :desc).first %>
+  <% if recent_article %>
+    <div class="section article">
+      <div class="headline-container">
+        <h2 class="headline"><%= section.name %></h2>
+        <% unless section_slug == "alert" %>
+        <small>(Updated: <%= recent_article.updated_at.strftime("%B %d, %Y") %>)</small>
+        <% end %>
+      </div>
+      <div class="content">
+        <% if section_slug == "alert" %>
+
+        <div class="content-description">
+          <a class="header-link" href="#">
+            <h3><%= recent_article.title %></h3>
+          </a>
+          <br>
+          <%= truncate(recent_article.content.to_plain_text, length: 500) %>
+          <br>
+          <a href="#" class="small-link">Full Story</a>
+        </div>
+        <% else %>
+            <div class="content-description">
+            <a class="header-link" href="<%= update_center_fyi_path %>">
+            <h3><%= recent_article.title %></h3>
+          </a>          
+          <br>
+          <% if recent_issue %>
+        <strong>Common Issues:</strong> <%= recent_issue.title %><br >
+        <% end %>
+        <% if server_issue %>
+        <strong>Server Issues:</strong> <%= server_issue.title %><br >
+        <% end %>
+        </div>
+        <% end %>
+      </div>
+ 
+    </div>
+    <% elsif section_slug == "what-s-new" %>
+    <% news_article = Article.joins(:category).where(categories: {slug: "news"}).order(created_at: :desc).first %>
+
+    <div class="section article">
+    <div class="headline-container">
+      <h2 class="headline">What's New</h2>
+      <% unless section_slug == "alert" %>
+<small>(Updated: <%= news_article&.updated_at&.strftime("%B %d, %Y") %>)</small>
+      <% end %>
+    </div>
+
+
+     <div class="content">
+
+        <div class="content-description">
+            <a class="header-link" href="/news">
+            <h3><%= news_article&.title %></h3>
+            </a>          
+          <br>
+
+        </div>
+       
+      </div>
+
+    </div>
+
+
+  <% else %>
+    <div class="flex justify-center items-center text-gray-500">
+      <p>No alert articles available.</p>
+    </div>
+  <% end %>
+
+</section>

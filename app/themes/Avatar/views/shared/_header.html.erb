@@ -1,0 +1,63 @@
+<style>
+@font-face {
+    font-family: 'CelticHand';
+    src: url('<%= asset_path('CelticHand.ttf') %>') format('truetype');
+
+}
+
+@font-face {
+  font-family: 'MatrixBold';
+  src: url('<%= asset_path('MatrixBold.ttf') %>') format('truetype');
+}
+
+@font-face {
+  font-family: 'MatrixRegular';
+  src: url('<%= asset_path('MatrixRegular.ttf') %>') format('truetype');
+}
+
+</style>
+
+<%= link_to ' ', root_path, class: 'uc_logo' %>
+<header>
+  <div class="header-content">
+    <div class="logo">
+      <h1>
+        <span class="small-header">Welcome to</span>
+        <span class="red-header">UltimaCraft</span>
+        <span class="very-small-header">A Minecraft Mod</span>
+      </h1>
+    </div>
+    <div class="header-banner">
+    
+    <img src="<%= Setting.get('header-banner') %>" alt="Header Banner">
+
+    </div>
+    <div class="header_bar">
+      <div class="page_name">
+        <%= controller.controller_name.humanize %>
+      </div>
+      <div class="date">
+        <%= Date.today.strftime("%-m/%e") %>/1998
+      </div>
+      <div class="search-container">
+        <span class="small-header">Search</span>
+        <input type="search" />
+      </div>
+      <div class="login-container">
+        <span class="small-header">Log in/Personalization</span>
+      
+<% if current_user %>
+<% account_login = "/account" %>
+<% else %>
+<% account_login = "/account/login" %>
+<% end %>
+        <a href="<%= account_login %>" class="pushable button">
+          <span class="front">
+            MYUC
+          </span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+</header>

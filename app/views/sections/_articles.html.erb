@@ -1,0 +1,25 @@
+
+<% custom_articles_path = Rails.root.join("app", "themes", current_theme, "views", "sections", "_articles.html.erb") %>
+<% if File.exist?(custom_articles_path) %>
+  <%= render file: custom_articles_path %>
+<% else %>
+
+<section class="py-14">
+  <div class="grid grid-cols-1 md:grid-cols-1 gap-4 p-4" style="height:70vh;">
+    <% recent_article = Article.order(created_at: :desc).first %>
+    <% if recent_article %>
+      <% article_image_url = url_for(recent_article.image) if recent_article.image.attached? %>
+      <div class="relative bg-cover bg-center p-6 flex justify-center items-center flex-col cursor-pointer" style="background-image: url(<%= article_image_url %>);">
+        <h3 class="text-white text-xl font-bold mb-2"><%= recent_article.title %></h3>
+<p class="text-white mb-4"><%= truncate(recent_article.content.to_plain_text, length: 100) %></p>
+        <div class="border border-white py-2 px-4 text-white cursor-pointer">Read more</div>
+      </div>
+    <% else %>
+      <div class="flex justify-center items-center text-gray-500">
+        <p>No articles available.</p>
+      </div>
+    <% end %>
+  </div>
+</section>
+
+<% end %>

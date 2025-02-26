@@ -1,0 +1,24 @@
+<!-- app/views/leaderboard/index.html.erb -->
+<h1>Leaderboard</h1>
+<table>
+  <thead>
+    <tr>
+      <th>Player</th>
+      <th>Commodity Type</th>
+      <th>Commodity Name</th>
+      <th>Total Contribution</th>
+      <th>Biggest Single</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @contributions.each do |row| %>
+      <tr>
+        <td><%= row.player_uuid %></td>
+        <td><%= row.commodity_type %></td>
+        <td><%= row.commodity_name %></td>
+        <td><%= row.total_contribution.to_f.round(2) %></td>
+        <td><%= row.biggest_single.to_f.round(2) %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

@@ -1,0 +1,28 @@
+<h1 class="text-3xl font-bold mb-4">Events</h1>
+<%= link_to 'New Event', new_admin_event_path, class: 'bg-blue-500 text-white px-4 py-2 rounded' %>
+
+<table class="min-w-full bg-white mt-4 border">
+  <thead>
+    <tr>
+        <th>Title</th>
+        <th>Location</th>
+        <th>Start Time</th>
+        <th>End Time</th>
+        <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @events.each do |event| %>
+      <tr>
+        <td class="py-2 px-4 border"><%= event.title %></td>
+        <td class="py-2 px-4 border"><%= event.location%></td>
+        <td class="py-2 px-4 border"><%= event.start_time.strftime('%B %d, %Y %I:%M %p') %></td>
+        <td class="py-2 px-4 border"><%= event.end_time.strftime('%B %d, %Y %I:%M %p') %></td>
+        <td class="py-2 px-4 border">
+          <%= link_to 'Edit', edit_admin_event_path(event), class: 'text-blue-500 hover:underline' %> |
+          <%= link_to 'Delete', admin_event_path(event), method: :delete, data: { confirm: 'Are you sure?' }, class: 'text-red-500 hover:underline' %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

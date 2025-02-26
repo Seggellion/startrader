@@ -1,0 +1,22 @@
+<div class="w-full text-white py-6">
+  <div class="container mx-auto px-4">
+    <nav class="flex flex-wrap justify-between lg:flex-nowrap">
+      <ul class="w-full lg:w-auto flex flex-wrap lg:flex-nowrap">
+ 
+        <%= render partial: 'menus/menu_item', collection: @footer_menu_items, as: :menu_item %>
+      </ul>
+    </nav>
+    <div class="w-full text-right mt-4">
+     <small>© <%= Time.now.year %> <%= Setting.get('store-name') %>. All Rights Reserved.</small>
+     </div>
+  </div>
+</div>
+<style>
+.menu-item > a {
+  @apply block py-2 px-4 hover:bg-gray-200;
+}
+
+.menu-item > ul {
+  @apply pl-4;
+}
+</style>

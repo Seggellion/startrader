@@ -1,0 +1,43 @@
+<div class="container mx-auto">
+  <h1 class="text-2xl font-bold mb-4"><%= @menu.new_record? ? 'New Menu' : 'Edit Menu' %></h1>
+
+<%= form_with model: [:admin, @menu], local: true, data: { turbo: true }, html: { multipart: true } do |form| %>
+    <div class="mb-4">
+      <%= form.label :name, class: 'block text-gray-700' %>
+      <%= form.text_field :name, class: 'form-input mt-1 block w-full' %>
+    </div>
+    <%= form.submit 'Save', class: 'btn btn-primary' %>
+  <% end %>
+
+  <% if @menu.persisted? %>
+    <h2 class="text-xl font-bold mt-6 mb-4">Menu Items</h2>
+    <div class="flex">
+      <div class="w-1/2">
+        <h3 class="text-lg font-bold mb-2">Pages</h3>
+        <!-- Add dynamic items here (Pages, Articles, Categories, etc.) -->
+        <div class="mb-4">
+          <%= form_with(model: [@menu, @menu.menu_items.new], url: menu_menu_items_path(@menu), local: true) do |form| %>
+            <%= form.hidden_field :parent_id %>
+            <%= form.hidden_field :url %>
+            <div class="mb-4">
+              <%= form.label :title, 'Static Link', class: 'block text-gray-700' %>
+              <%= form.text_field :title, class: 'form-input mt-1 block w-full' %>
+            </div>
+            <div class="mb-4">
+              <%= form.label :url, class: 'block text-gray-700' %>
+              <%= form.text_field :url, class: 'form-input mt-1 block w-full' %>
+            </div>
+            <%= form.submit 'Add to Menu', class: 'btn btn-primary' %>
+          <% end %>
+        </div>
+      </div>
+      <div class="w-1/2">
+        <h3 class="text-lg font-bold mb-2">Menu Structure</h3>
+        <ul data-controller="menu-items" data-menu-items-target="list">
+          <%= render partial: 'admin/menu_items/menu_item', collection: @menu.menu_items.roots, as: :menu_item %>
+        </ul>
+        <%= link_to 'Delete Menu', @menu, method: :delete, data: { confirm: 'Are you sure?' }, class: 'btn btn-danger mt-4' %>
+      </div>
+    </div>
+  <% end %>
+</div>

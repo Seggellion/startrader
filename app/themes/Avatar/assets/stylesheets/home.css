@@ -1,0 +1,79 @@
+.section {
+    margin: 14px 0px;
+  }
+  
+  .section .content {
+    height: auto;
+    display: flex;
+    flex-wrap: wrap;
+  }
+  
+  .section .content img {
+    margin: 5px;
+  }
+  
+  .section.spotlight .content-description {
+    width: 80%;
+  }
+
+  .section.article .content-description {
+    width: 95%;
+  }
+  
+  .section .content ul li {
+    line-height: 17px;
+  }
+  
+  .section:first-child {
+    margin-top: 0px;
+  }
+  
+  .section ul {
+    margin: 0px;
+  }
+  
+  .snippet_bar {
+    width: 150px;
+    padding: 0px 10px;
+    border-left: 1px solid var(--burgandy);
+  }
+  
+  @media screen and (max-width: var(--small)) { /* Replace $small */
+    .snippet_bar {
+      display: none;
+    }
+  }
+  
+  .snippet_bar .card {
+    padding: 10px 0px;
+  }
+  
+  .snippet_bar .card:first-child {
+    padding-top: 0px;
+  }
+  
+  .snippet_bar .card .headline {
+    letter-spacing: 0.9px;
+  }
+  
+  .snippet_bar .card .content-description {
+    text-align: center;
+    padding: 15px 0px;
+    font-size: 0.62rem;
+  }
+
+  .content-description{
+    line-height: 15px;
+  }
+  
+  .snippet_bar .card .content-description span {
+    text-align: left;
+    display: block;
+  }
+  
+section#home{
+    margin-left:40px;
+    margin-top: 20px;
+    display: flex;
+    width:100%;
+}

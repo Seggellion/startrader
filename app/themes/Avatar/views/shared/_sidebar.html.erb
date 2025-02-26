@@ -1,0 +1,91 @@
+<section id="sidebar">
+  <button class="mobile_button" onclick="mobileMenu();"></button>
+  <ul>
+    <li>
+      <%#= link_to 'Community', community_path %>Community
+      <ul class="sub_menu <% if controller.controller_name.include? 'community' or controller.controller_name.include? 'events'  %> open <%end%>">
+        <li>
+          <%#= link_to 'Newspaper', bnn_path %>Newspaper
+        </li>
+        <li>
+          <%= link_to 'Calendar', events_path %>
+        </li>
+        <li>
+          <a href="#">Guilds</a>
+        </li>
+        <li>
+          <a href="#">Newsletter</a>
+        </li>
+        <li>
+          <a href="#">Links</a>
+        </li>
+        </ul>
+    </li>
+    <li>
+    <a href="/playguide">Playguide</a>
+    
+    </li>
+    <li>
+      <a href="/economy">Economy</a>
+    </li>
+    <li>
+      <a href="/update-center">Update CTR</a>
+    </li>
+    <li>
+    <%#= link_to 'ACCT MGMT', acct_mgmt_path %>ACCT MGTM
+    </li>
+    <li>
+      <%#= link_to 'New Player', new_player_center_path %>New Player
+      <ul class="sub_menu <% if controller.controller_name.include? 'new' %> open <%end%>">
+        <li>
+          <%#= link_to 'Connecting', connecting_path %>Connecting
+        </li>
+        <li>
+          <%#= link_to 'Beginning', beginning_path %>Beginning
+        </li>
+        <li>
+          <a href="#">Professions</a>
+        </li>
+        <li>
+          <%#= link_to 'Etiquette', rules_path %>Etiquette
+        </li>
+        <li>
+          <a href="#">The Community</a>
+        </li>
+        <li>
+          <a href="#">The Staff</a>
+        </li>
+      </ul>
+    </li>
+    <li>
+      <%= link_to 'Home', root_path %>
+        <ul class="sub_menu <%= 'open' if sub_menu_open? %>">
+        <li>
+          <a href="/news">What's New</a>
+        </li>
+        <li>
+          <a href="#">Features</a>
+        </li>
+        <li>
+         <a href="/community/screenshots">Screenshots</a>
+        </li>
+        <li>
+          <%#= link_to 'Requirements', requirements_path %>Requirements
+        </li>
+        <li>
+          <a href="/downloads">Downloads</a>
+        </li>
+
+      </ul>
+    </li>
+    <li>
+      <a href="/contact-us">Contact Us</a>
+    </li>
+  </ul>
+</section>
+<script>
+  function mobileMenu(){
+    var element = document.getElementById("sidebar");
+    element.classList.toggle("mobileMenu");
+  };
+</script>

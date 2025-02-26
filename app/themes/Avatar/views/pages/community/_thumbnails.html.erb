@@ -1,0 +1,8 @@
+<!-- Thumbnails Section -->
+<div class="grid grid-cols-3 gap-4" data-screenshot-target="thumbnailContainer">
+  <% @staff_screenshots[1..5]&.each do |thumbnail| %>
+    <div>
+      <%= image_tag thumbnail.file.url, class: "rounded shadow w-full h-24 object-cover cursor-pointer", alt: thumbnail.meta_description, data: { action: "click->screenshot#selectScreenshot" }, "data-meta-keywords": thumbnail.meta_keywords %>
+    </div>
+  <% end %>
+</div>

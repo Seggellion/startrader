@@ -1,0 +1,31 @@
+<h1><%= @section.name %></h1>
+<p>Template: <%= @section.template %></p>
+<p>Animation Speed: <%= @section.animation_speed %> ms</p>
+<%= link_to 'New Block', new_admin_section_block_path(@section), class: 'bg-blue-500 text-white px-4 py-2 rounded' %>
+
+<h2>Blocks</h2>
+<table class="min-w-full bg-white mt-4 border">
+  <thead>
+    <tr>
+      <th class="py-2 px-4 border">Type</th>
+      <th class="py-2 px-4 border">Content</th>
+      <th class="py-2 px-4 border">Position</th>
+      <th class="py-2 px-4 border">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @section.blocks.each do |block| %>
+      <tr>
+        <td class="py-2 px-4 border"><%= block.block_type %></td>
+        <td class="py-2 px-4 border"><%= truncate(block.content, length: 100) %></td>
+        <td class="py-2 px-4 border"><%= block.position %></td>
+        <td class="py-2 px-4 border">
+          <%= link_to 'Edit', edit_admin_section_block_path(@section, block), class: 'text-blue-500 hover:underline' %> |
+          <%= link_to 'Delete', admin_section_block_path(@section, block), method: :delete, data: { confirm: 'Are you sure?' }, class: 'text-red-500 hover:underline' %> |
+          <%= link_to 'Up', move_up_admin_section_block_path(@section, block), method: :patch, class: 'text-green-500 hover:underline' %> |
+          <%= link_to 'Down', move_down_admin_section_block_path(@section, block), method: :patch, class: 'text-orange-500 hover:underline' %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

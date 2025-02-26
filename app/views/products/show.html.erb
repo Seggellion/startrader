@@ -1,0 +1,52 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="flex flex-col lg:flex-row">
+    <!-- Left side: Product Image -->
+    <div class="w-full lg:w-1/2 mb-8 lg:mb-0">
+    <% @product["images"]["edges"].each do |image| %>
+      <div class="mb-4">
+        <%= image_tag image["node"]["src"], alt: image["node"]["altText"], class: "w-full h-auto object-cover rounded-md shadow-lg" %>
+      </div>
+    <% end %>
+    <% @product["variants"]["edges"].each do |variant| %>
+      <% if variant["node"]["image"] %>
+        <div class="mb-4">
+          <%= image_tag variant["node"]["image"]["src"], alt: variant["node"]["altText"], class: "w-full h-auto object-cover rounded-md shadow-lg" %>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+
+    <!-- Right side: Product Details -->
+    <div class="w-full lg:w-1/2 lg:pl-8">
+      <h1 class="text-3xl font-bold mb-4"><%= @product["title"] %></h1>
+      <p class="text-xl text-gray-700 mb-6">
+        <% if @product["variants"]["edges"].first["node"]["price"] %>
+          <%= number_to_currency(@product["variants"]["edges"].first["node"]["price"]["amount"], unit: @product["variants"]["edges"].first["node"]["price"]["currencyCode"]) %>
+        <% else %>
+          Price not available
+        <% end %>
+      </p>
+      <div class="mb-6">
+        <%= raw @product["descriptionHtml"] %>
+      </div>
+
+      <!-- Variant Selector -->
+      <div class="mb-4">
+      
+        <%= form_with url: add_to_cart_product_path(@product["handle"]), method: :post, local: true do |form| %>
+          <div class="mb-4">
+            <%= form.label :variant_id, "Select Variant", class: "block text-sm font-medium text-gray-700" %>
+            <%= form.select :variant_id, @product["variants"]["edges"].map { |v| [v["node"]["title"], v["node"]["id"]] }, class: "form-select mt-1 block w-full" %>
+          </div>
+          <%= form.submit "Add to Cart", class: "bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700 w-full" %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+#variant_id{
+  padding:10px;
+}
+</style>

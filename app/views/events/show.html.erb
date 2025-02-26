@@ -1,0 +1,28 @@
+
+<% if lookup_context.exists?("pages/event", [], true) %>
+  <!-- Render the partial from the theme directory -->
+  <%= render "pages/event", event: @event %>
+<% else %>
+
+<h1 class="text-3xl font-bold mb-4"><%= @event.title %></h1>
+<p class="text-lg"><%= @event.formatted_time %> | <%= @event.location %></p>
+<div class="mt-4">
+  <p><%= @event.description %></p>
+</div>
+
+<!-- Google Map -->
+<div class="w-full h-96 mb-8" 
+     data-controller="google-map"
+     data-google-map-line1="<%= @event.address_line1 %>"
+     data-google-map-line2="<%= @event.address_line2 %>"
+     data-google-map-city="<%= @event.city %>"
+     data-google-map-state="<%= @event.state_short %>"
+     data-google-map-zip="<%= @event.zip %>"
+     data-google-map-store-name="<%= @event.title %>">
+
+     <div class="w-full h-96" data-google-map-target="map">
+  </div>
+
+</div>
+
+<% end %>

@@ -1,0 +1,29 @@
+<article class="news">
+
+<h3>What's new </h3>
+<% @articles.each do |article| %>
+
+
+    <div>
+        <div class="news-header">
+            <div class="title">
+                <%= article.title %>
+            </div>
+            <div class="update-time">
+                <%= article.updated_at.strftime("%b %d %Y %I:%M%p %Z (GMT %:z)") %>
+            </div>
+        </div>
+     <%= article.content %>
+    
+    
+    </div>
+    
+    <% end %>
+
+    
+</article>
+
+    
+    <% content_for :meta_title, @articles.last.title %>
+    <% content_for :meta_description, meta_description %>
+    <% content_for :meta_keywords, meta_keywords %>

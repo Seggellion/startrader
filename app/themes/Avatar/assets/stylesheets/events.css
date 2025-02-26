@@ -1,0 +1,63 @@
+.event-card, .event-page {
+    margin-bottom: 30px;
+  }
+  
+  .event-card .h4, .event-page .h4 {
+    margin-bottom: 2px;
+  }
+  
+  .event-card table, .event-page table {
+    width: 100%;
+  }
+  
+  .event-card table th, .event-page table th {
+    background-color: #32605e; /* Replace $teal */
+    text-transform: uppercase;
+    text-align: center;
+    color: white;
+    font-weight: 900;
+    font-size: 0.63rem;
+    width: 69px;
+  }
+  
+  .event-card table td, .event-page table td {
+    background-color: #ccb377; /* Replace $gold */
+    text-align: center;
+    font-size: 0.63rem;
+  }
+  
+  .event-card .event-info, .event-page .event-info {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .event-card .event-image, .event-page .event-image {
+    width: 125px;
+    margin-bottom: -75px;
+  }
+  
+  .event-page .event-image {
+    margin-bottom: 0px;
+  }
+  
+  .event-card .event-details, .event-page .event-details {
+    display: flex;
+  }
+  
+  .event-card .headers, .event-page .headers {
+    width: 85px;
+    display: flex;
+    flex-direction: column;
+    line-height: 1rem;
+  }
+  
+  .event-card .event-detail-details, .event-page .event-detail-details {
+    display: flex;
+    flex-direction: column;
+    line-height: 1rem;
+  }
+  
+  .event-card .event-card-footer, .event-page .event-card-footer {
+    display: block;
+  }
+  

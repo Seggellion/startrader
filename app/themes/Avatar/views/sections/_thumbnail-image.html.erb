@@ -1,0 +1,37 @@
+<div class="section spotlight">
+  <div class="headline-container">
+  <a href="/economy"><h2 class="headline"><%= section.name %></h2></a>
+    <small>(Updated: August 11 2000)</small>
+  </div>
+
+<div class="content">
+  <div style="width:134px; padding:20px" class="image">
+  <% section.blocks.each_with_index do |block, index| %>  
+        <% if block.image.attached? %>
+        <img src="<%= block.image.url %>" alt="Descriptive text for image" class="w-full h-full object-contain">
+        <% end %>
+    <% end %>
+  </div>
+  <div class="content-description">
+          
+      <% section.blocks.each_with_index do |block, index| %>
+        <% if index.odd? %>
+            <a  class="header-link"  href="/economy">
+                <h3>
+                    "<%= block.content %>"  
+                </h3>
+            </a><br>
+        <% end %>
+         <% if index.even? %>
+        <%= block.content %>
+        <% end %>
+        <% end %>
+    <br><a href="/economy" class="small-link">Full Story</a>
+  </div>
+</div>
+
+
+
+
+
+</div>

@@ -1,0 +1,10 @@
+ShopifyAPI::Context.setup(
+  api_key: Setting.get('shopify_api_key'),
+  api_secret_key: Setting.get('shopify_api_secret_key'),
+  host: Setting.get('shopify_app_host'),
+  scope: "read_products,read_orders", 
+  is_embedded: true, 
+  api_version: "2024-07", 
+  is_private: false,
+  session_storage: ShopifyAPI::Auth::FileSessionStorage.new
+)

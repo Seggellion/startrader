@@ -1,0 +1,32 @@
+<div class="bg-white p-6 rounded shadow">
+  <div class="flex justify-between items-center mb-4">
+    <h1 class="text-2xl font-bold">Cities</h1>
+        <%= button_to 'Import Cities', import_cities_admin_data_path, class: 'bg-blue-500 text-white px-4 py-2 rounded', method: :post %>
+    <%= link_to 'Add New', new_admin_city_path, class: 'bg-blue-500 text-white px-4 py-2 rounded' %>
+  </div>
+
+  <table class="min-w-full bg-white mt-4 border">
+    <thead>
+      <tr>
+        <th class="py-2 px-4 border">Name</th>
+        <th class="py-2 px-4 border">Type</th>
+        <th class="py-2 px-4 border">Parent</th>
+        <th class="py-2 px-4 border">Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @cities.each do |city| %>
+        <tr>
+          <td class="py-2 px-4 border"><%= city.name %></td>
+          <td class="py-2 px-4 border"><%= city.classification %></td>
+          <td class="py-2 px-4 border"><%= city.parent %></td>
+          <td class="py-2 px-4 border"><%= city.created_at.strftime('%Y-%m-%d') %></td>
+          <td class="py-2 px-4 border">
+            <%= link_to 'Edit', edit_admin_city_path(city), class: 'text-blue-500 hover:underline' %> |
+            <%= link_to 'Delete', admin_city_path(city), method: :delete, data: { confirm: 'Are you sure?' }, class: 'text-red-500 hover:underline' %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

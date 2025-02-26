@@ -1,0 +1,147 @@
+<article>
+<% if current_user %>
+  <h1 class="h1">Account</h1>
+  <%= current_user.username %>
+  <img class="h-10 w-10" src="<%= url_for(current_user.avatar) %>" alt="<%= current_user.username %>">
+
+  <table class="transaction-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+
+        <th>NPC Name</th>
+        <th>Type</th>
+        <th>Total Price</th>
+        <th>Items</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @purchase_transactions.each do |transaction| %>
+        <tr>
+          <td><%= transaction.id %></td>
+  
+          <td><%= transaction.npc_name %></td>
+          <td><%= transaction.transaction_type %></td>
+          <td><%= number_to_currency(transaction.total_price) %></td>
+          <td>
+            <%= transaction.transaction_items.map do |item|
+                  "Name: #{item.item_name}, Weight: #{item.weight}, Price: #{number_to_currency(item.price)}"
+               end.join("<br>").html_safe
+            %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  
+  <table class="transaction-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+
+        <th>NPC Name</th>
+        <th>Type</th>
+        <th>Total Price</th>
+        <th>Items</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @sell_transactions.each do |transaction| %>
+        <tr>
+          <td><%= transaction.id %></td>
+  
+          <td><%= transaction.npc_name %></td>
+          <td><%= transaction.transaction_type %></td>
+          <td><%= number_to_currency(transaction.total_price) %></td>
+          <td>
+            <%= transaction.transaction_items.map do |item|
+                  "Name: #{item.item_name}, Weight: #{item.weight}, Price: #{number_to_currency(item.price)}"
+               end.join("<br>").html_safe
+            %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>
+</article>
+
+
+<style>
+/* Apply basic styles to the article container */
+article {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+  padding: 20px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  width:100%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Style the account heading */
+.h1 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+.account article img {
+  border-radius: 50%;
+  margin-bottom: 20px;
+}
+
+/* Style the table */
+.transaction-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.transaction-table th,
+.transaction-table td {
+  padding: 12px 15px;
+  text-align: left;
+}
+
+.transaction-table th {
+  background: #0073e6;
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 1rem;
+  text-transform: uppercase;
+}
+
+.transaction-table tr:nth-child(even) {
+  background: #f2f2f2;
+}
+
+.transaction-table tr:hover {
+  background: #e6f7ff;
+}
+
+.transaction-table td {
+  border-bottom: 1px solid #ddd;
+  font-size: 0.9rem;
+}
+
+/* Handle long item content in the Items column */
+.transaction-table td:last-child {
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  max-width: 300px;
+}
+
+/* Add some padding to the table container */
+.transaction-table-container {
+  margin: 0 auto;
+  padding: 10px;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+</style>

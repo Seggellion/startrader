@@ -1,0 +1,16 @@
+test:
+  service: Disk
+  root: <%= Rails.root.join("tmp/storage") %>
+
+local:
+  service: Disk
+  root: <%= Rails.root.join("uploads") %>
+disk:
+  service: Disk
+  root: <%= Rails.root.join("storage") %>
+
+google:
+  service: GCS
+  project: "star_trader"
+  credentials: <%= ENV['GOOGLE_APPLICATION_CREDENTIALS'] %>
+  bucket: "star_trader"

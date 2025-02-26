@@ -1,0 +1,13 @@
+<h1>Contact Message</h1>
+
+<p><strong>First Name:</strong> <%= @contact_message.first_name %></p>
+<p><strong>Last Name:</strong> <%= @contact_message.last_name %></p>
+<p><strong>Email:</strong> <%= @contact_message.email %></p>
+<p><strong>IP Address:</strong> <%= @contact_message.ip_address %></p>
+<p><strong>Country:</strong> <%= @contact_message.country_code %></p>
+<p><strong>Subject:</strong> <%= @contact_message.subject %></p>
+<p><strong>Body:</strong></p>
+<p><%= @contact_message.body %></p>
+
+<p><strong>Received At:</strong> <%= @contact_message.created_at %></p>
+<p><strong>Read At:</strong> <%= @contact_message.read_at %></p>

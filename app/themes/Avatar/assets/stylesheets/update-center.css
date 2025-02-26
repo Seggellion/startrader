@@ -1,0 +1,17 @@
+.update-center-header{
+width: 100%;
+background-color:  rgb(75, 32, 104);
+display: flex;
+color:white;
+flex-direction: row;
+justify-content: space-between;
+padding: 0px 10px;
+}
+
+.update-center-header .title{
+    font-weight:900;
+}
+
+.update_center main section{
+    width:100%;
+}

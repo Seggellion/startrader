@@ -1,0 +1,28 @@
+<%# app/views/admin/articles/index.html.erb %>
+
+<h1 class="text-3xl font-bold mb-4">Articles</h1>
+<%= link_to 'New Article', new_admin_article_path, class: 'bg-blue-500 text-white px-4 py-2 rounded' %>
+
+<table class="min-w-full bg-white mt-4 border">
+  <thead>
+    <tr>
+      <th class="py-2 px-4 border">Title</th>
+      <th class="py-2 px-4 border">Author</th>
+      <th class="py-2 px-4 border">Date</th>
+      <th class="py-2 px-4 border">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @articles.each do |article| %>
+      <tr>
+        <td class="py-2 px-4 border"><%= article.title %></td>
+        <td class="py-2 px-4 border"><%= article.user.first_name %></td>
+        <td class="py-2 px-4 border"><%= article.created_at.strftime('%Y-%m-%d') %></td>
+        <td class="py-2 px-4 border">
+          <%= link_to 'Edit', edit_admin_article_path(article), class: 'text-blue-500 hover:underline' %> |
+          <%= link_to 'Delete', admin_article_path(article), method: :delete, data: { confirm: 'Are you sure?' }, class: 'text-red-500 hover:underline' %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
