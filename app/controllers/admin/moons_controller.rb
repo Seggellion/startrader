@@ -52,6 +52,12 @@ module Admin
       end
 
   
+
+      def delete_all
+        Location.where(classification:"moon").destroy_all
+        redirect_to admin_moons_path, notice: 'All planets have been deleted successfully.'
+      end
+
       def destroy
         @location = Location.find(params[:id])
         @location.destroy

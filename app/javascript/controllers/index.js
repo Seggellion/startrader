@@ -25,6 +25,9 @@ application.register("hello", HelloController)
 import MenuItemsController from "./menu_items_controller"
 application.register("menu-items", MenuItemsController)
 
+import StarSystemController from "./star_system_controller"
+application.register("star-system", StarSystemController)
+
 import MobilemenuController from "./mobilemenu_controller"
 application.register("mobilemenu", MobilemenuController)
 

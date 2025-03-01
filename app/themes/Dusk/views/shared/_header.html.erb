@@ -1,4 +1,4 @@
-<header class="bg-white">
+<header >
   <!-- First Row -->
   <div class="w-full">
   <div class="container mx-auto flex justify-between items-center px-4 lg:px-8 h-24">
@@ -10,7 +10,7 @@
     <% end %>
   </div>
 
-  <h2 class="text-2xl font-bold mx-auto hidden sm:block">Artificial Eye And Facial Prosthetic Clinic</h2>
+  <h2 style="color:white;" class="text-2xl font-bold mx-auto hidden sm:block">Orbitarium</h2>
 
   <% if (announcement = Setting.find_by(key: 'announcement-bar')) && announcement.parsed_value.present? %>
     <div class="announcement-bar text-black text-center py-2">

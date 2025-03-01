@@ -21,23 +21,19 @@ module Admin
       end
   
       def edit
-        @star_system = Commodity.find_by_slug(params[:id])
+        @star = Location.find_by_id(params[:id])
       end
-  
+
       def update
-        @star_system = Commodity.find_by_slug(params[:id])
+        @star = Location.find_by_id(params[:id])
       
-        # Update the star_system attributes first
-        if @star_system.update(star_system_params)
-          # If the star_system has content, process the ActionText content to replace <h1> with <h2>
-          if @star_system.content.present?
-            @star_system.content.body = convert_h1_to_h2(@star_system.content.body.to_s)
-            @star_system.content.save # Ensure the changes to the RichText object are persisted
-          end
-      
-          redirect_to edit_admin_star_system_path(@star_system), notice: 'Commodity was successfully updated.'
+        # Update the commodity attributes first
+        if @star.update(star_system_params)
+          # If the commodity has content, process the ActionText content to replace <h1> with <h2>
+
+          redirect_to edit_admin_star_system_path(@star), notice: 'Star was successfully updated.'
         else
-          render :edit, alert: 'Failed to update the star_system.'
+          render :edit, alert: 'Failed to update the commodity.'
         end
       end
           
@@ -51,6 +47,10 @@ module Admin
         end
       end
 
+      def delete_all
+        Location.where(classification:"star_system").destroy_all
+        redirect_to admin_star_systems_path, notice: 'All planets have been deleted successfully.'
+      end
   
       def destroy
         @location = Location.find(params[:id])
@@ -70,10 +70,42 @@ module Admin
         html.gsub(/<h1>/, "<h2>").gsub(/<\/h1>/, "</h2>")
       end
 
+      
       def star_system_params
-        params.require(:star_system).permit(:title, :content, :category_id, :meta_description, :meta_keywords, :template, images: [], remove_images: []).merge(user_id: current_user.id)
-
+        params.require(:location).permit(
+          :name,
+          :nickname,
+          :classification,
+          :parent_name,
+          :mass,
+          :periapsis,
+          :apoapsis,
+          :code,
+          :faction_name,
+          :is_available,
+          :is_available_live,
+          :is_visible,
+          :is_default_system,
+          :is_affinity_influenceable,
+          :is_habitation,
+          :is_refinery,
+          :is_cargo_center,
+          :is_medical,
+          :is_food,
+          :is_shop_fps,
+          :is_shop_vehicle,
+          :is_refuel,
+          :is_repair,
+          :is_nqa,
+          :is_player_owned,
+          :is_auto_load,
+          :has_loading_dock,
+          :has_docking_port,
+          :has_freight_elevator
+        )
       end
+
+
     end
   end
   

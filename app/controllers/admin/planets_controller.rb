@@ -1,6 +1,5 @@
 module Admin
     class PlanetsController < ApplicationController
-      before_action :set_commodity, only: [:update_category]
       def index
         @planets = Location.where(classification: 'planet')
       end
@@ -21,36 +20,29 @@ module Admin
       end
   
       def edit
-        @commodity = Commodity.find_by_slug(params[:id])
+        @planet = Location.find_by_id(params[:id])
       end
   
       def update
-        @commodity = Commodity.find_by_slug(params[:id])
+        @planet = Location.find_by_id(params[:id])
       
         # Update the commodity attributes first
-        if @commodity.update(commodity_params)
+        if @planet.update(planet_params)
           # If the commodity has content, process the ActionText content to replace <h1> with <h2>
-          if @commodity.content.present?
-            @commodity.content.body = convert_h1_to_h2(@commodity.content.body.to_s)
-            @commodity.content.save # Ensure the changes to the RichText object are persisted
-          end
-      
-          redirect_to edit_admin_commodity_path(@commodity), notice: 'Commodity was successfully updated.'
+
+          redirect_to edit_admin_planet_path(@planet), notice: 'Commodity was successfully updated.'
         else
           render :edit, alert: 'Failed to update the commodity.'
         end
       end
           
 
-      def update_category
 
-        if @commodity.update(commodity_params)
-          render json: { success: true }
-        else
-          render json: { success: false }
-        end
+      
+      def delete_all
+        Location.where(classification:"planet").destroy_all
+        redirect_to admin_planets_path, notice: 'All planets have been deleted successfully.'
       end
-
   
       def destroy
         @location = Location.find(params[:id])
@@ -70,10 +62,40 @@ module Admin
         html.gsub(/<h1>/, "<h2>").gsub(/<\/h1>/, "</h2>")
       end
 
-      def commodity_params
-        params.require(:commodity).permit(:title, :content, :category_id, :meta_description, :meta_keywords, :template, images: [], remove_images: []).merge(user_id: current_user.id)
-
+      def planet_params
+        params.require(:location).permit(
+          :name,
+          :nickname,
+          :classification,
+          :parent_name,
+          :mass,
+          :periapsis,
+          :apoapsis,
+          :code,
+          :faction_name,
+          :is_available,
+          :is_available_live,
+          :is_visible,
+          :is_default_system,
+          :is_affinity_influenceable,
+          :is_habitation,
+          :is_refinery,
+          :is_cargo_center,
+          :is_medical,
+          :is_food,
+          :is_shop_fps,
+          :is_shop_vehicle,
+          :is_refuel,
+          :is_repair,
+          :is_nqa,
+          :is_player_owned,
+          :is_auto_load,
+          :has_loading_dock,
+          :has_docking_port,
+          :has_freight_elevator
+        )
       end
+      
     end
   end
   

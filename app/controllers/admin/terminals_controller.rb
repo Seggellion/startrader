@@ -51,6 +51,10 @@ module Admin
         end
       end
 
+      def delete_all
+        Terminal.destroy_all
+        redirect_to admin_terminals_path, notice: 'All terminals have been deleted successfully.'
+      end
   
       def destroy
         @terminal = Terminal.find(params[:id])

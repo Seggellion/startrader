@@ -58,6 +58,12 @@ module Admin
         redirect_to admin_outposts_path, notice: 'Location was successfully deleted.'
       end
   
+
+      def delete_all
+        Location.where(classification:"outpost").destroy_all
+        redirect_to admin_outposts_path, notice: 'All outposts have been deleted successfully.'
+      end
+
       private
   
       def set_commodity

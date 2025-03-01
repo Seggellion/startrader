@@ -45,16 +45,14 @@ module Admin
         # 🧠 Handle the import logic for a single location
         def self.import_location(location_data)
           classification = "planet"
-          parent_id = determine_parent_id(location_data, classification)
 
-          location = Location.find_or_initialize_by(api_id: location_data['id'])
+          location = Location.find_or_initialize_by(name:location_data['name'])
           location.assign_attributes(
-            name: location_data['name'],
             nickname: location_data['nickname'],
             classification: classification,
             code: location_data['code'],
             api_id: location_data['id'],
-            parent_id: parent_id,
+            parent_name: location_data['star_system_name'],
             id_star_system: location_data['id_star_system'],
             id_planet: location_data['id_planet'],
             id_orbit: location_data['id_orbit'],
@@ -66,9 +64,9 @@ module Admin
             id_faction: location_data['id_faction'],
             id_company: location_data['id_company'],
             api_type: location_data['type'],
-            mass: location_data['mass'],
-            periapsis: location_data['periapsis'],
-            apoapsis: location_data['apoapsis'],
+            mass: 5.972e24,
+            periapsis: 147,
+            apoapsis: 152,
   
             # Boolean flags
             is_available: location_data['is_available'].to_i == 1,
@@ -125,7 +123,7 @@ module Admin
   
           
 
-          def self.determine_parent_id(data, classification)
+          def self.determine_parent_name(data, classification)
             case classification
             when "planet"
               # Planet's parent is a Star System

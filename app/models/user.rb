@@ -46,5 +46,11 @@ class User < ApplicationRecord
   user_ships.first # You could expand this to support "selected" ship logic
 end
 
+def update_credits(amount)
+  new_balance = wallet_balance.to_f + amount.to_f
+  
+  update(wallet_balance: new_balance)
+end
+
   end
   

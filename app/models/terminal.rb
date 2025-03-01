@@ -1,23 +1,16 @@
+# app/models/terminal.rb
+
 class Terminal < ApplicationRecord
-    # We want to link terminals to locations via "code"
-    belongs_to :location, optional: true
+  # We want to link terminals to locations via "location_name"
+  belongs_to :location, optional: true, primary_key: :name, foreign_key: :location_name
 
-    # Custom logic to determine the related location based on the available IDs
-   # before_save :assign_location
+  # Automatically assign location before saving the Terminal record
+  before_save :assign_location
   
-    private
+  private
   
-    def assign_location
-      # Try to match by space station ID first
-  
-      self.location = Location.find_by(api_id: id_space_station) if id_space_station.positive?
-  
-      # If no space station, try matching by city ID
-      self.location ||= Location.find_by(api_id: id_city) if id_city.positive?
-
-      # If no space station, try matching by city ID
-      self.location ||= Location.find_by(api_id: id_outpost) if id_outpost.positive?
-    end
-
+  def assign_location
+    # Match by exact location name
+    self.location = Location.find_by('LOWER(name) = ?', location_name.downcase) if location_name.present?
   end
-  
+end

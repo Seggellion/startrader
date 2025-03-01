@@ -15,8 +15,8 @@
     </div>
 
     <div class="mb-4">
-      <%= form.label :parent_id, "Parent Menu Item", class: 'block text-gray-700' %>
-      <%= form.select :parent_id, options_for_select(@menu_items_options, selected: @menu_item.parent_id), { include_blank: true }, class: 'form-select mt-1 block w-full' %>
+      <%= form.label :parent_name, "Parent Menu Item", class: 'block text-gray-700' %>
+      <%= form.select :parent_name, options_for_select(@menu_items_options, selected: @menu_item.parent_name), { include_blank: true }, class: 'form-select mt-1 block w-full' %>
     </div>
 
     <%= form.submit 'Save Changes', class: 'bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700' %>

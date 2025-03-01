@@ -1,12 +1,12 @@
-# 🚀 **Star Citizen Trade Game API**
+# 🚀 **Star Bitizen Trade Game API**
 
-An API-only **Ruby on Rails 8** application for a **text-based space trading game** in **Star Citizen**, played through **Twitch chat**. This API manages **player interactions**, **trade mechanics**, **planetary economy**, and **resource management** through a **tick-based system**.
+An API-only **Ruby on Rails 8** application for a **text-based space trading game** in **Star Bitizen**, played through **Twitch chat**. This API manages **player interactions**, **trade mechanics**, **planetary economy**, and **resource management** through a **tick-based system**.
 
 ---
 
 ## 📚 **Project Overview**
 
-The **Star Citizen Trade Game API** facilitates a **text-based space trading game** where:
+The **Star Bitizen Trade Game API** facilitates a **text-based space trading game** where:
 - Players interact through **Twitch chat commands**.
 - The API handles **trade mechanics**, **travel**, **buying/selling commodities**, and **resource generation/consumption**.
 - **Planetary outposts** have production facilities to generate resources.

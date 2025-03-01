@@ -111,7 +111,7 @@ export default class extends Controller {
         'Content-Type': 'application/json',
         'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
       },
-      body: JSON.stringify({ menu_item: { parent_id: parentId } })
+      body: JSON.stringify({ menu_item: { parent_name: parentId } })
     })
 
     if (response.ok) {
@@ -129,7 +129,7 @@ export default class extends Controller {
       newItem.innerHTML = `
         <span>${submenuTitle}</span>
         <input type="hidden" name="menu[menu_items_attributes][][title]" value="${submenuTitle}">
-        <input type="hidden" name="menu[menu_items_attributes][][parent_id]" value="${parentId}">
+        <input type="hidden" name="menu[menu_items_attributes][][parent_name]" value="${parentId}">
         <input type="hidden" name="menu[menu_items_attributes][][item_type]" value="custom">
       `
       const parentItem = this.listTarget.querySelector(`[data-id="${parentId}"]`)

@@ -45,16 +45,13 @@ module Admin
         # 🧠 Handle the import logic for a single location
         def self.import_location(location_data)
           classification = "moon"
-          parent_id = determine_parent_id(location_data, classification)
-
-          location = Location.find_or_initialize_by(api_id: location_data['id'])
+          location = Location.find_or_initialize_by(name:location_data['name'])
           location.assign_attributes(
-            name: location_data['name'],
             nickname: location_data['nickname'],
             classification: classification,
             code: location_data['code'],
             api_id: location_data['id'],
-            parent_id: parent_id,
+            parent_name: location_data['planet_name'],
             id_star_system: location_data['id_star_system'],
             id_planet: location_data['id_planet'],
             id_orbit: location_data['id_orbit'],
@@ -110,6 +107,7 @@ module Admin
           
           location.save!
         rescue => e
+          byebug
           Rails.logger.error "Failed to import location #{location_data['name']}: #{e.message}"
           false
         end
@@ -122,55 +120,6 @@ module Admin
           Rails.logger.error "Failed to fetch data (LocationsImporter): #{e.message}"
           nil
         end
-  
-          
-
-          def self.determine_parent_id(data, classification)
-            case classification
-            when "planet"
-              # Planet's parent is a Star System
-              return ensure_parent_exists(data['id_star_system'], "star_system") if data['id_star_system'].to_i > 0
-          
-            when "moon"
-              # Moon's parent is a Planet
-              return ensure_parent_exists(data['id_planet'], "planet") if data['id_planet'].to_i > 0
-          
-            when "space_station"
-              # Space Station's parent can be a Moon or a Planet
-              return ensure_parent_exists(data['id_moon'], "moon") if data['id_moon'].to_i > 0
-              return ensure_parent_exists(data['id_planet'], "planet") if data['id_planet'].to_i > 0
-          
-            when "outpost", "city", "poi"
-              # Outposts, Cities, POIs can belong to Moon, Planet, or Star System
-              return ensure_parent_exists(data['id_moon'], "moon") if data['id_moon'].to_i > 0
-              return ensure_parent_exists(data['id_planet'], "planet") if data['id_planet'].to_i > 0
-              return ensure_parent_exists(data['id_star_system'], "star_system") if data['id_star_system'].to_i > 0
-            end
-          
-            nil
-          end
-          
-
-          def self.ensure_parent_exists(api_id, classification)
-            return nil if api_id.to_i.zero?
-          
-            # Check if the parent location already exists
-            parent = Location.find_by(api_id: api_id)
-            return parent.id if parent
-          
-            # Create a placeholder parent if not found
-            placeholder = Location.create!(
-              api_id: api_id,
-              name: "Placeholder #{classification.capitalize} (ID: #{api_id})",
-              classification: classification,
-              is_available: false,
-              is_visible: false
-            )
-            
-            Rails.logger.info "Created placeholder for missing parent: #{placeholder.name} with ID #{placeholder.id}"
-            placeholder.id
-          end
-          
 
 
       end

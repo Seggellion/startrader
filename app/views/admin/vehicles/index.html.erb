@@ -1,0 +1,38 @@
+<div class="bg-white p-6 rounded shadow">
+  <div class="flex justify-between items-center mb-4">
+    <h1 class="text-2xl font-bold">Ships</h1>
+
+    <%= button_to 'Delete All Ships', delete_all_admin_vehicles_path, 
+    class: 'bg-red-500 text-white px-4 py-2 rounded', 
+    method: :delete, 
+    data: { confirm: 'Are you sure you want to delete all ships? This action cannot be undone.' } %>
+        <%= button_to 'Import Ships', import_ships_admin_data_path, class: 'bg-blue-500 text-white px-4 py-2 rounded', method: :post %>
+    <%= link_to 'Add New', new_admin_vehicle_path, class: 'bg-blue-500 text-white px-4 py-2 rounded' %>
+
+  </div>
+
+  <table class="min-w-full bg-white mt-4 border">
+    <thead>
+      <tr>
+        <th class="py-2 px-4 border">Name</th>
+        <th class="py-2 px-4 border">SCU</th>
+        <th class="py-2 px-4 border">Crew</th>
+        <th class="py-2 px-4 border">Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @vehicles.each do |vehicle| %>
+        <tr>
+          <td class="py-2 px-4 border"><%= vehicle.name_full %></td>
+          <td class="py-2 px-4 border"><%= vehicle.scu %></td>
+          <td class="py-2 px-4 border"><%= vehicle.crew %></td>
+          <td class="py-2 px-4 border"><%= vehicle.created_at.strftime('%Y-%m-%d') %></td>
+          <td class="py-2 px-4 border">
+            <%= link_to 'Edit', edit_admin_vehicle_path(vehicle), class: 'text-blue-500 hover:underline' %> |
+            <%= link_to 'Delete', admin_vehicle_path(vehicle), method: :delete, data: { confirm: 'Are you sure?' }, class: 'text-red-500 hover:underline' %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

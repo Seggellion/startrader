@@ -1,5 +1,5 @@
 class Ship < ApplicationRecord
-    has_many :user_ships
+    has_many :user_ships, dependent: :destroy
     has_many :users, through: :user_ships
   
     validates :model, presence: true, uniqueness: true

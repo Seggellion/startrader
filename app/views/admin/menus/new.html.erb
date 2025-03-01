@@ -17,7 +17,7 @@
         <!-- Add dynamic items here (Pages, Articles, Categories, etc.) -->
         <div class="mb-4">
           <%= form_with(model: [@menu, @menu.menu_items.new], url: menu_menu_items_path(@menu), local: true) do |form| %>
-            <%= form.hidden_field :parent_id %>
+            <%= form.hidden_field :parent_name %>
             <%= form.hidden_field :url %>
             <div class="mb-4">
               <%= form.label :title, 'Static Link', class: 'block text-gray-700' %>

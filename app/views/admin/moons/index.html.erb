@@ -1,6 +1,11 @@
 <div class="bg-white p-6 rounded shadow">
   <div class="flex justify-between items-center mb-4">
     <h1 class="text-2xl font-bold">Moons</h1>
+    <%= button_to 'Delete All Moons', delete_all_admin_moons_path, 
+    class: 'bg-red-500 text-white px-4 py-2 rounded', 
+    method: :delete, 
+    data: { confirm: 'Are you sure you want to delete all moons? This action cannot be undone.' } %>
+
         <%= button_to 'Import Moons', import_moons_admin_data_path, class: 'bg-blue-500 text-white px-4 py-2 rounded', method: :post %>
     <%= link_to 'Add New', new_admin_moon_path, class: 'bg-blue-500 text-white px-4 py-2 rounded' %>
   </div>

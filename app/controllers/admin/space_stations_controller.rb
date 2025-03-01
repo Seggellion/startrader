@@ -51,9 +51,14 @@ module Admin
         end
       end
 
+      def delete_all
+        Location.where(classification:"space_station").destroy_all
+        redirect_to admin_space_station_path, notice: 'All space_station have been deleted successfully.'
+      end
+
   
       def destroy
-        @commodity = Commodity.find(params[:id])
+        @commodity = Location.find(params[:id])
         @commodity.destroy
         redirect_to admin_space_stations_path, notice: 'Commodity was successfully deleted.'
       end

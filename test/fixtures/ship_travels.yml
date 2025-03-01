@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  user_ship: one
+  from_location: one
+  to_location: one
+  departure_tick: 1
+  arrival_tick: 1
+
+two:
+  user_ship: two
+  from_location: two
+  to_location: two
+  departure_tick: 1
+  arrival_tick: 1

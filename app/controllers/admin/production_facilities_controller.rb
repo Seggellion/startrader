@@ -51,6 +51,10 @@ module Admin
         end
       end
 
+      def delete_all
+        ProductionFacility.destroy_all
+        redirect_to admin_production_facilities_path, notice: 'All facilities have been deleted successfully.'
+      end
   
       def destroy
         @production_facility = ProductionFacility.find(params[:id])

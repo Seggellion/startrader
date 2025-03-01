@@ -2,12 +2,12 @@ module Admin
   class DataController < ApplicationController
  
     def import_ships
-        if Admin::Data::ShipsImporter.import_single!
+        if Admin::Data::ShipsImporter.import_all!
           flash[:notice] = "One ship imported successfully!"
         else
           flash[:alert] = "Failed to import ships."
         end
-        redirect_to admin_dashboard_index_path
+        redirect_to admin_vehicles_path
       end
   
       def import_commodities

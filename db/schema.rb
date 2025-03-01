@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_02_25_143041) do
+ActiveRecord::Schema[8.0].define(version: 2025_02_28_174906) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -186,7 +186,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_25_143041) do
   create_table "locations", force: :cascade do |t|
     t.string "name", null: false
     t.string "classification"
-    t.bigint "parent_id"
+    t.string "parent_name"
     t.float "mass"
     t.float "periapsis"
     t.float "apoapsis"
@@ -239,7 +239,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_25_143041) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["api_id"], name: "index_locations_on_api_id"
-    t.index ["parent_id"], name: "index_locations_on_parent_id"
+    t.index ["name"], name: "index_locations_on_name", unique: true
+    t.index ["parent_name"], name: "index_locations_on_parent_name"
   end
 
   create_table "media", force: :cascade do |t|
@@ -318,7 +319,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_25_143041) do
   end
 
   create_table "production_facilities", force: :cascade do |t|
-    t.bigint "location_id", null: false
     t.bigint "commodity_id", null: false
     t.string "facility_name"
     t.integer "production_rate"
@@ -349,9 +349,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_25_143041) do
     t.string "terminal_name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "location_name"
     t.index ["api_id"], name: "index_production_facilities_on_api_id"
     t.index ["commodity_id"], name: "index_production_facilities_on_commodity_id"
-    t.index ["location_id"], name: "index_production_facilities_on_location_id"
+    t.index ["location_name"], name: "index_production_facilities_on_location_name"
   end
 
   create_table "sections", force: :cascade do |t|
@@ -418,6 +419,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_25_143041) do
     t.string "region", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "ship_travels", force: :cascade do |t|
+    t.bigint "user_ship_id", null: false
+    t.bigint "from_location_id", null: false
+    t.bigint "to_location_id", null: false
+    t.integer "departure_tick", null: false
+    t.integer "arrival_tick", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["from_location_id"], name: "index_ship_travels_on_from_location_id"
+    t.index ["to_location_id"], name: "index_ship_travels_on_to_location_id"
+    t.index ["user_ship_id"], name: "index_ship_travels_on_user_ship_id"
   end
 
   create_table "ships", force: :cascade do |t|
@@ -517,6 +531,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_25_143041) do
     t.string "company_name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "name"
+    t.float "width"
+    t.float "fuel_quantum"
+    t.float "fuel_hydrogen"
     t.index ["api_id"], name: "index_ships_on_api_id"
     t.index ["model"], name: "index_ships_on_model", unique: true
   end
@@ -553,10 +571,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_25_143041) do
     t.string "nickname"
     t.string "code"
     t.integer "max_container_size"
-    t.bigint "location_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["location_id"], name: "index_terminals_on_location_id"
+    t.string "location_name"
+    t.index ["location_name"], name: "index_terminals_on_location_name"
   end
 
   create_table "testimonials", force: :cascade do |t|
@@ -566,6 +584,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_25_143041) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["category_id"], name: "index_testimonials_on_category_id"
+  end
+
+  create_table "ticks", force: :cascade do |t|
+    t.integer "sequence"
+    t.integer "current_tick"
+    t.datetime "processed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "user_ship_cargos", force: :cascade do |t|
@@ -588,6 +614,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_25_143041) do
     t.string "host_twitch_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "location_name"
+    t.string "status", default: "docked", null: false
+    t.index ["location_name"], name: "index_user_ships_on_location_name"
     t.index ["ship_id"], name: "index_user_ships_on_ship_id"
     t.index ["user_id"], name: "index_user_ships_on_user_id"
   end
@@ -608,6 +637,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_25_143041) do
     t.json "purchased_items", default: []
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "wallet_balance", precision: 15, scale: 2, default: "0.0"
     t.index ["uid"], name: "index_users_on_uid", unique: true
   end
 
@@ -618,19 +648,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_25_143041) do
   add_foreign_key "blocks", "sections"
   add_foreign_key "comments", "users"
   add_foreign_key "events", "categories"
-  add_foreign_key "locations", "locations", column: "parent_id"
   add_foreign_key "media", "users"
   add_foreign_key "npcs", "shards"
   add_foreign_key "pages", "categories"
   add_foreign_key "pages", "users"
   add_foreign_key "production_facilities", "commodities"
-  add_foreign_key "production_facilities", "locations"
+  add_foreign_key "ship_travels", "locations", column: "from_location_id"
+  add_foreign_key "ship_travels", "locations", column: "to_location_id"
+  add_foreign_key "ship_travels", "user_ships"
   add_foreign_key "star_bitizen_runs", "commodities"
   add_foreign_key "star_bitizen_runs", "locations", column: "buy_location_id"
   add_foreign_key "star_bitizen_runs", "locations", column: "sell_location_id"
   add_foreign_key "star_bitizen_runs", "user_ship_cargos"
   add_foreign_key "star_bitizen_runs", "users"
-  add_foreign_key "terminals", "locations"
   add_foreign_key "user_ship_cargos", "commodities"
   add_foreign_key "user_ship_cargos", "user_ships"
   add_foreign_key "user_ships", "ships"
