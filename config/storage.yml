@@ -9,8 +9,8 @@ disk:
   service: Disk
   root: <%= Rails.root.join("storage") %>
 
-google:
-  service: GCS
-  project: "star_trader"
-  credentials: <%= ENV['GOOGLE_APPLICATION_CREDENTIALS'] %>
-  bucket: "star_trader"
+#google:
+#  service: GCS
+#  project: "star_trader"
+#  credentials: <%= ENV['GOOGLE_APPLICATION_CREDENTIALS'] %>
+#  bucket: "star_trader"
