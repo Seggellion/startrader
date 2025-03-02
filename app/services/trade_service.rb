@@ -6,7 +6,7 @@ class TradeService
     class InsufficientCapacityError < StandardError; end
     class CommodityNotAvailableError < StandardError; end
     class LocationMismatchError < StandardError; end
-  
+    class InsufficientInventoryError < StandardError; end
     class UserNotFoundError < StandardError; end
     class ShipNotFoundError < StandardError; end
   
@@ -54,18 +54,21 @@ class TradeService
         commodity = Commodity.find_by!(name: commodity_name)
         location = Location.find_by!(name: location_name)
         facility = ProductionFacility.find_by!(location_name: location.name, commodity_id: commodity.id)
-    
+        raise InsufficientInventoryError, "Facility does not have enough inventory to sell." if facility.inventory <= 0
+
         user_ship = user.user_ships.first
     
         # Calculate the maximum affordable SCU based on wallet and cargo space
         
-        max_affordable_scu = (wallet_balance / facility.price_buy.to_f).floor
+        max_affordable_scu = (wallet_balance / facility.local_buy_price.to_f).floor
         max_cargo_space = user_ship.available_cargo_space
-    
+        max_facility_inventory = facility.inventory
+
         # Default SCU to the maximum possible if not provided or if too large
         scu = [scu.to_i, max_affordable_scu, max_cargo_space].select { |v| v > 0 }.min
-    
-        total_cost = facility.price_buy.to_f * scu
+        raise InsufficientInventoryError, "Not enough inventory at facility. Available: #{facility.inventory} SCU." if scu > facility.inventory
+
+        total_cost = facility.local_buy_price.to_f * scu
         loading_time = (scu * 2) + 10 # Example calculation
     
         # 1. Validate Commodity Availability
@@ -85,6 +88,8 @@ class TradeService
           cargo.save!
     
           user_ship.add_cargo_scu(scu)
+          facility.update!(inventory: facility.inventory - scu)
+
         end
     
         # 4. Return API Response
@@ -106,7 +111,12 @@ class TradeService
         facility = ProductionFacility.find_by!(location_name: location.name, commodity_id: commodity.id)
     
         user_ship = user.user_ships.first
-    
+
+        
+        if facility.inventory >= facility.max_inventory
+          raise InsufficientCapacityError, "Facility has reached max inventory and cannot buy more."
+        end
+
         # Validate Location Match
         if user_ship.location_name != facility.location_name
           raise LocationMismatchError, "Your ship is currently at '#{user_ship.location_name}', but the commodity can be sold at '#{facility.location_name}'. You need to travel to the correct location first."
@@ -126,6 +136,9 @@ class TradeService
         # Default to selling all available cargo if `scu` is blank or <= 0
         scu = cargo.scu if scu.blank? || scu.to_i <= 0
     
+        max_facility_demand = facility.inventory
+        scu = [scu.to_i, max_facility_demand].select { |v| v > 0 }.min
+
         # Validate SCU amount
         if cargo.scu < scu
           raise InsufficientInventoryError, "Not enough inventory to sell. You have #{cargo.scu} SCU of #{commodity_name}."
@@ -149,6 +162,8 @@ class TradeService
     
           # Update Ship Cargo Capacity
           user_ship.remove_cargo_scu(scu)
+          
+          facility.update!(inventory: [facility.inventory + scu, facility.max_inventory].min)
         end
     
         # Return API Response

@@ -15,12 +15,20 @@ module Api
   
         user_ship = find_or_create_user_ship(user, ship)
   
+        if ShipTravel.exists?(user_ship_id: user_ship.id)
+          return render json: { error: "Ship is already in transit." }, status: :unprocessable_entity
+        end
+
         destination = Location.find_by(name: travel_params[:location])
 
         if destination.nil?
           render json: { error: "Location not found." }, status: :not_found and return
         end
   
+        if destination.star_system_name != user_ship.location.star_system_name
+          render json: { error: "You cannot travel outside your current star system." }, status: :unprocessable_entity and return
+        end
+
         TravelService.new(user_ship: user_ship, to_location: destination).call
   
         render json: { status: 'travel_started', user_ship_id: user_ship.id }

@@ -9,6 +9,7 @@ module Admin
         return 0 unless data&.any?
     
         imported_count = 0
+        
         price_data_array = data['data'] || data
     
         price_data_array.each do |price_data|
@@ -54,8 +55,8 @@ module Admin
           commodity_name: price_data['commodity_name'],
           facility_name: price_data['terminal_name'],
           terminal_name: price_data['terminal_name'],
-          production_rate: 5,
-          consumption_rate: 1,
+          production_rate: price_data['price_buy'].to_f > 0 ? 5 : 0,
+          consumption_rate: price_data['price_sell'].to_f > 0 ? 5 : 0,
           location_name: location.name,
           max_inventory: max_inventory
         )

@@ -2,7 +2,7 @@ module Admin
     class ProductionFacilitiesController < ApplicationController
       before_action :set_production_facility, only: [:update_category]
       def index
-        @production_facilities = ProductionFacility.all
+        @production_facilities = ProductionFacility.order(Arel.sql("CASE WHEN price_buy > 0 THEN 0 ELSE 1 END"), :facility_name)
       end
   
       def new
@@ -21,19 +21,16 @@ module Admin
       end
   
       def edit
-        @production_facility = ProductionFacility.find_by_slug(params[:id])
+      
+        @production_facility = ProductionFacility.find_by_id(params[:id])
       end
   
       def update
-        @production_facility = ProductionFacility.find_by_slug(params[:id])
+        @production_facility = ProductionFacility.find_by_id(params[:id])
       
         # Update the production_facility attributes first
         if @production_facility.update(production_facility_params)
           # If the production_facility has content, process the ActionText content to replace <h1> with <h2>
-          if @production_facility.content.present?
-            @production_facility.content.body = convert_h1_to_h2(@production_facility.content.body.to_s)
-            @production_facility.content.save # Ensure the changes to the RichText object are persisted
-          end
       
           redirect_to edit_admin_production_facility_path(@production_facility), notice: 'ProductionFacility was successfully updated.'
         else
@@ -75,8 +72,11 @@ module Admin
       end
 
       def production_facility_params
-        params.require(:production_facility).permit(:title, :content, :category_id, :meta_description, :meta_keywords, :template, images: [], remove_images: []).merge(user_id: current_user.id)
-
+        params.require(:production_facility).permit(
+          :facility_name, :commodity_id, :location_name, :production_rate, 
+          :consumption_rate, :inventory, :max_inventory, :local_buy_price, 
+          :local_sell_price
+        )
       end
     end
   end

@@ -83,6 +83,7 @@ Rails.application.routes.draw do
     post 'buy', to: 'trades#buy'
     post 'sell', to: 'trades#sell'
     post 'status', to: 'trades#status'
+    post 'gate_travel', to: 'gate_travel#gate_travel'
 
     resources :commands, only: [] do
       collection do

@@ -64,6 +64,8 @@ gem 'byebug'
 gem "shopify_api"
 gem 'sitemap_generator'
 gem 'omniauth-twitch'
+gem 'delayed_job_active_record'
+gem 'daemons'
 
 
 

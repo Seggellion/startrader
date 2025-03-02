@@ -7,7 +7,7 @@ class ProductionFacility < ApplicationRecord
   validates :facility_name, :production_rate, :consumption_rate, presence: true
 
   # Generate resources on game ticks
-  def produce
+  def produce    
     self.inventory = [inventory + production_rate, max_inventory].min
     save!
   end

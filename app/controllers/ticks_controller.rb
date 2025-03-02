@@ -6,7 +6,7 @@ class TicksController < ApplicationController
   
     def create
       tick = Tick.new(tick_params)
-      if tick.save
+      if tick.save        
         tick.process_tick
         render json: tick, status: :created
       else
