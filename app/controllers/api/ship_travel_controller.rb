@@ -6,8 +6,7 @@ module Api
   
       # POST /api/travel
       def create
-  
-        user = User.first # Replace with the correct authentication or current user logic
+        user = find_or_create_user(travel_params[:username])
         ship = Ship.find_by(slug: travel_params[:ship_slug])
         if ship.nil?
           render json: { error: "Ship with slug '#{travel_params[:ship_slug]}' not found." }, status: :not_found and return
@@ -65,16 +64,30 @@ module Api
       private
   
       def travel_params
-        params.require(:ship_travel).permit(:ship_slug, :location)
+        params.require(:ship_travel).permit(:ship_slug, :location, :username)
       end
   
+
+          # Find or create a user by username with "provider: twitch"
+          def find_or_create_user(username)            
+            user = User.find_or_initialize_by(username: username.downcase.strip)
+            if user.new_record?
+              user.uid = SecureRandom.hex(10) 
+              user.twitch_id =  SecureRandom.hex(10) 
+              user.user_type = "player"
+              user.provider = "twitch"
+              user.save! # ✅ Ensure the user is saved before returning
+            end
+            user
+          end
+
       # Automatically creates a UserShip if not already present
       def find_or_create_user_ship(user, ship)
         
         user.user_ships.find_or_create_by(ship: ship) do |user_ship|
             user_ship.total_scu = ship.scu
             user_ship.used_scu = 0
-          user_ship.location = Location.first # Default to a starting location, if needed
+          user_ship.location = Location.planets.find_by(name:"Hurston")
         end
       end
     end

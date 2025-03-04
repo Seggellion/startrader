@@ -16,7 +16,6 @@ class SessionsController < ApplicationController
 
     # Step 1: Authenticate User
     user = User.find_or_create_by(uid: auth['uid'], provider: provider) do |u|
-      u.email = auth['info']['email']
       u.first_name = auth['info']['name']
       u.twitch_id = auth['uid']
       u.username = auth['info']['name']

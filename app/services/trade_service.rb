@@ -66,7 +66,7 @@ class TradeService
 
         # Default SCU to the maximum possible if not provided or if too large
         scu = [scu.to_i, max_affordable_scu, max_cargo_space].select { |v| v > 0 }.min
-        raise InsufficientInventoryError, "Not enough inventory at facility. Available: #{facility.inventory} SCU." if scu > facility.inventory
+        raise InsufficientInventoryError, "Not enough cargo inventory at facility. Available: #{facility.inventory} SCU." if scu > facility.inventory
 
         total_cost = facility.local_buy_price.to_f * scu
         loading_time = (scu * 2) + 10 # Example calculation
