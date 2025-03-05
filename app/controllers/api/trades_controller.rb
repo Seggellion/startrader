@@ -34,9 +34,10 @@ module Api
     end
 
     def status
-      result = TradeService.status(
-        username: params[:username]
-      )
+
+      username = params.dig(:trade, :username) || params[:username] 
+
+      result = TradeService.status(username: username)
 
       render json: result, status: :ok
     rescue StandardError => e

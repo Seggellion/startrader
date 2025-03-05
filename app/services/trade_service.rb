@@ -11,7 +11,7 @@ class TradeService
     class ShipNotFoundError < StandardError; end
   
     def self.status(username:)
-        user = User.find_by!(username: username)
+        user = User.where("LOWER(username) = ?", username.downcase).first!
         user_ship = user.user_ships.first
     
         raise ShipNotFoundError, "No ship found for user '#{username}'." unless user_ship

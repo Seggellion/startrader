@@ -29,7 +29,7 @@
                 <% if user.avatar.present? %>
                   <img class="h-10 w-10 rounded-full" src="<%=url_for(user.avatar)  %>" alt="<%= user.first_name %>">
                 <% else %>
-                                <%= image_tag "https://crafatar.com/avatars/#{user.minecraft_uuid}?size=128&overlay", alt: "Minecraft Avatar" %>
+                                <%= image_tag "https://crafatar.com/avatars/#{user.uid}?size=128&overlay", alt: "Minecraft Avatar" %>
 
            
                 <% end %>
@@ -38,7 +38,7 @@
                     <%= user.username %>
                   </div>
                   <div class="text-sm leading-5 text-gray-500">
-                    <%= user.minecraft_uuid %>
+                    <%= user.uid %>
                   </div>
                 </div>
               </div>
@@ -47,7 +47,7 @@
               <div class="text-sm leading-5 text-gray-900"><%= user.username %></div>
             </td>
             <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-200">
-              <div class="text-sm leading-5 text-gray-900"><%= user.minecraft_uuid %></div>
+              <div class="text-sm leading-5 text-gray-900"><%= user.uid %></div>
             </td>
             <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-200">
               <div class="text-sm leading-5 text-gray-900">
