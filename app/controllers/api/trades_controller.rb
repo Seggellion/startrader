@@ -6,16 +6,19 @@ module Api
 
     def sell
 
-      puts params[:username]
-      puts params[:wallet_balance]
-      puts params[:commodity_name]
-      puts params[:scu]
+      trade_params = params[:trade] || {}
+    
+      username = trade_params[:username]
+      wallet_balance = trade_params[:wallet_balance]
+      commodity_name = trade_params[:commodity_name]
+      scu = trade_params[:scu]
+
 
       result = TradeService.sell(
-        username: params[:username],
-        wallet_balance: params[:wallet_balance].to_f,
-        commodity_name: params[:commodity_name],
-        scu: params[:scu].to_i
+        username: username,
+        wallet_balance: wallet_balance,
+        commodity_name: commodity_name,
+        scu: scu
       )
 
       render json: result, status: :ok
