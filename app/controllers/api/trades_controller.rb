@@ -13,6 +13,11 @@ module Api
       commodity_name = trade_params[:commodity_name]
       scu = trade_params[:scu]
 
+      puts username
+      puts wallet_balance
+      puts commodity_name
+      puts scu
+
 
       result = TradeService.sell(
         username: username,
