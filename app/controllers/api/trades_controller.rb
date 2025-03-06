@@ -6,7 +6,7 @@ module Api
 
     def sell
 
-      puts params[:username],
+      puts params[:username]
       puts params[:wallet_balance]
       puts params[:commodity_name]
       puts params[:scu]
