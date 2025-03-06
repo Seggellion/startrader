@@ -4,6 +4,7 @@ class MovesController < ApplicationController
 
     def create
       user_ship = user.user_ships.find_by(id: params[:user_ship_id]) || user.user_ships.order(updated_at: :desc).first
+  byebug
       # ✅ If still no ship, return an error
       if user_ship.nil?
         return render json: { error: "No ship found for user #{username}." }, status: :unprocessable_entity

@@ -7,11 +7,21 @@ module Api
       # POST /api/travel
       def create
         user = find_or_create_user(travel_params[:username])
-        ship = Ship.find_by(slug: travel_params[:ship_slug])
-        if ship.nil?
-          render json: { error: "Ship with slug '#{travel_params[:ship_slug]}' not found." }, status: :not_found and return
+        
+        # ✅ Find ship if slug is provided, otherwise use most recent UserShip
+        ship = Ship.find_by(slug: travel_params[:ship_slug]) if travel_params[:ship_slug].present?
+      
+        # ✅ If no ship is found, use the user's most recently updated UserShip
+        unless ship
+          user_ship = user.user_ships.order(updated_at: :desc).first
+      
+          if user_ship
+            ship = user_ship.ship  # ✅ Assign the most recent ship
+          else
+            render json: { error: "No ship found for user '#{user.username}'." }, status: :not_found and return
+          end
         end
-  
+      
         user_ship = find_or_create_user_ship(user, ship)
   
         if ShipTravel.exists?(user_ship_id: user_ship.id)
@@ -69,17 +79,26 @@ module Api
   
 
           # Find or create a user by username with "provider: twitch"
-          def find_or_create_user(username)            
-            user = User.find_or_initialize_by(username: username.downcase.strip)
-            if user.new_record?
-              user.uid = SecureRandom.hex(10) 
-              user.twitch_id =  SecureRandom.hex(10) 
-              user.user_type = "player"
-              user.provider = "twitch"
-              user.save! # ✅ Ensure the user is saved before returning
+          def find_or_create_user(username)
+            normalized_username = username.downcase.strip
+          
+            # ✅ Find user case-insensitively
+            user = User.where("LOWER(username) = ?", normalized_username).first
+          
+            # ✅ Create user only if not found
+            unless user
+              user = User.create!(
+                username: normalized_username,
+                uid: SecureRandom.hex(10),
+                twitch_id: SecureRandom.hex(10),
+                user_type: "player",
+                provider: "twitch"
+              )
             end
+          
             user
           end
+          
 
       # Automatically creates a UserShip if not already present
       def find_or_create_user_ship(user, ship)

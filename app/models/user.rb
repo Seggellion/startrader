@@ -1,6 +1,6 @@
 class User < ApplicationRecord
     has_many :pages, dependent: :destroy
-    has_many :posts, dependent: :destroy
+
     has_many :media, dependent: :destroy
     has_many :comments, dependent: :destroy
     has_many :contact_messages, foreign_key: :email, primary_key: :email
