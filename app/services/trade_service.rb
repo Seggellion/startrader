@@ -134,19 +134,22 @@ class TradeService
     end    
 
     def self.sell(username:, wallet_balance:, commodity_name:, scu:)
+
       user = User.where("LOWER(username) = ?", username.downcase).first!
+      puts user.username
+      user_ship = user.user_ships.order(updated_at: :desc).first
+      puts user.user_ship.ship.slug
         user.update(wallet_balance: wallet_balance)
+        puts user.wallet_balance
         commodity = Commodity.find_by!(name: commodity_name)
+        puts commodity
         location_name = user_ship.location_name
+        puts location_name
         location = Location.find_by!(name: location_name)
         facility = ProductionFacility.find_by!(location_name: location.name, commodity_id: commodity.id)
-    
-        user_ship = user.user_ships.first
-
-        puts commodity
-        puts location_name
-        puts location_name
-        puts facility
+        puts facility.facility_name
+  
+   
 
         if facility.inventory >= facility.max_inventory
           raise InsufficientCapacityError, "Facility has reached max inventory and cannot buy more."
