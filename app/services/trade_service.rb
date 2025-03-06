@@ -11,7 +11,8 @@ class TradeService
     class ShipNotFoundError < StandardError; end
   
     def self.status(username:, wallet_balance: nil)
-      user = ApplicationService.find_or_create_user(username)
+      user = find_or_create_user(username)
+
     
       if wallet_balance.present?
         user.update!(wallet_balance: wallet_balance)
@@ -209,6 +210,29 @@ class TradeService
           message: "Sold #{scu} SCU of #{commodity_name}. Funds have been credited to your account."
         }
       end
+
+
+       
+    def self.find_or_create_user(username)
+        normalized_username = username.downcase.strip
+      
+        # ✅ Find user case-insensitively
+        user = User.where("LOWER(username) = ?", normalized_username).first
+      
+        # ✅ Create user only if not found
+        unless user
+          user = User.create!(
+            username: normalized_username,
+            uid: SecureRandom.hex(10),
+            twitch_id: SecureRandom.hex(10),
+            user_type: "player",
+            provider: "twitch"
+          )
+        end
+      
+        user
+      end
+      
 
 
   end
