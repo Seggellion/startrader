@@ -12,6 +12,24 @@ class ApplicationController < ActionController::Base
     before_action :set_active_storage_url_options
 
     
+    def self.find_or_create_user(username)
+      normalized_username = username.downcase.strip
+  
+      user = User.where("LOWER(username) = ?", normalized_username).first
+  
+      unless user
+        user = User.create!(
+          username: normalized_username,
+          uid: SecureRandom.hex(10),
+          twitch_id: SecureRandom.hex(10),
+          user_type: "player",
+          provider: "twitch"
+        )
+      end
+  
+      user
+    end
+
     private
 
 
