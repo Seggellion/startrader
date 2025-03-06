@@ -11,43 +11,62 @@ class TradeService
     class ShipNotFoundError < StandardError; end
   
     def self.status(username:)
-        user = User.where("LOWER(username) = ?", username.downcase).first!
-        user_ship = user.user_ships.first
+      user = User.where("LOWER(username) = ?", username.downcase).first!
     
-        raise ShipNotFoundError, "No ship found for user '#{username}'." unless user_ship
+      # ✅ Check if user already has a ship
+      user_ship = user.user_ships.first
     
-        # Gather Cargo Information
-        cargo = user_ship.user_ship_cargos.includes(:commodity).map do |cargo_item|
-          {
-            commodity_name: cargo_item.commodity.name,
-            scu: cargo_item.scu
-          }
+      if user_ship.nil?
+        # ✅ If no ship exists, give them a Caterpillar ship
+        caterpillar_ship = Ship.find_by(model: 'Caterpillar')  # Ensure this ship model exists
+    
+        if caterpillar_ship.nil?
+          raise ShipNotFoundError, "The Caterpillar ship is missing from the database."
         end
     
-        # Retrieve Ship Travel Information
-        ship_travel = ShipTravel.where(user_ship_id: user_ship.id).order(created_at: :desc).first
-        current_tick = Tick.order(created_at: :desc).pluck(:current_tick).first
+        user_ship = UserShip.create!(
+          user: user,
+          ship: caterpillar_ship,
+          location_name: 'Port Olisar', # Default starting location
+          total_scu: 576,  # Caterpillar has 576 SCU
+          used_scu: 0
+        )
     
-        # Return Status Information
+        Rails.logger.info "Caterpillar ship granted to user: #{username}"
+      end
+    
+      # Gather Cargo Information
+      cargo = user_ship.user_ship_cargos.includes(:commodity).map do |cargo_item|
         {
-          status: 'success',
-          wallet_balance: user.wallet_balance,
-          ship: {
-            model: user_ship.ship.model,
-            location: user_ship.location_name,
-            total_scu: user_ship.total_scu,
-            used_scu: user_ship.used_scu,
-            available_cargo_space: user_ship.available_cargo_space,
-            travel_status: ship_travel ? 'In Transit' : 'Stationary',
-            from_location: ship_travel&.from_location&.name,
-            to_location: ship_travel&.to_location&.name,
-            arrival_tick: ship_travel&.arrival_tick,
-            current_tick: current_tick,
-            time_remaining: ship_travel ? [ship_travel.arrival_tick - current_tick, 0].max : nil
-          },
-          cargo: cargo
+          commodity_name: cargo_item.commodity.name,
+          scu: cargo_item.scu
         }
       end
+    
+      # Retrieve Ship Travel Information
+      ship_travel = ShipTravel.where(user_ship_id: user_ship.id).order(created_at: :desc).first
+      current_tick = Tick.order(created_at: :desc).pluck(:current_tick).first
+    
+      {
+        status: 'success',
+        wallet_balance: user.wallet_balance,
+        ship: {
+          model: user_ship.ship.model,
+          location: user_ship.location_name,
+          total_scu: user_ship.total_scu,
+          used_scu: user_ship.used_scu,
+          available_cargo_space: user_ship.available_cargo_space,
+          travel_status: ship_travel ? 'In Transit' : 'Stationary',
+          from_location: ship_travel&.from_location&.name,
+          to_location: ship_travel&.to_location&.name,
+          arrival_tick: ship_travel&.arrival_tick,
+          current_tick: current_tick,
+          time_remaining: ship_travel ? [ship_travel.arrival_tick - current_tick, 0].max : nil
+        },
+        cargo: cargo,
+      }
+    end
+    
 
       def self.buy(username:, wallet_balance:, commodity_name:, scu:, location_name:)
         user = User.find_by!(username: username)
