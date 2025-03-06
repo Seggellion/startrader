@@ -88,7 +88,7 @@ class TradeService
     
       facility = ProductionFacility.find_by!(location_name: location.name, commodity_id: commodity.id)
       raise InsufficientInventoryError, "#{facility.location_name} Facility does not have enough inventory to sell." if facility.nil? || facility.inventory <= 0
-    
+
       # ✅ Calculate the maximum affordable SCU based on wallet and cargo space
       max_affordable_scu = (wallet_balance / facility.local_buy_price.to_f).floor
       max_cargo_space = user_ship.available_cargo_space
