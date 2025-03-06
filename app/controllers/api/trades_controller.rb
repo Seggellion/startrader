@@ -9,8 +9,7 @@ module Api
         username: params[:username],
         wallet_balance: params[:wallet_balance].to_f,
         commodity_name: params[:commodity_name],
-        scu: params[:scu].to_i,
-        location_name: params[:location]
+        scu: params[:scu].to_i
       )
 
       render json: result, status: :ok
@@ -24,8 +23,7 @@ module Api
         username: trade_params[:username],
         wallet_balance: trade_params[:wallet_balance].to_f,
         commodity_name: trade_params[:commodity_name],
-        scu: trade_params[:scu].to_i,
-        location_name: trade_params[:location]
+        scu: trade_params[:scu].to_i
       )
       
       render json: result, status: :ok

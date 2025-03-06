@@ -22,7 +22,7 @@ class TradeService
     
       if user_ship.nil?
         # ✅ If no ship exists, give them a Caterpillar ship
-        caterpillar_ship = Ship.find_by(model: 'Caterpillar')  # Ensure this ship model exists
+        caterpillar_ship = Ship.find_by(slug: 'caterpillar')  # Ensure this ship model exists
     
         if caterpillar_ship.nil?
           raise ShipNotFoundError, "The Caterpillar ship is missing from the database."
@@ -31,7 +31,7 @@ class TradeService
         user_ship = UserShip.create!(
           user: user,
           ship: caterpillar_ship,
-          location_name: 'Port Olisar', # Default starting location
+          location_name: 'Lorville', # Default starting location
           total_scu: 576,  # Caterpillar has 576 SCU
           used_scu: 0
         )
@@ -72,64 +72,65 @@ class TradeService
     end
     
 
-      def self.buy(username:, wallet_balance:, commodity_name:, scu:, location_name:)
-        user = User.find_by!(username: username)
-        commodity = Commodity.find_by!(name: commodity_name)
-        location = Location.find_by!(name: location_name)
-        facility = ProductionFacility.find_by!(location_name: location.name, commodity_id: commodity.id)
-        raise InsufficientInventoryError, "Facility does not have enough inventory to sell." if facility.inventory <= 0
-
-        user_ship = user.user_ships.first
+    def self.buy(username:, wallet_balance:, commodity_name:, scu:)
+      user = User.find_by!(username: username)
+      commodity = Commodity.find_by!(name: commodity_name)
     
-        # Calculate the maximum affordable SCU based on wallet and cargo space
-        
-        max_affordable_scu = (wallet_balance / facility.local_buy_price.to_f).floor
-        max_cargo_space = user_ship.available_cargo_space
-        max_facility_inventory = facility.inventory
-
-        # Default SCU to the maximum possible if not provided or if too large
-        scu = [scu.to_i, max_affordable_scu, max_cargo_space].select { |v| v > 0 }.min
-        raise InsufficientInventoryError, "Not enough cargo inventory at facility. Available: #{facility.inventory} SCU." if scu > facility.inventory
-
-        total_cost = facility.local_buy_price.to_f * scu
-        loading_time = (scu * 2) + 10 # Example calculation
+      # ✅ Get the user's most recent UserShip to determine location
+      user_ship = user.user_ships.order(updated_at: :desc).first
     
-        # 1. Validate Commodity Availability
-        raise CommodityNotAvailableError, "Commodity not available at this location." unless facility.commodity.is_sellable
-    
-        # 2. Validate Location Match
-        if user_ship.location_name != facility.location_name
-          raise LocationMismatchError, "Your ship is currently at '#{user_ship.location_name}', but the commodity is at '#{facility.location_name}'. You need to travel to the correct location first."
-        end
-    
-        # 3. Perform Transaction
-        ActiveRecord::Base.transaction do
-          user.update_credits(-total_cost)
-          
-          cargo = user_ship.user_ship_cargos.find_or_initialize_by(commodity_id: commodity.id)
-          cargo.scu = cargo.scu.to_i + scu
-          cargo.save!
-    
-          user_ship.add_cargo_scu(scu)
-          facility.update!(inventory: facility.inventory - scu)
-
-        end
-    
-        # 4. Return API Response
-        {
-          status: 'success',
-          wallet_balance: wallet_balance - total_cost,
-          loading_time: loading_time,
-          capital: total_cost,
-          message: "Purchased #{scu} SCU of #{commodity_name}. Loading will complete in #{loading_time / 60} minutes."
-        }
+      if user_ship.nil?
+        raise ShipNotFoundError, "No ship found for user '#{username}'."
       end
+  
+      location_name = user_ship.location_name
+      location = Location.find_by!(name: location_name)
+    
+      facility = ProductionFacility.find_by!(location_name: location.name, commodity_id: commodity.id)
+      raise InsufficientInventoryError, "#{facility.location_name} Facility does not have enough inventory to sell." if facility.nil? || facility.inventory <= 0
+    
+      # ✅ Calculate the maximum affordable SCU based on wallet and cargo space
+      max_affordable_scu = (wallet_balance / facility.local_buy_price.to_f).floor
+      max_cargo_space = user_ship.available_cargo_space
+      max_facility_inventory = facility.inventory
+    
+      # ✅ Default SCU to the maximum possible if not provided or if too large
+      scu = [scu.to_i, max_affordable_scu, max_cargo_space, max_facility_inventory].select { |v| v > 0 }.min
+      raise InsufficientInventoryError, "Not enough cargo inventory at facility. Available: #{facility.inventory} SCU." if scu > facility.inventory
+    
+      total_cost = facility.local_buy_price.to_f * scu
+      loading_time = (scu * 2) + 10  # Example calculation
+    
+      # ✅ Validate Commodity Availability
+      raise CommodityNotAvailableError, "Commodity not available at this location." unless facility.commodity.is_sellable
+    
+      # ✅ Perform Transaction
+      ActiveRecord::Base.transaction do
+        user.update_credits(-total_cost)
+    
+        cargo = user_ship.user_ship_cargos.find_or_initialize_by(commodity_id: commodity.id)
+        cargo.scu = cargo.scu.to_i + scu
+        cargo.save!
+    
+        user_ship.add_cargo_scu(scu)
+        facility.update!(inventory: facility.inventory - scu)
+      end
+    
+      # ✅ Return API Response
+      {
+        status: 'success',
+        wallet_balance: user.wallet_balance,
+        loading_time: loading_time,
+        capital: total_cost,
+        message: "Purchased #{scu} SCU of #{commodity_name} at #{location_name}. Loading will complete in #{loading_time / 60} minutes."
+      }
+    end    
 
-
-    def self.sell(username:, wallet_balance:, commodity_name:, scu:, location_name:)
+    def self.sell(username:, wallet_balance:, commodity_name:, scu:)
         user = User.find_by!(username: username)
         user.update(wallet_balance: wallet_balance)
         commodity = Commodity.find_by!(name: commodity_name)
+        location_name = user_ship.location_name
         location = Location.find_by!(name: location_name)
         facility = ProductionFacility.find_by!(location_name: location.name, commodity_id: commodity.id)
     
