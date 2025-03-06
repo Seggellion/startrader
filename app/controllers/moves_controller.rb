@@ -3,7 +3,11 @@ class MovesController < ApplicationController
     skip_before_action :verify_authenticity_token
 
     def create
-      user_ship = current_user.user_ships.find(params[:user_ship_id])
+      user_ship = user.user_ships.find_by(id: params[:user_ship_id]) || user.user_ships.order(updated_at: :desc).first
+      # ✅ If still no ship, return an error
+      if user_ship.nil?
+        return render json: { error: "No ship found for user #{username}." }, status: :unprocessable_entity
+      end
       destination = Location.find(params[:location_id])
   
       TravelService.new(user_ship: user_ship, to_location: destination).call
