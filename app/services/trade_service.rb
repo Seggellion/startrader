@@ -73,7 +73,7 @@ class TradeService
     
 
     def self.buy(username:, wallet_balance:, commodity_name:, scu:)
-      user = User.find_by!(username: username)
+      user = User.where("LOWER(username) = ?", username.downcase).first!
       commodity = Commodity.find_by!(name: commodity_name)
     
       # ✅ Get the user's most recent UserShip to determine location
@@ -134,7 +134,7 @@ class TradeService
     end    
 
     def self.sell(username:, wallet_balance:, commodity_name:, scu:)
-        user = User.find_by!(username: username)
+      user = User.where("LOWER(username) = ?", username.downcase).first!
         user.update(wallet_balance: wallet_balance)
         commodity = Commodity.find_by!(name: commodity_name)
         location_name = user_ship.location_name
