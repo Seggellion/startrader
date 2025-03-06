@@ -5,6 +5,12 @@ module Api
     skip_before_action :verify_authenticity_token
 
     def sell
+
+      puts params[:username],
+      puts params[:wallet_balance].to_f,
+      puts params[:commodity_name]
+      puts  params[:scu].to_i
+
       result = TradeService.sell(
         username: params[:username],
         wallet_balance: params[:wallet_balance].to_f,
@@ -24,12 +30,6 @@ module Api
       wallet_balance = trade_params[:wallet_balance]
       commodity_name = trade_params[:commodity_name]
       scu = trade_params[:scu]
-    
-puts trade_params
-puts username
-puts wallet_balance
-puts commodity_name
-puts scu
 
       if username.blank? || wallet_balance.blank? || commodity_name.blank?
         render json: { status: 'error', message: 'Missing required parameters' }, status: :unprocessable_entity and return

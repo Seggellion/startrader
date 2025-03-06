@@ -143,7 +143,11 @@ class TradeService
     
         user_ship = user.user_ships.first
 
-        
+        puts commodity
+        puts location_name
+        puts location_name
+        puts facility
+
         if facility.inventory >= facility.max_inventory
           raise InsufficientCapacityError, "Facility has reached max inventory and cannot buy more."
         end
