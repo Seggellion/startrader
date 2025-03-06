@@ -7,9 +7,9 @@ module Api
     def sell
 
       puts params[:username],
-      puts params[:wallet_balance].to_f
+      puts params[:wallet_balance]
       puts params[:commodity_name]
-      puts  params[:scu].to_i
+      puts params[:scu]
 
       result = TradeService.sell(
         username: params[:username],
