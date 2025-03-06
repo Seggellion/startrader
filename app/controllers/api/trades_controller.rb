@@ -37,7 +37,9 @@ module Api
 
       username = params.dig(:trade, :username) || params[:username] 
 
-      result = TradeService.status(username: username)
+      wallet_balance = params[:wallet_balance]  # ✅ Get AEC balance from Twitch bot
+
+      result = TradeService.status(username: username, wallet_balance: wallet_balance)
 
       render json: result, status: :ok
     rescue StandardError => e

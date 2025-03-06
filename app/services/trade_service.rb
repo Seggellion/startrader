@@ -10,9 +10,13 @@ class TradeService
     class UserNotFoundError < StandardError; end
     class ShipNotFoundError < StandardError; end
   
-    def self.status(username:)
+    def self.status(username:, wallet_balance: nil)
       user = User.where("LOWER(username) = ?", username.downcase).first!
     
+      if wallet_balance.present?
+        user.update!(wallet_balance: wallet_balance)
+      end  
+
       # ✅ Check if user already has a ship
       user_ship = user.user_ships.first
     
