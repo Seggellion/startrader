@@ -17,19 +17,30 @@ module Api
       render json: { status: 'error', message: e.message }, status: :unprocessable_entity
     end
 
-    # POST /api/buy
     def buy
+      trade_params = params[:trade] || {}
+    
+      username = trade_params[:username]
+      wallet_balance = trade_params[:wallet_balance]
+      commodity_name = trade_params[:commodity_name]
+      scu = trade_params[:scu]
+    
+      if username.blank? || wallet_balance.blank? || commodity_name.blank? || scu.blank?
+        render json: { status: 'error', message: 'Missing required parameters' }, status: :unprocessable_entity and return
+      end
+    
       result = TradeService.buy(
-        username: trade_params[:username],
-        wallet_balance: trade_params[:wallet_balance].to_f,
-        commodity_name: trade_params[:commodity_name],
-        scu: trade_params[:scu].to_i
+        username: username,
+        wallet_balance: wallet_balance,
+        commodity_name: commodity_name,
+        scu: scu
       )
-      
+    
       render json: result, status: :ok
-    rescue => e
+    rescue StandardError => e
       render json: { status: 'error', message: e.message }, status: :unprocessable_entity
     end
+    
 
     def status
 
