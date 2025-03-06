@@ -137,8 +137,10 @@ class TradeService
 
       user = User.where("LOWER(username) = ?", username.downcase).first!
       puts user.username
+      
       user_ship = user.user_ships.order(updated_at: :desc).first
-      puts user.user_ship.ship.slug
+      puts user_ship.ship.slug
+      
         user.update(wallet_balance: wallet_balance)
         puts user.wallet_balance
         commodity = Commodity.find_by!(name: commodity_name)
