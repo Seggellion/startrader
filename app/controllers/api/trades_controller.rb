@@ -25,18 +25,35 @@ module Api
       render json: { status: 'error', message: e.message }, status: :unprocessable_entity
     end
 
-    if commodity_name.blank?
-      # ✅ List all commodities available for purchase at the user's location
-      result = TradeService.list_available_commodities(username: username)
-    else
-      # ✅ Proceed with buying the commodity
-      result = TradeService.buy(
-        username: username,
-        wallet_balance: wallet_balance,
-        commodity_name: commodity_name,
-        scu: scu
-      )
-    end
+    def buy
+      trade_params = params[:trade] || {}
+    
+      username = trade_params[:username]
+      wallet_balance = trade_params[:wallet_balance]
+      commodity_name = trade_params[:commodity_name]
+      scu = trade_params[:scu]
+    
+      if username.blank? || wallet_balance.blank?
+        render json: { status: 'error', message: 'Missing required parameters' }, status: :unprocessable_entity and return
+      end
+    
+      if commodity_name.blank?
+        # ✅ List all commodities available for purchase at the user's location
+        result = TradeService.list_available_commodities(username: username)
+      else
+        # ✅ Proceed with buying the commodity
+        result = TradeService.buy(
+          username: username,
+          wallet_balance: wallet_balance,
+          commodity_name: commodity_name,
+          scu: scu
+        )
+      end
+    
+      render json: result, status: :ok
+    rescue StandardError => e
+      render json: { status: 'error', message: e.message }, status: :unprocessable_entity
+    end    
     
 
     def status
