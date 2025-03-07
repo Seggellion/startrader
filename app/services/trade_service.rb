@@ -234,6 +234,39 @@ class TradeService
       end
       
 
+      def self.list_available_commodities(username:)
+        user = User.where("LOWER(username) = ?", username.downcase).first!
+        user_ship = user.user_ships.order(updated_at: :desc).first
+      
+        if user_ship.nil?
+          raise ShipNotFoundError, "No ship found for user '#{username}'."
+        end
+      
+        location_name = user_ship.location_name
+        location = Location.find_by!(name: location_name)
+      
+        commodities = ProductionFacility.where(location_name: location.name)
+                                         .where("local_buy_price > 0")  # ✅ Only show buyable commodities
+                                         .includes(:commodity)
+                                         .map do |facility|
+          {
+            commodity_name: facility.commodity.name,
+            price: facility.local_buy_price
+          }
+        end
+      
+        if commodities.empty?
+          return { status: 'error', message: "No commodities available for purchase at #{location_name}." }
+        end
+      
+        {
+          status: 'success',
+          location: location_name,
+          commodities: commodities
+        }
+      end
+      
+
 
   end
   

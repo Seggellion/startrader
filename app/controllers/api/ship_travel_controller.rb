@@ -27,8 +27,8 @@ module Api
         if ShipTravel.exists?(user_ship_id: user_ship.id)
           return render json: { error: "Ship is already in transit." }, status: :unprocessable_entity
         end
-
-        destination = Location.find_by(name: travel_params[:location])
+        
+        destination = Location.where("LOWER(name) = ?", travel_params[:location].downcase).first
 
         if destination.nil?
           render json: { error: "Location not found." }, status: :not_found and return
