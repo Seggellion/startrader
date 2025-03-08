@@ -107,7 +107,7 @@ module Admin
           
           location.save!
         rescue => e
-          byebug
+          
           Rails.logger.error "Failed to import location #{location_data['name']}: #{e.message}"
           false
         end

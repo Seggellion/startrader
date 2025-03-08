@@ -92,7 +92,7 @@ module Admin
             has_freight_elevator: location_data['has_freight_elevator'].to_i == 1,
   
             # Name mappings
-            star_system_name: location_data['star_system_name'],
+            star_system_name: location_data['name'],
             planet_name: location_data['planet_name'],
             orbit_name: location_data['orbit_name'],
             moon_name: location_data['moon_name'],

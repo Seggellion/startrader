@@ -84,6 +84,7 @@ Rails.application.routes.draw do
     post 'sell', to: 'trades#sell'
     post 'status', to: 'trades#status'
     post 'gate_travel', to: 'gate_travel#gate_travel'
+    delete "cancel", to: "ship_travel#destroy"
 
     resources :commands, only: [] do
       collection do

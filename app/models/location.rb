@@ -31,10 +31,11 @@ inverse_of: :parent
   
     def distance_to(other_location, tick = Tick.current)
       # Calculate the current position using the advanced orbital mechanics
-      position1 = PlanetPositionCalculator.calculate_position(self, tick)
       
+      position1 = PlanetPositionCalculator.calculate_position(self, tick)      
       position2 = PlanetPositionCalculator.calculate_position(other_location, tick)
       
+    
       # Calculate the distance between the two points
       Math.sqrt((position2[:x] - position1[:x])**2 + (position2[:y] - position1[:y])**2)
     end
@@ -47,14 +48,16 @@ inverse_of: :parent
       Location.where(classification:"city")
     end
     
+    def space_station?
+      classification == "space_station"
+    end
     
     def self.stars
       @stars ||= Location.where(classification: "star_system").index_by(&:api_id)
     end
     
     def star
-      puts self.class.stars
-      self.class.stars[id_star_system]
+      Location.find_by(name: self.star_system_name)
     end
     
 

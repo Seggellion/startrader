@@ -22,6 +22,7 @@ class Tick < ApplicationRecord
     ShipArrivalJob.perform_later
     tick.update!(current_tick: tick.current_tick + 1, sequence: tick.sequence + 1)
     tick.process_tick # Runs optimized processing logic
+    tick.send(:correct_ship_statuses) if tick.current_tick % 3 == 0
   end
 
   def process_tick
@@ -73,6 +74,16 @@ class Tick < ApplicationRecord
       ActiveRecord::Base.connection.execute(sql)
     end
   end
+
+  def correct_ship_statuses
+    ActiveRecord::Base.connection.execute(<<-SQL)
+      UPDATE user_ships
+      SET status = 'aimlessly floating in space'
+      WHERE status = 'in_transit'
+      AND id NOT IN (SELECT user_ship_id FROM ship_travels WHERE arrival_tick > #{Tick.current})
+    SQL
+  end
+  
 
   def update_market_prices    
     MarketPriceUpdater.update_prices! if current_tick % 1 == 0

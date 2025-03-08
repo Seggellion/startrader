@@ -45,7 +45,12 @@ module Admin
         # 🧠 Handle the import logic for a single location
         def self.import_location(location_data)
           classification = "city"
-          parent_name = determine_parent_name(location_data, classification)
+
+        if location_data['moon_name']
+          parent_name = location_data['moon_name']
+        else
+          parent_name = location_data['planet_name']
+        end
 
           location = Location.find_or_initialize_by(api_id: location_data['id'])
           location.assign_attributes(

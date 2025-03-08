@@ -13,6 +13,7 @@ class User < ApplicationRecord
   has_many :user_ships
   has_many :ships, through: :user_ships
   has_many :star_bitizen_runs
+  has_one :active_ship, -> { order(updated_at: :desc) }, class_name: 'UserShip'
 
   validates :username, :twitch_id, presence: true
 

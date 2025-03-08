@@ -7,7 +7,7 @@ class UserShip < ApplicationRecord
     validates :total_scu, :used_scu, presence: true
 
 
-  has_one :active_travel, -> { where('arrival_tick > ?', Tick.current) }, class_name: 'ShipTravel'
+  has_one :active_travel, -> { where('arrival_tick >= ?', Tick.current) }, class_name: 'ShipTravel'
 
     # Calculate remaining cargo space
     def available_cargo_space

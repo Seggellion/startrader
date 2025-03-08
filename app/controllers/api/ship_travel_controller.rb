@@ -21,7 +21,7 @@ module Api
             render json: { error: "No ship found for user '#{user.username}'." }, status: :not_found and return
           end
         end
-      
+        
         user_ship = find_or_create_user_ship(user, ship)
   
         if ShipTravel.exists?(user_ship_id: user_ship.id)
@@ -33,14 +33,18 @@ module Api
         if destination.nil?
           render json: { error: "Location not found." }, status: :not_found and return
         end
-  
+
+        if user_ship.location.nil?          
+          user_ship.update(location_name:destination.star_system_name)
+        end
+        
         if destination.star_system_name != user_ship.location.star_system_name
           render json: { error: "You cannot travel outside your current star system." }, status: :unprocessable_entity and return
         end
-
+        
         TravelService.new(user_ship: user_ship, to_location: destination).call
   
-        render json: { status: 'travel_started', user_ship_id: user_ship.id }
+        render json: { status: 'travel_started', user_ship_id: user_ship.id, current_tick: Tick.current, arrival_tick: ShipTravel.last.arrival_tick }
       rescue StandardError => e
         render json: { error: e.message }, status: :unprocessable_entity
       end
@@ -70,6 +74,34 @@ module Api
           }
         end
       end
+
+
+            # DELETE /api/cancel
+            def destroy
+              user = User.where("LOWER(username) = ?", params[:username].downcase.strip).first
+              
+              if user.nil?
+                return render json: { error: "User not found." }, status: :not_found
+              end
+        
+              user_ship = user.user_ships.find_by(host_twitch_id: params[:host_twitch_id])
+        
+              if user_ship.nil?
+                return render json: { error: "User ship not found or does not belong to the specified user." }, status: :not_found
+              end
+        
+              if user_ship.active_travel.nil?
+                return render json: { error: "No active travel to cancel." }, status: :unprocessable_entity
+              end
+        
+              user_ship.active_travel.destroy
+              user_ship.update(status: "Floating aimlessly in space")
+              render json: { status: "travel_cancelled", user_ship_id: user_ship.id }
+            rescue StandardError => e
+              render json: { error: e.message }, status: :unprocessable_entity
+            end
+                
+      
   
       private
   

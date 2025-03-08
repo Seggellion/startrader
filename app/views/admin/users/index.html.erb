@@ -13,7 +13,7 @@
             
           </th>
           <th class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
-            UUID
+            Active Ship
           </th>
           <th class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
             Role
@@ -29,9 +29,7 @@
                 <% if user.avatar.present? %>
                   <img class="h-10 w-10 rounded-full" src="<%=url_for(user.avatar)  %>" alt="<%= user.first_name %>">
                 <% else %>
-                                <%= image_tag "https://crafatar.com/avatars/#{user.uid}?size=128&overlay", alt: "Minecraft Avatar" %>
-
-           
+                 *<%= image_tag "https://crafatar.com/avatars/#{user.uid}?size=128&overlay", alt: "Avatar" %>           
                 <% end %>
                 <div class="ml-4">
                   <div class="text-sm leading-5 font-medium text-gray-900">
@@ -47,8 +45,24 @@
               <div class="text-sm leading-5 text-gray-900"><%= user.username %></div>
             </td>
             <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-200">
-              <div class="text-sm leading-5 text-gray-900"><%= user.uid %></div>
-            </td>
+              <div class="text-sm leading-5 text-gray-900"><%= user.active_ship.ship.model %> - <%= user.active_ship.status %>
+              <% if user.active_ship.status == "in_transit" %>
+              
+  (Arriving at tick <%= user.active_ship.active_travel&.arrival_tick %>)
+<% end %>     
+              </div>
+
+              <div class="text-sm leading-5 text-gray-900">
+              <% if user.active_ship.status == "in_transit" %>
+          
+                Traveling to <%= user.active_ship.active_travel&.to_location&.name || "Unknown" %>
+              <% else %>
+                <%= user.active_ship.location_name %>
+              <% end %>
+            </div>
+            
+
+              </td>
             <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-200">
               <div class="text-sm leading-5 text-gray-900">
                 <%= user.user_type == 0 ? "Administrator" : "User" %>

@@ -77,6 +77,7 @@ module Admin
           :nickname,
           :classification,
           :parent_name,
+          :star_system_name,
           :mass,
           :periapsis,
           :apoapsis,

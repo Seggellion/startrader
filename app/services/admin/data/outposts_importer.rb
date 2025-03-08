@@ -51,7 +51,7 @@ module Admin
             classification: classification,
             code: location_data['code'],
             api_id: location_data['id'],
-            parent_name: location_data['planet_name'] || location_data['moon_name'],
+            parent_name: location_data['moon_name'] || location_data['planet_name'],
             id_star_system: location_data['id_star_system'],
             id_planet: location_data['id_planet'],
             id_orbit: location_data['id_orbit'],

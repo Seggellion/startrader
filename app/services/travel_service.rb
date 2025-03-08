@@ -2,7 +2,7 @@
 class TravelService
   attr_reader :user_ship, :to_location
 
-  def initialize(user_ship:, to_location:)
+  def initialize(user_ship:, to_location:)    
     @user_ship = user_ship
     @from_location = user_ship.location
     @to_location = to_location
@@ -10,7 +10,7 @@ class TravelService
 
   def call
     raise "Already in transit" if user_ship.active_travel.present?
-
+    
     start_tick = Tick.current
     duration = TravelTimeCalculator.new(
       ship: user_ship.ship,
