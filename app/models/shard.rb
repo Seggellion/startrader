@@ -13,15 +13,7 @@ class Shard < ApplicationRecord
   
     # Scopes
     scope :with_active_npcs, -> { includes(:npcs).where(npcs: { is_active: true }) }
+
   
-    # Callbacks
-    before_save :sanitize_name
-  
-    private
-  
-    # Ensure the shard name is properly formatted
-    def sanitize_name
-      self.name = name.strip.titleize
-    end
   end
   

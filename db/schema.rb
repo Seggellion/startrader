@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_03_04_020522) do
+ActiveRecord::Schema[8.0].define(version: 2025_03_09_175355) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -425,6 +425,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_04_020522) do
     t.jsonb "last_location", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "shard_name"
+    t.integer "wallet_balance", default: 0
     t.index ["shard_id"], name: "index_shard_users_on_shard_id"
     t.index ["user_id"], name: "index_shard_users_on_user_id"
   end
@@ -565,6 +567,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_04_020522) do
     t.bigint "commodity_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "commodity_name"
+    t.string "shard"
+    t.string "buy_location_name"
+    t.string "sell_location_name"
+    t.integer "local_buy_price"
+    t.integer "user_ship_id"
+    t.integer "local_sell_price"
     t.index ["commodity_id"], name: "index_star_bitizen_runs_on_commodity_id"
     t.index ["user_id"], name: "index_star_bitizen_runs_on_user_id"
     t.index ["user_ship_cargo_id"], name: "index_star_bitizen_runs_on_user_ship_cargo_id"
@@ -617,6 +626,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_04_020522) do
     t.decimal "sell_price", precision: 10, scale: 2
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "commodity_name"
     t.index ["commodity_id"], name: "index_user_ship_cargos_on_commodity_id"
     t.index ["user_ship_id"], name: "index_user_ship_cargos_on_user_ship_id"
   end
@@ -626,7 +636,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_04_020522) do
     t.bigint "ship_id", null: false
     t.integer "total_scu"
     t.integer "used_scu"
-    t.string "host_twitch_id"
+    t.string "shard_name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "location_name"

@@ -22,9 +22,9 @@ class PlanetPositionCalculator
     when 'space_station'
       calculate_space_station_position(location, tick)
     when 'outpost', 'city'
-      if location.id_moon
+      if location.id_moon > 0
         calculate_moon_position(location.parent, tick)
-      else
+      else        
         calculate_planet_position(location.parent, tick)
       end
     else

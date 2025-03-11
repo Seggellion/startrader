@@ -1,7 +1,13 @@
 class Commodity < ApplicationRecord
-    has_many :production_facilities
-    has_many :location_commodities, through: :production_facilities
   
+  has_many :production_facilities, 
+  primary_key: :name, 
+  foreign_key: :commodity_name
+  
+    has_many :location_commodities, through: :production_facilities
+
+
+
     validates :name, presence: true
   
     # Example method to calculate dynamic price (e.g., based on supply/demand)

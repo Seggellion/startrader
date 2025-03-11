@@ -2,7 +2,11 @@
 
 class ProductionFacility < ApplicationRecord
   belongs_to :location, primary_key: :name, foreign_key: :location_name, optional: true
-  belongs_to :commodity
+
+  # Using `commodity_name` instead of `commodity_id`
+  belongs_to :commodity, 
+             primary_key: :name, 
+             foreign_key: :commodity_name
 
   validates :facility_name, :production_rate, :consumption_rate, presence: true
 

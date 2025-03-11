@@ -125,7 +125,7 @@ Rails.application.routes.draw do
   namespace :admin do
     root to: 'dashboard#index'
 
-    resources :planets, :cities, :outposts, :terminals, :moons, :vehicles, :space_stations, :star_systems, :production_facilities, only: [:index, :new, :create, :edit, :update, :destroy] do
+    resources :planets, :user_ships, :star_bitizen_runs, :shards, :shard_users, :ship_travels, :cities, :outposts, :terminals, :moons, :vehicles, :space_stations, :star_systems, :production_facilities, only: [:index, :new, :create, :edit, :update, :destroy] do
       collection do
         delete :delete_all
       end

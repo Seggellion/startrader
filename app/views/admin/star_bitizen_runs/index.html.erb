@@ -1,0 +1,41 @@
+<div class="bg-white p-6 rounded shadow">
+  <div class="flex justify-between items-center mb-4">
+    <h1 class="text-2xl font-bold">StarBitizenRun</h1>
+    <%= button_to 'Delete All StarBitizenRun', delete_all_admin_star_bitizen_runs_path, 
+    class: 'bg-red-500 text-white px-4 py-2 rounded', 
+    method: :delete, 
+    data: { confirm: 'Are you sure you want to delete all ships? This action cannot be undone.' } %>
+    <%= link_to 'Add New', new_admin_star_bitizen_run_path, class: 'bg-blue-500 text-white px-4 py-2 rounded' %>
+  </div>
+
+  <table class="min-w-full bg-white mt-4 border">
+    <thead>
+      <tr>
+        <th class="py-2 px-4 border">Name</th>
+        <th class="py-2 px-4 border">Type</th>
+        <th class="py-2 px-4 border">Spaceship</th>
+        <th class="py-2 px-4 border">SCU</th>
+        <th class="py-2 px-4 border">Route</th>
+        <th class="py-2 px-4 border">Profit</th>
+        <th class="py-2 px-4 border">Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @star_bitizen_runs.each do |star_bitizen_run| %>
+        <tr>
+          <td class="py-2 px-4 border"><%= star_bitizen_run.user.username %></td>
+          <td class="py-2 px-4 border"><%= star_bitizen_run.commodity.name %></td>
+           <td class="py-2 px-4 border"><%= star_bitizen_run.user_ship.ship.model %></td>
+              <td class="py-2 px-4 border"><%= star_bitizen_run.scu %></td>
+                            <td class="py-2 px-4 border"><%= star_bitizen_run.buy_location_name %> --> <%= star_bitizen_run.sell_location_name %></td>
+                                                        <td class="py-2 px-4 border"><%= star_bitizen_run.profit %></td>
+          <td class="py-2 px-4 border"><%= star_bitizen_run.created_at.strftime('%Y-%m-%d') %></td>
+          <td class="py-2 px-4 border">
+            <%= link_to 'Edit', edit_admin_star_bitizen_run_path(star_bitizen_run), class: 'text-blue-500 hover:underline' %> |
+            <%= link_to 'Delete', admin_star_bitizen_run_path(star_bitizen_run), method: :delete, data: { confirm: 'Are you sure?' }, class: 'text-red-500 hover:underline' %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

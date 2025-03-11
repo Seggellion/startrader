@@ -1,0 +1,38 @@
+<div class="bg-white p-6 rounded shadow">
+  <div class="flex justify-between items-center mb-4">
+    <h1 class="text-2xl font-bold">ShipTravels</h1>
+    <%= button_to 'Delete All ShipTravels', delete_all_admin_ship_travels_path, 
+    class: 'bg-red-500 text-white px-4 py-2 rounded', 
+    method: :delete, 
+    data: { confirm: 'Are you sure you want to delete all ships? This action cannot be undone.' } %>
+    <%= link_to 'Add New', new_admin_ship_travel_path, class: 'bg-blue-500 text-white px-4 py-2 rounded' %>
+  </div>
+
+  <table class="min-w-full bg-white mt-4 border">
+    <thead>
+      <tr>
+        <th class="py-2 px-4 border">Name</th>
+        <th class="py-2 px-4 border">Type</th>
+        <th class="py-2 px-4 border">Destination</th>
+        <th class="py-2 px-4 border">Arrival Tick</th>
+        <th class="py-2 px-4 border">Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @ship_travels.each do |ship_travel| %>
+        <tr>
+          <td class="py-2 px-4 border"><%= ship_travel.user.username %></td>
+          <td class="py-2 px-4 border"><%= ship_travel.user_ship.ship.model %></td>
+          <td class="py-2 px-4 border"><%= ship_travel.to_location.name %></td>
+               <td class="py-2 px-4 border"><%= ship_travel.arrival_tick %></td>
+          <td class="py-2 px-4 border"><%= ship_travel.created_at.strftime('%Y-%m-%d') %></td>
+               
+          <td class="py-2 px-4 border">
+            <%= link_to 'Edit', edit_admin_ship_travel_path(ship_travel), class: 'text-blue-500 hover:underline' %> |
+            <%= link_to 'Delete', admin_ship_travel_path(ship_travel), method: :delete, data: { confirm: 'Are you sure?' }, class: 'text-red-500 hover:underline' %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

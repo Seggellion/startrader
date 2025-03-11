@@ -12,12 +12,14 @@ module Api
       wallet_balance = trade_params[:wallet_balance]
       commodity_name = trade_params[:commodity_name]
       scu = trade_params[:scu]
+      shard = trade_params[:shard]
 
       result = TradeService.sell(
         username: username,
         wallet_balance: wallet_balance,
         commodity_name: commodity_name,
-        scu: scu
+        scu: scu,
+        shard: shard
       )
 
       render json: result, status: :ok
@@ -32,8 +34,9 @@ module Api
       wallet_balance = trade_params[:wallet_balance]
       commodity_name = trade_params[:commodity_name]
       scu = trade_params[:scu]
-    
-      if username.blank? || wallet_balance.blank?
+    shard = trade_params[:shard]
+
+      if username.blank? || shard.blank?
         render json: { status: 'error', message: 'Missing required parameters' }, status: :unprocessable_entity and return
       end
     
@@ -46,7 +49,8 @@ module Api
           username: username,
           wallet_balance: wallet_balance,
           commodity_name: commodity_name,
-          scu: scu
+          scu: scu,
+          shard: shard
         )
       end
     
@@ -59,10 +63,10 @@ module Api
     def status
 
       username = params.dig(:trade, :username) || params[:username] 
-
+      shard = params[:shard] 
       wallet_balance = params[:wallet_balance]  # ✅ Get AEC balance from Twitch bot
 
-      result = TradeService.status(username: username, wallet_balance: wallet_balance)
+      result = TradeService.status(username: username, wallet_balance: wallet_balance, shard: shard)
 
       render json: result, status: :ok
     rescue StandardError => e

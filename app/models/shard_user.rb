@@ -1,8 +1,6 @@
 class ShardUser < ApplicationRecord
   belongs_to :user
-  belongs_to :shard
-
-  has_many :shard_user_skills, dependent: :destroy
+  belongs_to :shard, primary_key: :name, foreign_key: :shard_name, optional: true
 
   # Store inventory and currency as JSON
   store :inventory, coder: JSON
@@ -37,6 +35,18 @@ class ShardUser < ApplicationRecord
     else
       raise "Insufficient funds for #{type}"
     end
+  end
+
+  # Returns all UserShip records where the shard_name matches this ShardUser's shard.name
+  def user_ships
+    
+    UserShip.where(user_id: user_id, shard_name: shard_name)
+  end
+
+  def update_credits(amount)
+    new_balance = wallet_balance.to_f + amount.to_f
+    
+    update(wallet_balance: new_balance)
   end
 
   private

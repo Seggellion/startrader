@@ -20,9 +20,15 @@ inverse_of: :parent
     has_many :terminals
 
  
+    # Using `location_name` as foreign key instead of `location_id`
+    has_many :production_facilities, 
+    primary_key: :name, 
+    foreign_key: :location_name
 
-    has_many :production_facilities
-    has_many :commodities, through: :production_facilities
+    # Through association, linking to commodities via production facilities
+    has_many :commodities, 
+    through: :production_facilities, 
+    source: :commodity
   
     has_many :star_bitizen_runs, foreign_key: :buy_location_id
     has_many :star_bitizen_runs, foreign_key: :sell_location_id
@@ -60,7 +66,6 @@ inverse_of: :parent
       Location.find_by(name: self.star_system_name)
     end
     
-
     # Example method to get available commodities at this location
     def available_commodities
       production_facilities.includes(:commodity).map(&:commodity)

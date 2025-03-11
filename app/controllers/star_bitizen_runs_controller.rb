@@ -1,6 +1,6 @@
 class StarBitizenRunsController < ApplicationController
     def index
-      runs = StarBitizenRun.all
+      runs = StarBitizenRun.order(updated_at: :desc)
       render json: runs
     end
   
