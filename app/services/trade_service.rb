@@ -12,7 +12,7 @@ class TradeService
   
     def self.status(username:, wallet_balance: nil, shard:)
       user = find_or_create_user(username, shard)
-      shard_user = user.shard_users.find_by(shard_name:shard)
+      shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard.downcase).first
 
       if wallet_balance.present?
         shard_user.update!(wallet_balance: wallet_balance)
@@ -82,8 +82,8 @@ class TradeService
       
       user = User.where("LOWER(username) = ?", username.downcase).first!
       commodity = Commodity.find_by!(name: commodity_name)
-      
-      shard_user = ShardUser.find_or_create_by(user_id: user.id, shard_name: shard)
+      shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard.downcase).first
+
       # ✅ Get the user's most recent UserShip to determine location
       user_ship = shard_user.user_ships.order(updated_at: :desc).first
       
@@ -165,7 +165,8 @@ class TradeService
 
     def self.sell(username:, wallet_balance:, commodity_name: nil, scu: nil, shard:)
       user = User.where("LOWER(username) = ?", username.downcase).first!
-      shard_user = ShardUser.find_or_create_by(user_id: user.id, shard_name: shard)
+      shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard.downcase).first
+
       user_ship = shard_user.user_ships.order(updated_at: :desc).first
       raise ShipNotFoundError, "No ship found for user '#{username}'." unless user_ship
     
