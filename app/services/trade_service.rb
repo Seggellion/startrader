@@ -12,6 +12,7 @@ class TradeService
   
     def self.status(username:, wallet_balance: nil, shard:)
       user = find_or_create_user(username, shard)
+      
       shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard.downcase).first
 
       if wallet_balance.present?
@@ -272,8 +273,8 @@ class TradeService
         
         # ✅ Find user case-insensitively
         user = User.where("LOWER(username) = ?", normalized_username).first
-        
-        shard = Shard.find_by_name(shard)
+        shard = Shard.where("LOWER(name) = ?", shard).first
+ 
         
         # ✅ Create user only if not found
         unless user
@@ -286,9 +287,6 @@ class TradeService
           )
         end
         
-
-        
-
 
         unless user.shard_users&.find_by(shard_name: shard.name)
           
