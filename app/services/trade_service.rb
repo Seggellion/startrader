@@ -293,8 +293,9 @@ class TradeService
         unless user.shard_users&.find_by(shard_name: shard.name)
           
           ShardUser.create(user_id: user.id, shard_id: shard.id, shard_name: shard.name)
+          
         end
-
+        puts user.shard_users.last
         user
       end
       
