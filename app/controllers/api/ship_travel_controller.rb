@@ -7,7 +7,11 @@ module Api
       # POST /api/travel
       def create
         user = find_or_create_user(travel_params[:username])
+
         
+        # ✅ Find user case-insensitively
+        shard = Shard.where("LOWER(name) = ?", shard).first
+
         # ✅ Find ship if slug is provided, otherwise use most recent UserShip
         ship = Ship.find_by(slug: travel_params[:ship_slug]) if travel_params[:ship_slug].present?
       
@@ -22,7 +26,7 @@ module Api
           end
         end
         
-        user_ship = find_or_create_user_ship(user, ship)
+        user_ship = find_or_create_user_ship(user, ship, shard)
   
         if ShipTravel.exists?(user_ship_id: user_ship.id)
           return render json: { error: "Ship is already in transit." }, status: :unprocessable_entity
@@ -135,11 +139,12 @@ module Api
           
 
       # Automatically creates a UserShip if not already present
-      def find_or_create_user_ship(user, ship)
+      def find_or_create_user_ship(user, ship, shard)
         
         user.user_ships.find_or_create_by(ship: ship) do |user_ship|
             user_ship.total_scu = ship.scu
             user_ship.used_scu = 0
+            user_ship.shard_name = shard
           user_ship.location = Location.planets.find_by(name:"Hurston")
         end
       end

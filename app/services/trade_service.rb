@@ -275,9 +275,6 @@ class TradeService
         user = User.where("LOWER(username) = ?", normalized_username).first
         shard = Shard.where("LOWER(name) = ?", shard).first
  
-        puts user
-        puts shard
-        
         # ✅ Create user only if not found
         unless user
           user = User.create!(
@@ -291,12 +288,11 @@ class TradeService
         
 
         unless user.shard_users&.find_by(shard_name: shard.name)
-            puts "User found: #{user.username}, ID: #{user.id}"
-                  puts "Shard found: #{shard.name}, ID: #{shard.id}"
+
           ShardUser.create!(user_id: user.id, shard_id: shard.id, shard_name: shard.name)
           
         end
-        puts user.shard_users.last
+
         user
       end
       

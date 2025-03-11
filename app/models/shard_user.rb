@@ -38,9 +38,8 @@ class ShardUser < ApplicationRecord
   end
 
   # Returns all UserShip records where the shard_name matches this ShardUser's shard.name
-  def user_ships
-    
-    UserShip.where(user_id: user_id, shard_name: shard_name)
+  def user_ships  
+    UserShip.where(user_id: user_id, shard_name: shard_name.downcase)
   end
 
   def update_credits(amount)
