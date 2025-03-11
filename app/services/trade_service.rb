@@ -24,8 +24,7 @@ class TradeService
       end
 
       # ✅ Check if user already has a ship
-      user_ship = shard_user.user_ships.first
-    
+      user_ship = shard_user.user_ships.order(updated_at: :desc).first
       if user_ship.nil?
         # ✅ If no ship exists, give them a Caterpillar ship
         caterpillar_ship = Ship.find_by(slug: 'caterpillar')  # Ensure this ship model exists
