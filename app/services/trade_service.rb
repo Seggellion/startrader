@@ -23,7 +23,7 @@ class TradeService
       end
 
       # ✅ Check if user already has a ship
-      user_ship = user.user_ships.first
+      user_ship = shard_user.user_ships.first
     
       if user_ship.nil?
         # ✅ If no ship exists, give them a Caterpillar ship

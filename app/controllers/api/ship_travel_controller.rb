@@ -79,12 +79,14 @@ module Api
             # DELETE /api/cancel
             def destroy
               user = User.where("LOWER(username) = ?", params[:username].downcase.strip).first
-              
+            
+              shard = params[:shard] 
+              shard_user = user.shard_users.find_by(shard_name:shard)
               if user.nil?
                 return render json: { error: "User not found." }, status: :not_found
               end
         
-              user_ship = user.user_ships.find_by(host_twitch_id: params[:host_twitch_id])
+              user_ship = shard_user.user_ships.order(updated_at: :desc).first
         
               if user_ship.nil?
                 return render json: { error: "User ship not found or does not belong to the specified user." }, status: :not_found
