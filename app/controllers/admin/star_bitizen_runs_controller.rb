@@ -1,7 +1,7 @@
 module Admin
     class StarBitizenRunsController < ApplicationController
       def index
-        @star_bitizen_runs = StarBitizenRun.all
+        @star_bitizen_runs = StarBitizenRun.order(updated_at: :desc)
       end
   
       def new
