@@ -48,7 +48,7 @@ module Api
         
         TravelService.new(user_ship: user_ship, to_location: destination).call
   
-        render json: { status: 'travel_started', user_ship_id: user_ship.id, current_tick: Tick.current, arrival_tick: ShipTravel.last.arrival_tick }
+        render json: { status: 'travel_started', user_ship_id: user_ship.id, destination: destination.name, current_tick: Tick.current, arrival_tick: ShipTravel.last.arrival_tick }
       rescue StandardError => e
         render json: { error: e.message }, status: :unprocessable_entity
       end
