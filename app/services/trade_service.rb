@@ -200,6 +200,7 @@ class TradeService
         raise InsufficientInventoryError, "No matching cargo to sell at #{location_name}."
       end
       total_profit = 0
+      total_scu_sold = 0
       transactions = []
     
       ActiveRecord::Base.transaction do
@@ -219,7 +220,8 @@ class TradeService
           # ✅ Calculate Profit
           total_revenue = facility.local_sell_price.to_f * scu_to_sell
           total_profit += total_revenue
-    
+          total_scu_sold += scu_to_sell
+          
           # ✅ Perform Transaction
           shard_user.update_credits(total_revenue)
           
@@ -271,6 +273,7 @@ class TradeService
         status: 'success',
         profit: total_profit,
         wallet_balance: shard_user.wallet_balance,
+        scu: total_scu_sold,
         transactions: transactions
       }
     end
