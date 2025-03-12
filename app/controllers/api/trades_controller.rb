@@ -29,7 +29,7 @@ module Api
 
     def buy
       trade_params = params[:trade] || {}
-    
+    puts params
       username = trade_params[:username]
       wallet_balance = trade_params[:wallet_balance]
       commodity_name = trade_params[:commodity_name]
