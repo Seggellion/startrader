@@ -161,6 +161,7 @@ class TradeService
         status: 'success',
         wallet_balance: shard_user.wallet_balance,
         loading_time: loading_time,
+        scu: scu,
         capital: total_cost,
         message: "Purchased #{scu} SCU of #{commodity_name} at #{location_name}. Loading will complete in #{loading_time / 60} minutes."
       }
