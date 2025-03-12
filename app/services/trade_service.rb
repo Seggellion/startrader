@@ -79,7 +79,10 @@ class TradeService
     
 
     def self.buy(username:, wallet_balance:, commodity_name:, scu:, shard:)
-      
+      puts username
+      puts wallet_balance
+      puts commodity_name
+      puts shard
       user = User.where("LOWER(username) = ?", username.downcase).first!
       commodity = Commodity.find_by!(name: commodity_name)
       shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard.downcase).first
