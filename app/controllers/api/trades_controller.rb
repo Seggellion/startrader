@@ -113,7 +113,7 @@ end
     private
 
     def trade_params
-      params.permit(:username, :wallet_balance, :commodity_name, :scu, :location)
+      params.permit(:username, :wallet_balance, :commodity_name, :scu, :location, :shard)
     end
   end
 end
