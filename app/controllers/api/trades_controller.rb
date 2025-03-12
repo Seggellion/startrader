@@ -36,6 +36,10 @@ module Api
       scu = trade_params[:scu]
     shard = trade_params[:shard]
 
+    puts username
+    puts wallet_balance
+    puts shard
+
       if username.blank? || shard.blank?
         render json: { status: 'error', message: 'Missing required parameters' }, status: :unprocessable_entity and return
       end
