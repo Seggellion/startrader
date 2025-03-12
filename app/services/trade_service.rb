@@ -79,10 +79,7 @@ class TradeService
     
 
     def self.buy(username:, wallet_balance:, commodity_name:, scu:, shard:)
-      puts username
-      puts wallet_balance
-      puts commodity_name
-      puts shard
+
       user = User.where("LOWER(username) = ?", username.downcase).first!
       commodity = Commodity.find_by!(name: commodity_name)
       shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard.downcase).first
@@ -183,9 +180,16 @@ class TradeService
       if commodity_name.blank?
         buyable_commodities = ProductionFacility.where(location_name: location.name)
                                                 .where("local_sell_price > 0")
-                                                .pluck(:commodity_name) # ✅ Match by name
+                                                .pluck(:commodity_name) # ✅ Match by name                                                
       else
-        buyable_commodities = [commodity_name] # ✅ Directly match the given commodity name
+        is_buyable = ProductionFacility.exists?(
+          location_name: location.name, 
+          commodity_name: commodity_name, 
+          local_sell_price: 1..,  # ✅ Ensure it has a sell price (greater than 0)
+          local_buy_price: [nil, 0]  # ✅ Ensure it's NOT also buyable (must be nil or 0)
+        )
+        
+        buyable_commodities = is_buyable ? [commodity_name] : []
       end
 
     
@@ -221,8 +225,11 @@ class TradeService
           
           # ✅ Update Cargo
           cargo.scu -= scu_to_sell
+          
           star_bitizen_run = StarBitizenRun.find_by(user_ship_cargo_id: cargo.id)
+          
           star_bitizen_run.update(user_ship_cargo_id: nil)
+          
           cargo.scu <= 0 ? cargo.destroy! : cargo.save!
           
     

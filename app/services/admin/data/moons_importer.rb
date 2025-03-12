@@ -63,9 +63,9 @@ module Admin
             id_faction: location_data['id_faction'],
             id_company: location_data['id_company'],
             api_type: location_data['type'],
-            mass: location_data['mass'],
-            periapsis: location_data['periapsis'],
-            apoapsis: location_data['apoapsis'],
+            mass: 100,
+            periapsis: 70,
+            apoapsis: 70,
   
             # Boolean flags
             is_available: location_data['is_available'].to_i == 1,

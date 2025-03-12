@@ -29,16 +29,13 @@ module Api
 
     def buy
       trade_params = params[:trade] || {}
-    puts params
+
       username = trade_params[:username]
       wallet_balance = trade_params[:wallet_balance]
       commodity_name = trade_params[:commodity_name]
       scu = trade_params[:scu]
     shard = trade_params[:shard]
 
-    puts username
-    puts wallet_balance
-    puts shard
 
       if username.blank? || shard.blank?
         render json: { status: 'error', message: 'Missing required parameters' }, status: :unprocessable_entity and return
