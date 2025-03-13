@@ -48,7 +48,7 @@ module Admin
 
       def delete_all
         Location.where(classification:"space_station").destroy_all
-        redirect_to admin_space_station_path, notice: 'All space_station have been deleted successfully.'
+        redirect_to admin_space_stations_path, notice: 'All space_station have been deleted successfully.'
       end
 
   

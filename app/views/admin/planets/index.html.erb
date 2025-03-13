@@ -4,7 +4,7 @@
     <%= button_to 'Delete All Planets', delete_all_admin_planets_path, 
     class: 'bg-red-500 text-white px-4 py-2 rounded', 
     method: :delete, 
-    data: { confirm: 'Are you sure you want to delete all ships? This action cannot be undone.' } %>
+    data: { confirm: 'Are you sure you want to delete all planets? This action cannot be undone.' } %>
         <%= button_to 'Import Planets', import_planets_admin_data_path, class: 'bg-blue-500 text-white px-4 py-2 rounded', method: :post %>
     <%= link_to 'Add New', new_admin_planet_path, class: 'bg-blue-500 text-white px-4 py-2 rounded' %>
   </div>

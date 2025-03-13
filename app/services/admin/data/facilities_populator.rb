@@ -40,7 +40,7 @@ module Admin
         Rails.logger.info "Assigning Location ID #{location.id} (#{location.name}) to ProductionFacility for Commodity #{price_data['commodity_name']}"
 
         max_inventory = max_inventory_for_location(location.classification)
-
+#location name is not populating correctly, and some locations have both sets of prices.
 
         facility = ProductionFacility.find_or_initialize_by(api_id: price_data['id'])
         facility.assign_attributes(

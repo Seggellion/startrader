@@ -52,7 +52,7 @@ module Admin
             classification: classification,
             code: location_data['code'],
             api_id: location_data['id'],
-            parent_name: location_data['parent_name'],
+            parent_name: location_data['name'],
             id_star_system: location_data['id_star_system'],
             star_system_name: location_data['name'],
             id_planet: location_data['id_planet'],

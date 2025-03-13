@@ -21,11 +21,11 @@ module Admin
       end
   
       def edit
-        @terminal = Terminal.find_by_slug(params[:id])
+        @terminal = Terminal.find_by_id(params[:id])
       end
   
       def update
-        @terminal = Terminal.find_by_slug(params[:id])
+        @terminal = Terminal.find_by_id(params[:id])
       
         # Update the terminal attributes first
         if @terminal.update(terminal_params)

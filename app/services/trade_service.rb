@@ -79,9 +79,9 @@ class TradeService
     
 
     def self.buy(username:, wallet_balance:, commodity_name:, scu:, shard:)
-
+      
       user = User.where("LOWER(username) = ?", username.downcase).first!
-      commodity = Commodity.find_by!(name: commodity_name)
+      commodity = Commodity.where("name ILIKE ?", commodity_name).first!
       shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard.downcase).first
 
       # ✅ Get the user's most recent UserShip to determine location
@@ -95,13 +95,19 @@ class TradeService
       if shard_user.wallet_balance == 0
         raise InsufficientCreditsError, "INSF FNDS '#{username}'."
       end
-
+      
       location_name = user_ship.location_name
       location = Location.find_by!(name: location_name)
     
-      facility = ProductionFacility.find_by!(location_name: location.name, commodity_id: commodity.id)
-      raise InsufficientInventoryError, "#{facility.location_name} Facility does not have enough inventory to sell." if facility.nil? || facility.inventory <= 0
-          
+      facility = ProductionFacility
+      .where("location_name ILIKE ? AND commodity_id = ?", "%#{location.name}%", commodity.id)
+      .first
+    
+      if facility.nil?
+        raise InsufficientInventoryError, "No matching facility found for #{location.name} and #{commodity.name}."
+      elsif facility.inventory <= 0
+        raise InsufficientInventoryError, "#{facility.location_name} Facility does not have enough inventory to sell."
+      end
 
       # ✅ Calculate the maximum affordable SCU based on wallet and cargo space
       max_affordable_scu = (shard_user.wallet_balance / facility.local_buy_price.to_f).floor
@@ -167,7 +173,7 @@ class TradeService
     def self.sell(username:, wallet_balance:, commodity_name: nil, scu: nil, shard:)
       user = User.where("LOWER(username) = ?", username.downcase).first!
       shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard.downcase).first
-
+    
       user_ship = shard_user.user_ships.order(updated_at: :desc).first
       raise ShipNotFoundError, "No ship found for user '#{username}'." unless user_ship
     
@@ -176,110 +182,70 @@ class TradeService
       location_name = user_ship.location_name
       location = Location.find_by!(name: location_name)
     
-      # ✅ If no commodity is specified, get all buyable commodities at this location
+      # ✅ If no commodity is specified, return a list of commodities that the facility at this location is buying
       if commodity_name.blank?
         buyable_commodities = ProductionFacility.where(location_name: location.name)
-                                                .where("local_sell_price > 0")
-                                                .pluck(:commodity_name) # ✅ Match by name                                                
-      else
-        is_buyable = ProductionFacility.exists?(
-          location_name: location.name, 
-          commodity_name: commodity_name, 
-          local_sell_price: 1..,  # ✅ Ensure it has a sell price (greater than 0)
-          local_buy_price: [nil, 0]  # ✅ Ensure it's NOT also buyable (must be nil or 0)
-        )
-        
-        buyable_commodities = is_buyable ? [commodity_name] : []
-      end
-
-    
-      # ✅ Get all cargo that matches the buyable commodities
-      cargo_to_sell = user_ship.user_ship_cargos.includes(:commodity).where(commodities: { name: buyable_commodities }) # ✅ Match by name
-    
-      if cargo_to_sell.empty?
-        raise InsufficientInventoryError, "No matching cargo to sell at #{location_name}."
-      end
-      total_profit = 0
-      total_scu_sold = 0
-      transactions = []
-    
-      ActiveRecord::Base.transaction do
-        cargo_to_sell.each do |cargo|
-          facility = ProductionFacility.find_by(location_name: location.name, commodity_name: cargo.commodity.name) # ✅ Match by name          
-    
-          next if facility.nil? || facility.inventory >= facility.max_inventory  # Skip if facility can't buy more
-    
-          max_scu = cargo.scu if scu.blank? || scu.to_i <= 0
-          max_facility_demand = facility.inventory
-          scu_to_sell = [max_scu, max_facility_demand].select { |v| v > 0 }.min
-    
-          if cargo.scu < scu_to_sell
-            raise InsufficientInventoryError, "Not enough inventory to sell. You have #{cargo.scu} SCU of #{cargo.commodity.name}."
-          end
-    
-          # ✅ Calculate Profit
-          total_revenue = facility.local_sell_price.to_f * scu_to_sell
-          total_profit += total_revenue
-          total_scu_sold += scu_to_sell
-          
-          # ✅ Perform Transaction
-          shard_user.update_credits(total_revenue)
-          
-          # ✅ Update Cargo
-          cargo.scu -= scu_to_sell
-          
-          star_bitizen_run = StarBitizenRun.find_by(user_ship_cargo_id: cargo.id)
-          
-          star_bitizen_run.update(user_ship_cargo_id: nil)
-          
-          cargo.scu <= 0 ? cargo.destroy! : cargo.save!
-          
-    
-          # ✅ Update Ship Cargo Capacity
-          user_ship.remove_cargo_scu(scu_to_sell)
-    
-          # ✅ Update Facility Inventory
-          facility.update!(inventory: [facility.inventory + scu_to_sell, facility.max_inventory].min)
-    
-          star_bitizen_run = StarBitizenRun.find_by(
-            user: user,
-            user_ship: user_ship,
-            commodity_name: cargo.commodity.name,
-            local_sell_price: nil,
-            shard: shard
-          )
-
-                  # Update trade record
-        star_bitizen_run.update!(
-          local_sell_price: facility.local_sell_price,
-          sell_location_name: location.name,
-          profit: total_profit,
-          scu: scu_to_sell
-        )
-
-          transactions << {
-            commodity_name: cargo.commodity.name,
-            scu_sold: scu_to_sell,
-            total_price: total_revenue
+                                                .where("local_sell_price > 0") # ✅ Facility must be buying
+                                                .includes(:commodity)
+                                                .map do |facility|
+          {
+            commodity_name: facility.commodity.name,
+            sell_price: facility.local_sell_price
           }
         end
+    
+        if buyable_commodities.empty?
+          return { status: 'error', message: "No commodities can be sold at #{location_name}." }
+        end
+    
+        return {
+          status: 'success',
+          location: location_name,
+          commodities: buyable_commodities
+        }
       end
-
-
-
+    
+      # ✅ Find the specified commodity
+      commodity = Commodity.where("name ILIKE ?", commodity_name).first!
+      facility = ProductionFacility.find_by(location_name: location.name, commodity_id: commodity.id)
+    
+      # ✅ Check if the facility is buying this commodity
+      if facility.nil? || facility.local_sell_price.nil? || facility.local_sell_price <= 0
+        return { status: 'error', message: "#{location_name} is not buying #{commodity_name}." }
+      end
+    
+      cargo_to_sell = user_ship.user_ship_cargos.find_by(commodity_id: commodity.id)
+      raise InsufficientInventoryError, "No inventory of #{commodity_name} to sell." if cargo_to_sell.nil?
+    
+      max_scu = cargo_to_sell.scu if scu.blank? || scu.to_i <= 0
+      max_facility_demand = facility.inventory
+      scu_to_sell = [max_scu, max_facility_demand].select { |v| v > 0 }.min
+    
+      raise InsufficientInventoryError, "Not enough inventory to sell. You have #{cargo_to_sell.scu} SCU of #{commodity_name}." if cargo_to_sell.scu < scu_to_sell
+    
+      # ✅ Calculate Profit
+      total_revenue = facility.local_sell_price.to_f * scu_to_sell
+    
+      ActiveRecord::Base.transaction do
+        shard_user.update_credits(total_revenue)
+    
+        cargo_to_sell.scu -= scu_to_sell
+        cargo_to_sell.scu <= 0 ? cargo_to_sell.destroy! : cargo_to_sell.save!
+    
+        user_ship.remove_cargo_scu(scu_to_sell)
+    
+        facility.update!(inventory: [facility.inventory + scu_to_sell, facility.max_inventory].min)
+      end
     
       # ✅ Return API Response
       {
         status: 'success',
-        profit: total_profit,
+        profit: total_revenue,
         wallet_balance: shard_user.wallet_balance,
-        scu: total_scu_sold,
-        transactions: transactions
+        scu: scu_to_sell,
+        message: "Sold #{scu_to_sell} SCU of #{commodity_name} at #{location_name}."
       }
     end
-    
-
-
        
     def self.find_or_create_user(username, shard)
         normalized_username = username.downcase.strip
@@ -313,15 +279,15 @@ class TradeService
       def self.list_available_commodities(username:)
         user = User.where("LOWER(username) = ?", username.downcase).first!
         user_ship = user.user_ships.order(updated_at: :desc).first
-      
+        
         if user_ship.nil?
           raise ShipNotFoundError, "No ship found for user '#{username}'."
         end
       
         location_name = user_ship.location_name
-        location = Location.find_by!(name: location_name)
-      
-        commodities = ProductionFacility.where(location_name: location.name)
+        location = Location.where("name ILIKE ?", "%#{location_name}%").first!
+        
+        commodities = ProductionFacility.where("? ILIKE '%' || facility_name || '%'", location.name)
                                          .where("local_buy_price > 0")  # ✅ Only show buyable commodities
                                          .includes(:commodity)
                                          .map do |facility|
@@ -330,7 +296,7 @@ class TradeService
             price: facility.local_buy_price
           }
         end
-      
+
         if commodities.empty?
           return { status: 'error', message: "No commodities available for purchase at #{location_name}." }
         end

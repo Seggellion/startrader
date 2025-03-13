@@ -52,7 +52,10 @@ module Admin
 
         # Dynamically assign location_name based on priority
         terminal.location_name = determine_location_name(terminal_data)
-
+if terminal.name == "Admin - ARC-L1"
+# byebug
+#We have to match terminal with location through code.
+end
         if terminal.save
           Rails.logger.info "Successfully imported terminal: #{terminal.name} (Location: #{terminal.location_name})"
           true
@@ -67,8 +70,8 @@ module Admin
 
       # 🔍 Determine the Best Matching `location_name`
       def self.determine_location_name(data)
-        data['city_name'] ||
         data['space_station_name'] ||
+        data['city_name'] ||
         data['outpost_name'] ||
         data['poi_name'] ||
         data['moon_name'] ||

@@ -11,6 +11,13 @@ class Terminal < ApplicationRecord
   
   def assign_location
     # Match by exact location name
-    self.location = Location.find_by('LOWER(name) = ?', location_name.downcase) if location_name.present?
+    if location_name.present?
+      matched_location = Location.find_by('LOWER(name) = ?', location_name.downcase)
+
+      if matched_location
+        self.location = matched_location  # ✅ Assign location association
+        self.location_name = matched_location.name  # ✅ Ensure location_name persists
+      end
+    end
   end
 end

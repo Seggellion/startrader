@@ -28,7 +28,7 @@ module Api
     end
 
     def buy
-      trade_params = params[:trade] || {}
+      trade_params = params[:trade] || {}      
 
       username = trade_params[:username]
       wallet_balance = trade_params[:wallet_balance]
@@ -75,6 +75,7 @@ module Api
     end
 
     def self.list_available_commodities(username:)
+      
   user = User.where("LOWER(username) = ?", username.downcase).first!
   user_ship = user.user_ships.order(updated_at: :desc).first
 
@@ -83,9 +84,8 @@ module Api
   end
 
   location_name = user_ship.location_name
-  location = Location.find_by!(name: location_name)
-
-  commodities = ProductionFacility.where(location_name: location.name)
+  location = Location.where("name ILIKE ?", "%#{location_name}%").first!
+  commodities = ProductionFacility.where("? ILIKE '%' || location_name || '%'", location.name)
                                    .where("local_buy_price > 0")  # ✅ Only show buyable commodities
                                    .includes(:commodity)
                                    .map do |facility|

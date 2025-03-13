@@ -45,7 +45,7 @@ module Admin
         # 🧠 Handle the import logic for a single location
         def self.import_location(location_data)
           classification = "space_station"
-          parent_name = determine_parent_name(location_data, classification)
+          parent_name = determine_parent_name(location_data)
 
           location = Location.find_or_initialize_by(name:location_data['name'])
           location.assign_attributes(
@@ -65,9 +65,9 @@ module Admin
             id_faction: location_data['id_faction'],
             id_company: location_data['id_company'],
             api_type: location_data['type'],
-            mass: location_data['mass'],
-            periapsis: location_data['periapsis'],
-            apoapsis: location_data['apoapsis'],
+            mass: 500,
+            periapsis: 200,
+            apoapsis: 200,
   
             # Boolean flags
             is_available: location_data['is_available'].to_i == 1,
@@ -124,30 +124,12 @@ module Admin
   
           
 
-          def self.determine_parent_name(data, classification)
-            case classification
-            when "planet"
-              # Planet's parent is a Star System
-              return ensure_parent_exists(data['id_star_system'], "star_system") if data['id_star_system'].to_i > 0
-          
-            when "moon"
-              # Moon's parent is a Planet
-              return ensure_parent_exists(data['id_planet'], "planet") if data['id_planet'].to_i > 0
-          
-            when "space_station"
-              # Space Station's parent can be a Moon or a Planet
-              return ensure_parent_exists(data['id_moon'], "moon") if data['id_moon'].to_i > 0
-              return ensure_parent_exists(data['id_planet'], "planet") if data['id_planet'].to_i > 0
-          
-            when "outpost", "city", "poi"
-              # Outposts, Cities, POIs can belong to Moon, Planet, or Star System
-              return ensure_parent_exists(data['id_moon'], "moon") if data['id_moon'].to_i > 0
-              return ensure_parent_exists(data['id_planet'], "planet") if data['id_planet'].to_i > 0
-              return ensure_parent_exists(data['id_star_system'], "star_system") if data['id_star_system'].to_i > 0
-            end
-          
-            nil
-          end
+        def self.determine_parent_name(data)
+          data['moon_name'] ||
+          data['planet_name'] ||
+          data['star_system_name'] # Defaults to Star System if all else is nil
+        end
+        
           
 
           def self.ensure_parent_exists(api_id, classification)

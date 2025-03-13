@@ -17,6 +17,7 @@
       <tr>
         <th class="py-2 px-4 border">Name</th>
         <th class="py-2 px-4 border">Nickname</th>
+        <th class="py-2 px-4 border">Parent</th>
         <th class="py-2 px-4 border">Code</th>
         <th class="py-2 px-4 border">Date</th>
       </tr>
@@ -25,7 +26,9 @@
       <% @terminals.each do |terminal| %>
         <tr>
           <td class="py-2 px-4 border"><%= terminal.name %></td>
-                    <td class="py-2 px-4 border"><%= terminal.nickname %></td>
+          <td class="py-2 px-4 border"><%= terminal.nickname %></td>
+          
+          <td class="py-2 px-4 border"><%= terminal.location&.name %></td>
           <td class="py-2 px-4 border"><%= terminal.code %></td>
           <td class="py-2 px-4 border"><%= terminal.created_at.strftime('%Y-%m-%d') %></td>
           <td class="py-2 px-4 border">
