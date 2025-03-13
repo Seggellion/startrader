@@ -287,15 +287,17 @@ class TradeService
         location_name = user_ship.location_name
         location = Location.where("name ILIKE ?", "%#{location_name}%").first!
         
-        commodities = ProductionFacility.where("? ILIKE '%' || facility_name || '%'", location.name)
-                                         .where("local_buy_price > 0")  # ✅ Only show buyable commodities
-                                         .includes(:commodity)
-                                         .map do |facility|
+        commodities = ProductionFacility
+        .where("facility_name ILIKE ?", "%#{location.name}%")  # ✅ Proper wildcard search
+        .where("local_buy_price > 0")  # ✅ Only show buyable commodities
+        .includes(:commodity)
+        .map do |facility|
           {
             commodity_name: facility.commodity.name,
             price: facility.local_buy_price
           }
         end
+      
 
         if commodities.empty?
           return { status: 'error', message: "No commodities available for purchase at #{location_name}." }

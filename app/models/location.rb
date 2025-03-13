@@ -50,6 +50,10 @@ inverse_of: :parent
       Location.where(classification:"planet")
     end
 
+    def self.space_stations
+      Location.where(classification:"space_station")
+    end
+
     def self.cities
       Location.where(classification:"city")
     end
