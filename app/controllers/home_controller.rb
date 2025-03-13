@@ -8,7 +8,9 @@ class HomeController < ApplicationController
         @testimonials = Testimonial.by_category_name('home-page')
         @sections = Section.all
         @events = Event.all
-
+        @facilities_by_location = ProductionFacility
+        .includes(:commodity)
+        .group_by(&:location_name)
     end
 
     def news

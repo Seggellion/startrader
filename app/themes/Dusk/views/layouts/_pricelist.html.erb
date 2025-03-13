@@ -1,0 +1,26 @@
+<div style="padding:10px;">
+<h1>Commodity Market Prices</h1>
+
+<% @facilities_by_location.each do |location_name, facilities| %>
+  <h2><%= location_name %></h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Commodity</th>
+        <th>Buy Price</th>
+        <th>Sell Price</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% facilities.each do |facility| %>
+        <tr>
+          <td><%= facility.commodity.name %></td>
+          <td><%= facility.local_buy_price.present? ? "#{facility.local_buy_price} AEC" : "N/A" %></td>
+          <td><%= facility.local_sell_price.present? ? "#{facility.local_sell_price} AEC" : "N/A" %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>
+
+</div>
