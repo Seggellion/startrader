@@ -98,10 +98,8 @@ class TradeService
       
       location_name = user_ship.location_name
       location = Location.find_by!(name: location_name)
-    
-      facility = ProductionFacility
-      .where("location_name ILIKE ? AND commodity_id = ?", "%#{location.name}%", commodity.id)
-      .first
+
+      facility = ProductionFacility.where("location_name ILIKE ? AND commodity_name = ?", "%#{location.name}%", commodity.name).first
     
       if facility.nil?
         raise InsufficientInventoryError, "No matching facility found for #{location.name} and #{commodity.name}."
@@ -288,16 +286,24 @@ class TradeService
         location = Location.where("name ILIKE ?", "%#{location_name}%").first!
         
         commodities = ProductionFacility
-        .where("facility_name ILIKE ?", "%#{location.name}%")  # ✅ Proper wildcard search
+        .where("facility_name ILIKE ?", "%#{location.name}%") # ✅ Try facility_name first
         .where("local_buy_price > 0")  # ✅ Only show buyable commodities
         .includes(:commodity)
-        .map do |facility|
+      
+        # If no results were found, try searching by location_name
+        if commodities.empty?
+          commodities = ProductionFacility
+            .where("location_name ILIKE ?", "%#{location.name}%") # ✅ Fallback to location_name
+            .where("local_buy_price > 0")
+            .includes(:commodity)
+        end
+        
+        commodities = commodities.map do |facility|
           {
             commodity_name: facility.commodity.name,
             price: facility.local_buy_price
           }
-        end
-      
+        end              
 
         if commodities.empty?
           return { status: 'error', message: "No commodities available for purchase at #{location_name}." }

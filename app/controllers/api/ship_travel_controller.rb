@@ -83,9 +83,11 @@ module Api
             # DELETE /api/cancel
             def destroy
               user = User.where("LOWER(username) = ?", params[:username].downcase.strip).first
-            
+            puts user
               shard = params[:shard] 
+              puts shard
               shard_user = user.shard_users.find_by(shard_name:shard)
+              puts shard_user
               if user.nil?
                 return render json: { error: "User not found." }, status: :not_found
               end

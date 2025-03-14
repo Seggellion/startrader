@@ -116,37 +116,45 @@ class PlanetPositionCalculator
   end
 
   def self.calculate_space_station_position(location, tick)
+    parent_body = Location.planets.find_by(name: location.parent_name) || Location.moons.find_by(name: location.parent_name)
+  
     if location.name.include?('-L1') || location.name.include?('-L2')
-      calculate_lagrange_station_position(location, tick)
+      calculate_lagrange_station_position(location, parent_body, tick)
     elsif location.name.include?('Gateway')
       calculate_star_gateway_position(location, tick)
-    else
-      calculate_co_orbital_station_position(location, tick)
+    else      
+      calculate_co_orbital_station_position(location, parent_body, tick)
     end
   end
 
-  def self.calculate_lagrange_station_position(location, tick)
-    parent_planet = Location.planets.find_by(name: location.parent_name)
-    
-    planet_position = calculate_planet_position(parent_planet, tick)
-
+  def self.calculate_lagrange_station_position(location, parent_body, tick)
+    return { x: 0.0, y: 0.0 } unless parent_body
+  
+    parent_position = parent_body.classification == 'moon' ? 
+                      calculate_moon_position(parent_body, tick) :
+                      calculate_planet_position(parent_body, tick)
+  
     lagrange_multiplier = location.name.include?('-L1') ? L1_MULTIPLIER : -L2_MULTIPLIER
-    x = planet_position[:x] + (lagrange_multiplier * planet_position[:x])
-    y = planet_position[:y] + (lagrange_multiplier * planet_position[:y])
-
+  
+    x = parent_position[:x] + (lagrange_multiplier * parent_position[:x])
+    y = parent_position[:y] + (lagrange_multiplier * parent_position[:y])
+  
     { x: x, y: y }
   end
-
-  def self.calculate_co_orbital_station_position(location, tick)
-    parent_planet = Location.planets.find_by(name: location.parent_name)    
-    planet_position = calculate_planet_position(parent_planet, tick)
-
+  
+  def self.calculate_co_orbital_station_position(location, parent_body, tick)
+    return { x: 0.0, y: 0.0 } unless parent_body
+  
+    parent_position = parent_body.classification == 'moon' ? 
+                      calculate_moon_position(parent_body, tick) :
+                      calculate_planet_position(parent_body, tick)
+  
     phase_index = location.name[-1].to_i - 1
     phase_shift = CO_ORBITAL_PHASES[phase_index] * (Math::PI / 180)
-
-    x = planet_position[:x] * Math.cos(phase_shift) - planet_position[:y] * Math.sin(phase_shift)
-    y = planet_position[:x] * Math.sin(phase_shift) + planet_position[:y] * Math.cos(phase_shift)
-
+  
+    x = parent_position[:x] * Math.cos(phase_shift) - parent_position[:y] * Math.sin(phase_shift)
+    y = parent_position[:x] * Math.sin(phase_shift) + parent_position[:y] * Math.cos(phase_shift)
+  
     { x: x, y: y }
   end
 
