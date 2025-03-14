@@ -86,7 +86,7 @@ module Api
             puts user
               shard = params[:shard] 
               puts shard
-              shard_user = user.shard_users.find_by(shard_name:shard)
+              shard_user = user.shard_users.find_by("shard_name ILIKE ?", shard)
               puts shard_user
               if user.nil?
                 return render json: { error: "User not found." }, status: :not_found
