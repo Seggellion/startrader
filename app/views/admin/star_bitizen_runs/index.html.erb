@@ -29,7 +29,7 @@
               <td class="py-2 px-4 border"><%= star_bitizen_run.scu %></td>
                             <td class="py-2 px-4 border"><%= star_bitizen_run.buy_location_name %> --> <%= star_bitizen_run.sell_location_name %></td>
                                                         <td class="py-2 px-4 border"><%= star_bitizen_run.profit %></td>
-          <td class="py-2 px-4 border"><%= star_bitizen_run.created_at.strftime('%Y-%m-%d') %></td>
+                                                        <td class="py-2 px-4 border"><%= star_bitizen_run.updated_at.in_time_zone('Pacific Time (US & Canada)').strftime('%Y-%m-%d %I:%M %p %Z') %></td>
           <td class="py-2 px-4 border">
             <%= link_to 'Edit', edit_admin_star_bitizen_run_path(star_bitizen_run), class: 'text-blue-500 hover:underline' %> |
             <%= link_to 'Delete', admin_star_bitizen_run_path(star_bitizen_run), method: :delete, data: { confirm: 'Are you sure?' }, class: 'text-red-500 hover:underline' %>

@@ -98,6 +98,7 @@ class TradeService
       
       location_name = user_ship.location_name
       location = Location.find_by!(name: location_name)
+    
 
       facility = ProductionFacility.where("location_name ILIKE ? AND commodity_name = ?", "%#{location.name}%", commodity.name).first
     
@@ -106,6 +107,7 @@ class TradeService
       elsif facility.inventory <= 0
         raise InsufficientInventoryError, "#{facility.location_name} Facility does not have enough inventory to sell."
       end
+
 
       # ✅ Calculate the maximum affordable SCU based on wallet and cargo space
       max_affordable_scu = (shard_user.wallet_balance / facility.local_buy_price.to_f).floor
@@ -205,11 +207,13 @@ class TradeService
     
       # ✅ Find the specified commodity
       commodity = Commodity.where("name ILIKE ?", commodity_name).first!
-      facility = ProductionFacility.find_by(location_name: location.name, commodity_id: commodity.id)
+
+      facility = ProductionFacility.where("location_name ILIKE ? AND commodity_name = ?", "%#{location.name}%", commodity.name).first
     
-      # ✅ Check if the facility is buying this commodity
-      if facility.nil? || facility.local_sell_price.nil? || facility.local_sell_price <= 0
-        return { status: 'error', message: "#{location_name} is not buying #{commodity_name}." }
+      if facility.nil?
+        raise InsufficientInventoryError, "No matching facility found for #{location.name} and #{commodity.name}."
+      elsif facility.inventory == facility.max_inventory
+        raise InsufficientInventoryError, "#{facility.location_name} Facility does not have enough inventory to sell."
       end
     
       cargo_to_sell = user_ship.user_ship_cargos.find_by(commodity_id: commodity.id)
@@ -228,6 +232,23 @@ class TradeService
         shard_user.update_credits(total_revenue)
     
         cargo_to_sell.scu -= scu_to_sell
+
+        star_bitizen_run = StarBitizenRun.find_by(
+          user: user,
+          user_ship: user_ship,
+          commodity_name: cargo_to_sell.commodity.name,
+          local_sell_price: nil,
+          shard: shard
+        )
+
+                # Update trade record
+      star_bitizen_run.update!(
+        local_sell_price: facility.local_sell_price,
+        sell_location_name: location.name,
+        profit: total_revenue,
+        scu: scu_to_sell
+      )
+
         cargo_to_sell.scu <= 0 ? cargo_to_sell.destroy! : cargo_to_sell.save!
     
         user_ship.remove_cargo_scu(scu_to_sell)
