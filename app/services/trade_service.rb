@@ -107,7 +107,7 @@ class TradeService
       elsif facility.inventory <= 0
         raise InsufficientInventoryError, "#{facility.location_name} Facility does not have enough inventory to sell."
       end
-
+      
 
       # ✅ Calculate the maximum affordable SCU based on wallet and cargo space
       max_affordable_scu = (shard_user.wallet_balance / facility.local_buy_price.to_f).floor

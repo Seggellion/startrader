@@ -16,6 +16,7 @@
     <thead>
       <tr>
         <th class="py-2 px-4 border">Facility</th>
+        <th class="py-2 px-4 border">Location</th>
         <th class="py-2 px-4 border">Commodity</th>
         <th class="py-2 px-4 border">base buy / sell</th>
         <th class="py-2 px-4 border">local buy / sell</th>
@@ -26,6 +27,7 @@
       <% @production_facilities.each do |production_facility| %>
         <tr>
           <td class="py-2 px-4 border"><%= production_facility.facility_name %></td>
+          <td class="py-2 px-4 border"><%= production_facility.location_name %></td>
           <td class="py-2 px-4 border"><%= production_facility.commodity_name %></td>
           <td class="py-2 px-4 border"><%= production_facility.price_buy %> / <%= production_facility.price_sell %></td>
           <td class="py-2 px-4 border"><span style="color:red;"><%= production_facility.local_buy_price %></span> / <span style="color:green;"><%= production_facility.local_sell_price %></span></td>

@@ -34,7 +34,7 @@ module Api
       wallet_balance = trade_params[:wallet_balance]
       commodity_name = trade_params[:commodity_name]
       scu = trade_params[:scu]
-    shard = trade_params[:shard]
+      shard = trade_params[:shard]
 
 
       if username.blank? || shard.blank?

@@ -21,6 +21,8 @@ module Admin
   
       def edit
         @user_ship = UserShip.find_by_id(params[:id])
+        @user_ship_cargos = @user_ship.user_ship_cargos.includes(:commodity)
+
       end
   
       def update

@@ -36,6 +36,38 @@
       </div>
       
 
+      <!-- 🚀 Cargo List -->
+      <div class="bg-white p-6 rounded shadow mt-6">
+        <h2 class="text-xl font-semibold mb-4">Cargo on This Ship</h2>
+  
+        <% if @user_ship.user_ship_cargos.any? %>
+          <table class="w-full border-collapse border border-gray-300">
+            <thead>
+              <tr class="bg-gray-200">
+                <th class="border p-2 text-left">Commodity</th>
+                <th class="border p-2 text-left">SCU</th>
+                <th class="border p-2 text-left">Price</th>
+                <th class="border p-2 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @user_ship.user_ship_cargos.each do |cargo| %>
+                <tr>
+                  <td class="border p-2"><%= cargo.commodity.name %></td>
+                  <td class="border p-2"><%= cargo.scu %> SCU</td>
+                    <td class="border p-2"><%= cargo.buy_price %></td>
+                  <td class="border p-2">
+                    <%= link_to "Remove", admin_user_ship_cargo_path(cargo), method: :delete, data: { confirm: "Are you sure?" }, class: "text-red-600 hover:underline" %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% else %>
+          <p class="text-gray-500">No cargo is currently stored on this ship.</p>
+        <% end %>
+      </div>
+
       
     </div>
 
