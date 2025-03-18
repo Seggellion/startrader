@@ -137,21 +137,39 @@ class TradeService
     
         user_ship.add_cargo_scu(scu)
 
-        # Create StarBitizenRun record
-        star_bitizen_run = StarBitizenRun.create!(
-          user: user,
-          commodity: commodity,
-          commodity_name: commodity.name,
-          local_buy_price: facility.local_buy_price,
-          local_sell_price: nil, # Will be updated later
-          scu: scu,
-          buy_location_name: location.name,
-          sell_location_name: nil, # Will be updated later
-          profit: 0,
-          user_ship_cargo_id: user_ship.user_ship_cargos.last.id,
-          user_ship_id: user_ship.id,
-          shard: shard # Track game shard
-        )
+# Find existing StarBitizenRun for the same commodity, ship, and buy location
+star_bitizen_run = StarBitizenRun.find_by(
+  user: user,
+  user_ship: user_ship,
+  commodity_name: commodity.name,
+  buy_location_name: location.name,
+  shard: shard
+)
+
+    if star_bitizen_run
+      # ✅ Update existing StarBitizenRun record
+      star_bitizen_run.update!(
+        local_buy_price: facility.local_buy_price, # Update to latest buy price
+        scu: star_bitizen_run.scu + scu, # Add to existing SCU
+        profit: 0 # Reset profit until sold
+      )
+    else
+      # ✅ Create new StarBitizenRun record if none exists
+      star_bitizen_run = StarBitizenRun.create!(
+        user: user,
+        commodity: commodity,
+        commodity_name: commodity.name,
+        local_buy_price: facility.local_buy_price,
+        local_sell_price: nil, # Will be updated later
+        scu: scu,
+        buy_location_name: location.name,
+        sell_location_name: nil, # Will be updated later
+        profit: 0,
+        user_ship_cargo_id: user_ship.user_ship_cargos.last.id,
+        user_ship_id: user_ship.id,
+        shard: shard # Track game shard
+      )
+    end
 
         facility.update!(inventory: facility.inventory - scu)
       end
@@ -208,8 +226,8 @@ class TradeService
       # ✅ Find the specified commodity
       commodity = Commodity.where("name ILIKE ?", commodity_name).first!
 
-      facility = ProductionFacility.where("location_name ILIKE ? AND commodity_name = ?", "%#{location.name}%", commodity.name).first
-    
+      facility = ProductionFacility.where("location_name ILIKE ? AND commodity_name = ? AND price_sell > 0", "%#{location.name}%", commodity.name).first
+      
       if facility.nil?
         raise InsufficientInventoryError, "No matching facility found for #{location.name} and #{commodity.name}."
       elsif facility.inventory == facility.max_inventory
@@ -229,6 +247,7 @@ class TradeService
       total_revenue = facility.local_sell_price.to_f * scu_to_sell
     
       ActiveRecord::Base.transaction do
+        
         shard_user.update_credits(total_revenue)
     
         cargo_to_sell.scu -= scu_to_sell
@@ -242,12 +261,14 @@ class TradeService
         )
 
                 # Update trade record
-      star_bitizen_run.update!(
-        local_sell_price: facility.local_sell_price,
-        sell_location_name: location.name,
-        profit: total_revenue,
-        scu: scu_to_sell
-      )
+                if star_bitizen_run.present?
+                  star_bitizen_run.update!(
+                    local_sell_price: facility.local_sell_price,
+                    sell_location_name: location.name,
+                    profit: total_revenue,
+                    scu: scu_to_sell
+                  )
+                end
 
         cargo_to_sell.scu <= 0 ? cargo_to_sell.destroy! : cargo_to_sell.save!
     
