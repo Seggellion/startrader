@@ -98,7 +98,12 @@ class TradeService
       
       location_name = user_ship.location_name
       location = Location.find_by!(name: location_name)
-    
+    puts user
+    puts commodity
+    puts shard_user
+    puts user_ship
+    puts location_name
+    puts location
 
       facility = ProductionFacility.where("location_name ILIKE ? AND commodity_name = ?", "%#{location.name}%", commodity.name).first
     
@@ -187,6 +192,8 @@ star_bitizen_run = StarBitizenRun.find_by(
         message: "Purchased #{scu} SCU of #{commodity_name} at #{location_name}. Loading will complete in #{loading_time / 60} minutes."
       }
     end    
+
+   # I need to build something that can split a starbitizenrun if they decided to split their cargo.
 
     def self.sell(username:, wallet_balance:, commodity_name: nil, scu: nil, shard:)
       user = User.where("LOWER(username) = ?", username.downcase).first!

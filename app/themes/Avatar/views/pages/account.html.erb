@@ -2,7 +2,11 @@
 <% if current_user %>
   <h1 class="h1">Account</h1>
   <%= current_user.username %>
+  
   <img class="h-10 w-10" src="<%= url_for(current_user.avatar) %>" alt="<%= current_user.username %>">
+
+
+  
 
   <table class="transaction-table">
     <thead>
