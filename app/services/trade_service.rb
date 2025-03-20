@@ -98,12 +98,6 @@ class TradeService
       
       location_name = user_ship.location_name
       location = Location.find_by!(name: location_name)
-    puts user
-    puts commodity
-    puts shard_user
-    puts user_ship
-    puts location_name
-    puts location
 
       facility = ProductionFacility.where("location_name ILIKE ? AND commodity_name = ?", "%#{location.name}%", commodity.name).first
     
