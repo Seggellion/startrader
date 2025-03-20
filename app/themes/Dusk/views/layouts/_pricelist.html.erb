@@ -17,6 +17,8 @@
           <td><%= facility.commodity.name %></td>
           <td><%= facility.local_buy_price.present? ? "#{facility.local_buy_price} AEC" : "N/A" %></td>
           <td><%= facility.local_sell_price.present? ? "#{facility.local_sell_price} AEC" : "N/A" %></td>
+          <td><%= facility.inventory.present? ? "#{facility.inventory} SCU" : "N/A" %> / <%= facility.max_inventory.present? ? "#{facility.max_inventory} SCU" : "N/A" %></td>
+
         </tr>
       <% end %>
     </tbody>

@@ -1,3 +1,31 @@
 body{
     background-color:grey;
 }
+
+h1 {
+    font-size: 1.5em;
+}
+h2 {
+    font-size: 1.25em;
+}
+table {
+    margin-bottom: 2em;
+    padding-top: 1em;
+}
+thead {
+    text-align: left;
+}
+th {
+    border-top: thin solid rgba(0,0,0,0.25);
+    border-bottom: thin solid rgba(0,0,0,0.25);
+    padding-top: 0.25em;
+    padding-bottom: 0.25em;
+}
+th:not(:first-child),
+td:not(:first-child) {
+    padding-left: 1em;
+    padding-right: 1em;
+}
+td {
+    border-bottom: thin dotted rgba(0,0,0,0.25);
+}

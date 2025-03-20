@@ -44,9 +44,7 @@
 
    <% if Setting.get('telephone').present? %>
   <%= link_to Setting.get('telephone'), "tel:#{Setting.get('telephone').gsub(/\s+/, '')}", title: "Call Us", aria_label: "Telephone Number #{Setting.get('telephone')}" %>
-<% else %>
-  <!-- You can choose to render nothing or display a fallback message -->
-  <p>Telephone number not available</p>
+
 <% end %>
 
  </div>
