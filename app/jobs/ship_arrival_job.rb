@@ -19,7 +19,8 @@ class ShipArrivalJob < ApplicationJob
         location_name: travel.to_location.name,
         status: status
       )
-      TwitchNotificationService.notify_arrival(user.username, travel.to_location.name)
+      
+      TwitchNotificationService.notify_arrival(travel.user.username, travel.to_location.name)
 
       # Clean up the completed ShipTravel record
       travel.destroy

@@ -97,9 +97,11 @@ module Api
               if user_ship.nil?
                 return render json: { error: "User ship not found or does not belong to the specified user." }, status: :not_found
               end
-        
-              if user_ship.active_travel.nil?
-                return render json: { error: "No active travel to cancel." }, status: :unprocessable_entity
+
+              active_travel = user_ship.active_travel
+
+              if active_travel.present?
+                active_travel.destroy
               end
         
               user_ship.active_travel.destroy
