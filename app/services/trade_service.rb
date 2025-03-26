@@ -142,7 +142,8 @@ star_bitizen_run = StarBitizenRun.find_by(
   user_ship: user_ship,
   commodity_name: commodity.name,
   buy_location_name: location.name,
-  shard: shard
+  shard: shard,
+  local_sell_price: nil
 )
 
     if star_bitizen_run
