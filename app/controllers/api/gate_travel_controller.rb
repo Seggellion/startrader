@@ -4,7 +4,7 @@ module Api
 
       def gate_travel
         username = params[:username]
-        user = User.find_by!(username: username)
+        user = User.where("LOWER(username) = ?", username.downcase).first!
   
         # Find the user's most recently updated ship
         user_ship = user.user_ships.order(updated_at: :desc).first
