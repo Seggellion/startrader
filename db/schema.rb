@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_03_09_175355) do
+ActiveRecord::Schema[8.0].define(version: 2025_03_28_014408) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -334,7 +334,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_09_175355) do
   end
 
   create_table "production_facilities", force: :cascade do |t|
-    t.bigint "commodity_id", null: false
     t.string "facility_name"
     t.integer "production_rate"
     t.integer "consumption_rate"
@@ -365,8 +364,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_09_175355) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "location_name"
-    t.index ["api_id"], name: "index_production_facilities_on_api_id"
-    t.index ["commodity_id"], name: "index_production_facilities_on_commodity_id"
+    t.index ["api_id"], name: "index_production_facilities_on_api_id", unique: true
     t.index ["location_name"], name: "index_production_facilities_on_location_name"
   end
 
@@ -676,7 +674,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_09_175355) do
   add_foreign_key "npcs", "shards"
   add_foreign_key "pages", "categories"
   add_foreign_key "pages", "users"
-  add_foreign_key "production_facilities", "commodities"
   add_foreign_key "ship_travels", "locations", column: "from_location_id"
   add_foreign_key "ship_travels", "locations", column: "to_location_id"
   add_foreign_key "ship_travels", "user_ships"
