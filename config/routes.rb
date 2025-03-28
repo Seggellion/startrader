@@ -23,6 +23,7 @@ Rails.application.routes.draw do
   get 'playguide/atlas', to: 'playguide#atlas', defaults: { slug: 'atlas' }
   get 'playguide/atlas/:slug', to: 'playguide#atlas', as: 'atlas_page'
   post 'set_theme', to: 'themes#set_theme', as: :set_theme
+  get '/shard/:name', to: 'star_bitizen_runs#shard_index', as: :shard_runs
 
   # Menu & Menu Items
   resources :menus, only: [:index, :new, :create, :edit, :update, :destroy] do
