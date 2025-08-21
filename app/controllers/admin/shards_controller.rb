@@ -61,7 +61,8 @@ module Admin
       def shard_params
         params.require(:shard).permit(
           :name,
-          :region        
+          :region,
+          :channel_uuid        
         )
       end
       

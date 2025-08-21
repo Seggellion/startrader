@@ -17,3 +17,6 @@ pin "ThreeJSInitializer", to: "modules/ThreeJSInitializer.js"
 pin "CelestialBody", to: "modules/CelestialBody.js"
 pin "AnimationController", to: "modules/animation.js"
 pin "OrbitCreator", to: "modules/OrbitCreator.js"
+pin "@rails/actioncable", to: "actioncable.esm.js"
+pin_all_from "app/javascript/channels", under: "channels"
+

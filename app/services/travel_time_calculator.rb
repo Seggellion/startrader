@@ -10,6 +10,7 @@ class TravelTimeCalculator
     def calculate
         
       distance = @from_location.distance_to(@to_location, @start_tick)
+      
       base_speed = @ship.speed
       
       (distance / base_speed).ceil

@@ -1,5 +1,5 @@
 class EventsController < ApplicationController
-  before_action :prepend_theme_view_path
+  before_action :prepend_theme_view_path, except: [:send_check_status]
     def index
         @events = Event.all.order(start_time: :asc)
       end
@@ -8,7 +8,11 @@ class EventsController < ApplicationController
         @event = Event.friendly.find(params[:slug])
       end
 
-
+  def send_check_status
+    
+    RabbitmqSender.send_event(params[:streamer])
+    redirect_back fallback_location: root_path, notice: "Message sent to #{params[:streamer]}"
+  end
 
       private
     

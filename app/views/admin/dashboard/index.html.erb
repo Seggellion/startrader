@@ -17,8 +17,34 @@
 <div class="data-sync">
     <%= button_to 'Import Ships', import_ships_admin_data_path, method: :post %>
 
+<%= button_to "Check Status",
+              send_check_status_path(streamer: "Seggellion"),
+              method: :post,
+              class: "bg-blue-500 text-white px-4 py-2 rounded" %>
 
+                
     </div>
+
+
+<div class="controls">
+    <!-- e.g., app/views/admin/dashboard.html.erb -->
+<% running = TickControl.instance.running? %>
+
+<% if running %>
+  <%= button_to "Stop ticks", admin_stop_tick_path,
+        method: :post,
+        data: { turbo_confirm: "Stop the tick engine?" },
+        class: "bg-red-500 text-white px-4 py-2 rounded" %>
+<% else %>
+  <%= button_to "Start ticks", admin_start_tick_path,
+        method: :post,
+        class: "bg-blue-500 text-white px-4 py-2 rounded" %>
+<% end %>
+
+<p>Status: <strong><%= running ? "Running" : "Stopped" %></strong></p>
+</div>
+
+
 
   </div>
 

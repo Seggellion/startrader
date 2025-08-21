@@ -15,6 +15,12 @@
       <%= form.text_field :region, class: 'form-input mt-1 block w-full' %>
     </div>
   
+          <div class="mb-4">
+      <%= form.label :channel_uuid, 'UUID', class: 'block text-gray-700' %>
+      <%= form.text_field :channel_uuid, class: 'form-input mt-1 block w-full' %>
+    </div>
+
+    
     
       <div class="mb-4 flex justify-end">
         <%= form.submit "Save", class: "bg-blue-500 text-white px-4 py-2 rounded cursor-pointer" %>

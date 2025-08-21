@@ -63,8 +63,8 @@ module Api
 
     def status
 
-      username = params.dig(:trade, :username) || params[:username] 
-      shard = params[:shard] 
+      username = params.dig(:trade, :username) || params[:username]       
+      shard = params[:shard_uuid] 
       wallet_balance = params[:wallet_balance]  # ✅ Get AEC balance from Twitch bot
 
       result = TradeService.status(username: username, wallet_balance: wallet_balance, shard: shard)

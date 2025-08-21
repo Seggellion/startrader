@@ -1,0 +1,14 @@
+# app/channels/ticks_channel.rb
+class TicksChannel < ApplicationCable::Channel
+  def subscribed
+    stream_from "ticks"
+    # Immediately send current status so clients know whether to render
+    running = Tick.generator_running?
+    ActionCable.server.broadcast("ticks", {
+      type: "status",
+      running: running,
+      tick: Tick.current,
+      seconds_per_tick: Tick::SECONDS_PER_TICK
+    })
+  end
+end

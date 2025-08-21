@@ -11,9 +11,13 @@ class TradeService
     class ShipNotFoundError < StandardError; end
   
     def self.status(username:, wallet_balance: nil, shard:)
+      
+      shard = Shard.find_by(channel_uuid: shard)
       user = find_or_create_user(username, shard)
       
-      shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard.downcase).first
+      shard_user =user.shard_users.find_by(shard_id:shard.id)
+
+
 
       if wallet_balance.present?
         shard_user.update!(wallet_balance: wallet_balance)
@@ -23,26 +27,17 @@ class TradeService
         shard_user.update!(wallet_balance: 15000)
       end
 
+      
       # ✅ Check if user already has a ship
       user_ship = shard_user.user_ships.order(updated_at: :desc).first
+      
       if user_ship.nil?
-        # ✅ If no ship exists, give them a Caterpillar ship
-        caterpillar_ship = Ship.find_by(slug: 'caterpillar')  # Ensure this ship model exists
-    
-        if caterpillar_ship.nil?
-          raise ShipNotFoundError, "The Caterpillar ship is missing from the database."
-        end
-    
-        user_ship = UserShip.create!(
-          user: user,
-          ship: caterpillar_ship,
-          location_name: 'Lorville', # Default starting location
-          total_scu: 576,  # Caterpillar has 576 SCU
-          used_scu: 0,
-          shard_name: shard 
-        )
-    
-        Rails.logger.info "Caterpillar ship granted to user: #{username}"
+        return {
+          status: 'success',
+          wallet_balance: shard_user.wallet_balance,
+          ship: "No Ship",
+          cargo: []
+        }
       end
     
       # Gather Cargo Information
@@ -66,15 +61,16 @@ class TradeService
           total_scu: user_ship.total_scu,
           used_scu: user_ship.used_scu,
           available_cargo_space: user_ship.available_cargo_space,
-          travel_status: ship_travel ? 'In Transit' : 'Stationary',
+          travel_status: user_ship.status,
           from_location: ship_travel&.from_location&.name,
           to_location: ship_travel&.to_location&.name,
           arrival_tick: ship_travel&.arrival_tick,
           current_tick: current_tick,
-          time_remaining: ship_travel ? [ship_travel.arrival_tick - current_tick, 0].max : nil
+          time_remaining: ship_travel&.seconds_remaining(current_tick)
         },
         cargo: cargo,
       }
+      
     end
     
 
@@ -294,8 +290,7 @@ star_bitizen_run = StarBitizenRun.find_by(
         
         # ✅ Find user case-insensitively
         user = User.where("LOWER(username) = ?", normalized_username).first
-        shard = Shard.where("LOWER(name) = ?", shard).first
- 
+         
         # ✅ Create user only if not found
         unless user
           user = User.create!(
@@ -308,7 +303,7 @@ star_bitizen_run = StarBitizenRun.find_by(
         end
         
 
-        unless user.shard_users&.find_by(shard_name: shard.name)
+        unless user.shard_users.find_by(shard_id:shard.id)
 
           ShardUser.create!(user_id: user.id, shard_id: shard.id, shard_name: shard.name)
           

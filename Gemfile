@@ -66,7 +66,7 @@ gem 'sitemap_generator'
 gem 'omniauth-twitch'
 gem 'delayed_job_active_record'
 gem 'daemons'
-
+gem 'bunny'
 
 
 group :development, :test do
@@ -85,3 +85,5 @@ group :test do
   gem "capybara"
   gem "selenium-webdriver"
 end
+
+gem "solid_cable", "~> 3.0"

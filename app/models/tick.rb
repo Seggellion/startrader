@@ -5,6 +5,14 @@ class Tick < ApplicationRecord
 
   after_save :update_market_prices, if: :saved_change_to_current_tick?
 
+ SECONDS_PER_TICK = Setting.get('seconds_per_tick').to_i
+
+ SIMULATED_HOURS_PER_TICK  = Setting.get('hours_per_tick').to_i * 3600
+
+ 
+  def self.seconds_per_tick = SECONDS_PER_TICK
+    def self.hours_per_tick = SIMULATED_HOURS_PER_TICK
+
   def self.current
     first_or_create(current_tick: 0, sequence: 1).current_tick
   end
@@ -18,11 +26,17 @@ class Tick < ApplicationRecord
   end
 
   def self.increment!
+    
     tick = first_or_create(current_tick: 0, sequence: 1)
     ShipArrivalJob.perform_later
     tick.update!(current_tick: tick.current_tick + 1, sequence: tick.sequence + 1)
     tick.process_tick # Runs optimized processing logic
     tick.send(:correct_ship_statuses) if tick.current_tick % 3 == 0
+  ActionCable.server.broadcast("tick", {
+    type: "tick",
+    tick: Tick.current,
+    seconds_per_tick: Tick::SIMULATED_HOURS_PER_TICK
+  })
   end
 
   def process_tick

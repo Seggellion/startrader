@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_03_28_014408) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_19_034413) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -434,6 +434,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_28_014408) do
     t.string "region", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "channel_uuid"
   end
 
   create_table "ship_travels", force: :cascade do |t|
@@ -444,7 +445,15 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_28_014408) do
     t.integer "arrival_tick", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "total_duration_ticks", default: 0, null: false
+    t.boolean "is_paused", default: false, null: false
+    t.integer "paused_at_tick"
+    t.integer "remaining_ticks_from_arrival"
+    t.integer "interdict_window_percent", default: 15, null: false
+    t.integer "interdiction_count", default: 0, null: false
+    t.integer "last_interdicted_tick"
     t.index ["from_location_id"], name: "index_ship_travels_on_from_location_id"
+    t.index ["is_paused", "departure_tick", "arrival_tick"], name: "idx_on_is_paused_departure_tick_arrival_tick_218f541b33"
     t.index ["to_location_id"], name: "index_ship_travels_on_to_location_id"
     t.index ["user_ship_id"], name: "index_ship_travels_on_user_ship_id"
   end
@@ -608,6 +617,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_28_014408) do
     t.index ["category_id"], name: "index_testimonials_on_category_id"
   end
 
+  create_table "tick_controls", force: :cascade do |t|
+    t.boolean "running", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "ticks", force: :cascade do |t|
     t.integer "sequence"
     t.integer "current_tick"
@@ -639,7 +654,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_28_014408) do
     t.datetime "updated_at", null: false
     t.string "location_name"
     t.string "status", default: "docked", null: false
+    t.string "ship_slug"
+    t.string "guid"
+    t.integer "shard_id"
+    t.bigint "shard_user_id"
+    t.index ["guid"], name: "index_user_ships_on_guid", unique: true
     t.index ["location_name"], name: "index_user_ships_on_location_name"
+    t.index ["shard_id"], name: "index_user_ships_on_shard_id"
+    t.index ["shard_user_id"], name: "index_user_ships_on_shard_user_id"
     t.index ["ship_id"], name: "index_user_ships_on_ship_id"
     t.index ["user_id"], name: "index_user_ships_on_user_id"
   end
@@ -684,6 +706,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_28_014408) do
   add_foreign_key "star_bitizen_runs", "users"
   add_foreign_key "user_ship_cargos", "commodities"
   add_foreign_key "user_ship_cargos", "user_ships"
+  add_foreign_key "user_ships", "shard_users"
+  add_foreign_key "user_ships", "shards"
   add_foreign_key "user_ships", "ships"
   add_foreign_key "user_ships", "users"
 end

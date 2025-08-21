@@ -5,7 +5,7 @@ class ShipArrivalJob < ApplicationJob
     current_tick = Tick.current
   
     # Find all ships scheduled to arrive at or before the current tick
-    ShipTravel.where("arrival_tick <= ?", current_tick).find_each do |travel|
+ShipTravel.where("arrival_tick <= ?", current_tick).where.not(arrival_tick: 0).find_each do |travel|
       # Determine the appropriate status based on the location classification
       status = case travel.to_location.classification
                when "space_station" then "docked"
@@ -20,7 +20,10 @@ class ShipArrivalJob < ApplicationJob
         status: status
       )
       
-      TwitchNotificationService.notify_arrival(travel.user.username, travel.to_location.name)
+     # TwitchNotificationService.notify_arrival(travel.user.username, travel.to_location.name)
+
+      RabbitmqSender.send_ship_report(travel)
+    
 
       # Clean up the completed ShipTravel record
       travel.destroy

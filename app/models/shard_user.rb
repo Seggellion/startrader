@@ -8,6 +8,8 @@ class ShardUser < ApplicationRecord
   store :stats, coder: JSON
   store :last_location, coder: JSON
 
+  has_many :user_ships
+  has_many :ships, through: :user_ships
 
   before_save :initialize_serialized_fields # ✅ Runs before every save
 
@@ -37,10 +39,7 @@ class ShardUser < ApplicationRecord
     end
   end
 
-  # Returns all UserShip records where the shard_name matches this ShardUser's shard.name
-  def user_ships  
-    UserShip.where(user_id: user_id, shard_name: shard_name.downcase)
-  end
+
 
   def update_credits(amount)
     new_balance = wallet_balance.to_f + amount.to_f

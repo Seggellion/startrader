@@ -22,7 +22,7 @@ module Api
       private
   
       def set_shard_user
-        uid = params[:id].delete('-') # Remove dashes from UUID
+        uid = params[:id]
         shard_id = params[:shard_id] # Shard association
         karma_adjustment = params[:karma].to_i
         fame_adjustment = params[:fame].to_i

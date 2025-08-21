@@ -21,7 +21,7 @@
       <% @space_stations.each do |space_station| %>
         <tr>
           <td class="py-2 px-4 border"><%= space_station.name %></td>
-          <td class="py-2 px-4 border"><%= space_station.parent.name %></td>
+          <td class="py-2 px-4 border"><%= space_station.parent&.name %></td>
           <td class="py-2 px-4 border"><%= space_station.created_at.strftime('%Y-%m-%d') %></td>
           <td class="py-2 px-4 border">
             <%= link_to 'Edit', edit_admin_space_station_path(space_station), class: 'text-blue-500 hover:underline' %> |

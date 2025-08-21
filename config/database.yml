@@ -1,20 +1,36 @@
-
 default: &default
   adapter: postgresql
   encoding: unicode
-
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   username: <%= ENV['DB_USERNAME'] %>
   password: <%= ENV['DB_PASSWORD'] %>
 
 development:
-  <<: *default
-  database: star_trader_development
+  primary:
+    <<: *default
+    database: star_trader_development
+  cable:
+    <<: *default
+    database: star_trader_development
+    schema_search_path: "cable,public"
+    migrations_paths: db/cable_migrate
 
 test:
-  <<: *default
-  database: star_trader_test
+  primary:
+    <<: *default
+    database: star_trader_test
+  cable:
+    <<: *default
+    database: star_trader_test
+    schema_search_path: "cable,public"
+    migrations_paths: db/cable_migrate
 
 production:
-  <<: *default
-  database: star_trader_production
+  primary:
+    <<: *default
+    database: star_trader_production
+  cable:
+    <<: *default
+    database: star_trader_production
+    schema_search_path: "cable,public"
+    migrations_paths: db/cable_migrate

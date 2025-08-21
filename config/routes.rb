@@ -25,6 +25,8 @@ Rails.application.routes.draw do
   post 'set_theme', to: 'themes#set_theme', as: :set_theme
   get '/shard/:name', to: 'star_bitizen_runs#shard_index', as: :shard_runs
 
+  post "/send_check_status", to: "events#send_check_status", as: :send_check_status
+
   # Menu & Menu Items
   resources :menus, only: [:index, :new, :create, :edit, :update, :destroy] do
     resources :menu_items, only: [:new, :create, :edit, :update, :destroy] do
@@ -76,7 +78,13 @@ Rails.application.routes.draw do
 
   # API Namespace
   namespace :api do
-    resources :ship_travel, only: [:create]
+    resources :ship_travel, only: [:create, :show]
+
+    post 'user_ships/:guid/interdict', to: 'ship_travel#interdict_by_guid', as: :interdict_by_guid
+    post 'user_ships/:guid/resume',    to: 'ship_travel#resume_by_guid',    as: :resume_by_guid
+
+
+    get "interdictable_ships", to: "ship_travel#interdictable_index"
     get 'location/:user_ship_id', to: 'travel#location', as: 'location'
     post 'distance_calculator', to: 'distance_calculator#calculate'
     post 'set_tick', to: 'tick#set'
@@ -125,6 +133,9 @@ Rails.application.routes.draw do
   # Admin Namespace
   namespace :admin do
     root to: 'dashboard#index'
+  post "tick/start", to: "tick_controls#start", as: :start_tick
+  post "tick/stop",  to: "tick_controls#stop",  as: :stop_tick
+    resources :ships, controller: :vehicles, as: :ships
 
     resources :planets, :user_ships, :user_ship_cargos, :star_bitizen_runs, :shards, :shard_users, :ship_travels, :cities, :outposts, :terminals, :moons, :vehicles, :space_stations, :star_systems, :production_facilities, only: [:index, :new, :create, :edit, :update, :destroy] do
       collection do
@@ -150,7 +161,7 @@ Rails.application.routes.draw do
       end
     end
 
-    resources :locations, :articles, :testimonials, :pages, :posts, :comments, :users, :categories, :events, :settings, :services, :contact_messages, only: [:index, :show, :create, :edit, :update, :destroy]
+    resources :locations, :articles, :testimonials, :pages, :posts, :comments, :users, :categories, :events, :settings, :services, :contact_messages, only: [:index, :show, :create, :edit, :update, :destroy, :new]
 
     resources :articles, :pages, :services do
       member do
