@@ -2,8 +2,6 @@ default: &default
   adapter: postgresql
   encoding: unicode
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  username: <%= ENV['DB_USERNAME'] %>
-  password: <%= ENV['DB_PASSWORD'] %>
 
 development:
   primary:
@@ -27,10 +25,9 @@ test:
 
 production:
   primary:
-    <<: *default
-    database: star_trader_production
+    url: <%= ENV["DATABASE_URL"] %>
+    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   cable:
-    <<: *default
-    database: star_trader_production
+    url: <%= ENV["DATABASE_URL"] %>
     schema_search_path: "cable,public"
     migrations_paths: db/cable_migrate
