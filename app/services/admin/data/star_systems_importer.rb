@@ -114,14 +114,28 @@ module Admin
         end
   
         # 🌐 Fetch JSON data from the API
-        def self.fetch_api_data(url)
-          response = Net::HTTP.get(URI(url))
-          JSON.parse(response)
-        rescue => e
-          Rails.logger.error "Failed to fetch data (LocationsImporter): #{e.message}"
-          nil
-        end
-  
+def self.fetch_api_data(url)
+  uri = URI(url)
+  req = Net::HTTP::Get.new(uri)
+  req['User-Agent'] = 'StarTraderBot/1.0'
+  req['Accept'] = 'application/json'
+
+  res = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https') do |http|
+    http.request(req)
+  end
+
+  unless res.is_a?(Net::HTTPSuccess)
+    Rails.logger.error "Failed request: #{res.code} #{res.message}"
+    Rails.logger.error "Response body (truncated): #{res.body[0..200]}"
+    return nil
+  end
+
+  JSON.parse(res.body)
+rescue => e
+  Rails.logger.error "Failed to fetch data (StarSystemsImporter): #{e.message}"
+  nil
+end
+
           
 
 
