@@ -119,6 +119,8 @@ def self.fetch_api_data(url)
   req = Net::HTTP::Get.new(uri)
   req['User-Agent'] = 'StarTraderBot/1.0'
   req['Accept'] = 'application/json'
+  req['Authorization'] = "Bearer #{Setting.get("uex_api_token")}"
+
 
   res = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https') do |http|
     http.request(req)
