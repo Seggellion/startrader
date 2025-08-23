@@ -50,7 +50,7 @@ user_ship = resolve_user_ship_by_guid_or_slug(
       travel = TravelService.new(user_ship: user_ship, to_location: destination).call
       render json: {
         status:        "travel_started",
-        channel_name: shard.name
+        channel_name: shard.name,
         user_ship_id:  user_ship.id,
         destination:   destination.name,
         current_tick:  Tick.current,
