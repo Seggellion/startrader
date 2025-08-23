@@ -50,6 +50,7 @@ user_ship = resolve_user_ship_by_guid_or_slug(
       travel = TravelService.new(user_ship: user_ship, to_location: destination).call
       render json: {
         status:        "travel_started",
+        channel_name: shard.name
         user_ship_id:  user_ship.id,
         destination:   destination.name,
         current_tick:  Tick.current,
@@ -318,40 +319,57 @@ user_ship = resolve_user_ship_by_guid_or_slug(
       shard
     end
 
-    def resolve_user_ship_by_guid_or_slug(user:, shard:, ship_guid:, ship_slug:)
-      # 1) Try to find an existing hull by GUID
-      
-      if ship_guid.present?
-        if (existing = user.user_ships.find_by(guid: ship_guid))
-          # Ensure shard attribution stays consistent if you track by shard_id/name
-          if shard && existing.shard_id != shard.id
-            existing.update!(shard_id: shard.id, shard_name: shard.name)
-          end
-          return existing
+   def resolve_user_ship_by_guid_or_slug(user:, shard:, ship_guid:, ship_slug:)
+  # If a shard is provided, ensure a ShardUser exists (create if missing)
+  shard_user =
+    if shard.present?
+      # Prefer scoping through associations if available; otherwise fallback to the model
+      (user.respond_to?(:shard_users) ? user.shard_users : ShardUser)
+        .find_or_create_by!(user_id: user.id, shard_id: shard.id) do |su|
+          # Add any default attributes for new ShardUser here (e.g., wallet_balance)
+          su.shard_name = shard.name if su.respond_to?(:shard_name)
         end
-      end
-
-      # 2) No existing hull; we must have a slug to create from the catalog
-      raise ActiveRecord::RecordInvalid, "ship_slug is required when ship_guid not found." if ship_slug.blank?
-
-      ship = Ship.find_by(slug: ship_slug)
-      raise ActiveRecord::RecordNotFound, "Ship not found for slug #{ship_slug.inspect}." if ship.nil?
-
-
-      shard_user = ShardUser.find_by(shard_id: shard.id, user_id: user.id)
-      # 3) Create a new UserShip derived from the catalog row
-      user.user_ships.create!(
-        guid:          ship_guid.presence || SecureRandom.uuid,
-        ship:          ship,
-        ship_slug:     ship.slug, 
-        total_scu:     ship.scu,
-        used_scu:      0,
-        shard_id:      shard&.id,
-        shard_name:    shard&.name,
-        shard_user_id: shard_user.id,   
-        status:        "docked"
-      )
+    else
+      nil
     end
+
+  # 1) Try to find an existing hull by GUID
+  if ship_guid.present?
+    if (existing = user.user_ships.find_by(guid: ship_guid))
+      # Keep shard attribution consistent
+      if shard.present?
+        changes = {}
+        changes[:shard_id]      = shard.id      if existing.shard_id      != shard.id
+        changes[:shard_name]    = shard.name    if existing.respond_to?(:shard_name) && existing.shard_name != shard.name
+        changes[:shard_user_id] = shard_user.id if existing.respond_to?(:shard_user_id) && existing.shard_user_id != shard_user&.id
+        existing.update!(changes) unless changes.empty?
+      end
+      return existing
+    end
+  end
+
+  # 2) No existing hull; we must have a slug to create from the catalog
+  raise ActiveRecord::RecordInvalid, "ship_slug is required when ship_guid not found." if ship_slug.blank?
+
+  ship = Ship.find_by(slug: ship_slug)
+  raise ActiveRecord::RecordNotFound, "Ship not found for slug #{ship_slug.inspect}." if ship.nil?
+
+  # 3) Create a new UserShip derived from the catalog row
+  ActiveRecord::Base.transaction do
+    user.user_ships.create!(
+      guid:          ship_guid.presence || SecureRandom.uuid,
+      ship:          ship,
+      ship_slug:     ship.slug,
+      total_scu:     ship.scu,
+      used_scu:      0,
+      shard_id:      shard&.id,
+      shard_name:    (shard&.name if UserShip.attribute_names.include?("shard_name")),
+      shard_user_id: (shard_user&.id if UserShip.attribute_names.include?("shard_user_id")),
+      status:        "docked"
+    )
+  end
+end
+
 
     def resolve_location_by_name(name)
       return nil if name.blank?

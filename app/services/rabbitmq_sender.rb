@@ -14,20 +14,24 @@ class RabbitmqSender
   def self.send_ship_report(travel)
     ship = travel.user_ship
     user = ship.user
-
+    shard = ship.shard
+    shard_name = shard.name.downcase
     exchange_name = "MaidenB0T_events"
-    routing_key   = "maidenb0tevents.#{user.uid.downcase}"
+    routing_key   = "maidenb0tevents.#{shard_name}"
     tag_id        = routing_key
 
     # Build the message string in the expected format
     message = [
-      user.uid,
+      shard_name,
       "ShipArrival",
+      user.uid,
       travel.departure_tick,
       travel.arrival_tick,
-      ship.shard.channel_uuid,
+      shard.channel_uuid,
+      user.username,
       ship.guid,
-      ship.status
+      ship.status,
+      travel.to_location.name
     ].join("|")
 
     exchange = RABBITMQ_CHANNEL.topic(exchange_name, durable: true)
