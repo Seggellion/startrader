@@ -74,14 +74,50 @@ class TradeService
     end
     
 
-    def self.buy(username:, wallet_balance:, commodity_name:, scu:, shard:)
+    def self.buy(username:, wallet_balance:, commodity_name:, scu:, shard:, ship_guid:, ship_slug:)
 
       
       user = User.where("LOWER(username) = ?", username.downcase).first!
       commodity = Commodity.where("name ILIKE ?", commodity_name).first!
       shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard.downcase).first
+      shard_user.update(wallet_balance:wallet_balance)
+      shard = Shard.find_by_name(shard)
       # ✅ Get the user's most recent UserShip to determine location
-      user_ship = shard_user.user_ships.order(updated_at: :desc).first
+ user_ship =
+    if ship_guid.present?
+      shard_user.user_ships.find_by(guid: ship_guid)
+    end
+
+  if user_ship.nil?
+    # We must have a slug to create from the catalog
+    raise ActiveRecord::RecordInvalid, "ship_slug is required when ship_guid not found." if ship_slug.blank?
+byebug
+    ship = Ship.find_by!(slug: ship_slug)
+
+    # Pick a location for the brand-new ship:
+    # 1) caller-provided location_name, else
+    
+    # 2) the most recent ship's location, else hard fail (we need a concrete place to buy from).
+    fallback_loc = shard_user.user_ships.order(updated_at: :desc).first&.location_name
+    new_ship_location = Location.find_by_name("Orison").name
+   
+    raise LocationMismatchError, "location_name required to create ship (no prior ship to infer from)." if new_ship_location.blank?
+
+    user_ship = shard_user.user_ships.create!(
+      guid: ship_guid.presence || SecureRandom.uuid,
+      ship: ship,                                  # establishes UserShip.ship relation
+      ship_slug: ship.slug,                   # optional caching, if your model has it
+      shard: shard, 
+      shard_user: shard_user,      
+      user: user,
+      total_scu: ship.scu, 
+      used_scu: 0,                # optional convenience
+      location_name: new_ship_location
+      # total_scu/used_scu or other fields can be initialized here if your schema requires it
+    )
+  end
+
+
       
       if user_ship.nil?
         raise ShipNotFoundError, "No ship found for user '#{username}'."
@@ -102,13 +138,20 @@ class TradeService
       elsif facility.inventory <= 0
         raise InsufficientInventoryError, "#{facility.location_name} Facility does not have enough inventory to sell."
       end
-      
+
+      if scu == "max"
+        scu = ""
+      end
 
       # ✅ Calculate the maximum affordable SCU based on wallet and cargo space
       max_affordable_scu = (shard_user.wallet_balance / facility.local_buy_price.to_f).floor
       max_cargo_space = user_ship.available_cargo_space
       max_facility_inventory = facility.inventory
     
+      if max_cargo_space <= 0
+        raise InsufficientCapacityError, "Ship '#{user_ship.id}' has no available cargo space."
+      end
+
       # ✅ Default SCU to the maximum possible if not provided or if too large
       scu = [scu.to_i, max_affordable_scu, max_cargo_space, max_facility_inventory].select { |v| v > 0 }.min
       raise InsufficientInventoryError, "Not enough cargo inventory at facility. Available: #{facility.inventory} SCU." if scu > facility.inventory
@@ -197,6 +240,7 @@ star_bitizen_run = StarBitizenRun.find_by(
     
       location_name = user_ship.location_name
       location = Location.find_by!(name: location_name)
+        
     
       # ✅ If no commodity is specified, return a list of commodities that the facility at this location is buying
       if commodity_name.blank?
@@ -235,7 +279,7 @@ star_bitizen_run = StarBitizenRun.find_by(
       cargo_to_sell = user_ship.user_ship_cargos.find_by(commodity_id: commodity.id)
       raise InsufficientInventoryError, "No inventory of #{commodity_name} to sell." if cargo_to_sell.nil?
     
-      max_scu = cargo_to_sell.scu if scu.blank? || scu.to_i <= 0
+    max_scu = (scu.blank? || scu.to_i <= 0) ? cargo_to_sell.scu : scu.to_i
       max_facility_demand = facility.inventory
       scu_to_sell = [max_scu, max_facility_demand].select { |v| v > 0 }.min
     

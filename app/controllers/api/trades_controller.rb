@@ -35,7 +35,8 @@ module Api
       commodity_name = trade_params[:commodity_name]
       scu = trade_params[:scu]
       shard = trade_params[:shard_name]
-
+      ship_guid = trade_params[:ship_guid]
+      ship_slug = trade_params[:ship_slug]
 
       if username.blank? || shard.blank?
         render json: { status: 'error', message: 'Missing required parameters' }, status: :unprocessable_entity and return
@@ -51,7 +52,9 @@ module Api
           wallet_balance: wallet_balance,
           commodity_name: commodity_name,
           scu: scu,
-          shard: shard
+          shard: shard,
+          ship_guid: ship_guid,
+          ship_slug: ship_slug
         )
       end
     

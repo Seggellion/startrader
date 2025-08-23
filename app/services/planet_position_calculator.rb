@@ -3,6 +3,9 @@ class PlanetPositionCalculator
   # G in Mkm^3 / kg / s^2 (matches JS)
   G = 6.67430e-38
 
+  L1_MULTIPLIER = 0.01
+  L2_MULTIPLIER = 0.01
+
   # Must match CelestialBody.SCALE_POS in JS
   UNIT_SCALE = 5.0
 
@@ -117,6 +120,34 @@ class PlanetPositionCalculator
 
     r_scene = (a_mkm / UNIT_SCALE)
     { x: r_scene * Math.cos(m + phase_shift), y: r_scene * Math.sin(m + phase_shift) }
+  end
+
+
+def self.calculate_space_station_position(location, tick)
+    parent_body = Location.planets.find_by(name: location.parent_name) || Location.moons.find_by(name: location.parent_name)
+  
+    if location.name.include?('-L1') || location.name.include?('-L2')
+      calculate_lagrange_station_position(location, parent_body, tick)
+    elsif location.name.include?('Gateway')
+      calculate_star_gateway_position(location, tick)
+    else      
+      calculate_co_orbital_station_position(location, parent_body, tick)
+    end
+  end
+
+  def self.calculate_lagrange_station_position(location, parent_body, tick)
+    return { x: 0.0, y: 0.0 } unless parent_body
+  
+    parent_position = parent_body.classification == 'moon' ? 
+                      calculate_moon_position(parent_body, tick) :
+                      calculate_planet_position(parent_body, tick)
+  
+    lagrange_multiplier = location.name.include?('-L1') ? L1_MULTIPLIER : -L2_MULTIPLIER
+  
+    x = parent_position[:x] + (lagrange_multiplier * parent_position[:x])
+    y = parent_position[:y] + (lagrange_multiplier * parent_position[:y])
+  
+    { x: x, y: y }
   end
 
   def self.calculate_co_orbital_station_position(location, parent_body, tick)

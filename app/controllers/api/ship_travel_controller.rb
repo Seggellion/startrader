@@ -218,9 +218,10 @@ user_ship = resolve_user_ship_by_guid_or_slug(
     # DELETE /api/cancel
     # Accepts either legacy params (username, shard) or new ones (player_guid/player_name, shard_uuid)
     def destroy
+      
       user  = if params[:player_guid].present?
                 User.find_by(uid: params[:player_guid]) || User.where("LOWER(username) = ?", params[:player_name].to_s.downcase.strip).first
-              elses
+              else
                 User.where("LOWER(username) = ?", params[:username].to_s.downcase.strip).first
               end
       return render json: { error: "User not found." }, status: :not_found if user.nil?
