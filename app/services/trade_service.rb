@@ -75,11 +75,11 @@ class TradeService
     
 
     def self.buy(username:, wallet_balance:, commodity_name:, scu:, shard:)
+
       
       user = User.where("LOWER(username) = ?", username.downcase).first!
       commodity = Commodity.where("name ILIKE ?", commodity_name).first!
       shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard.downcase).first
-
       # ✅ Get the user's most recent UserShip to determine location
       user_ship = shard_user.user_ships.order(updated_at: :desc).first
       

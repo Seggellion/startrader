@@ -8,11 +8,11 @@ module Api
 
       trade_params = params[:trade] || {}
     
-      username = trade_params[:username]
+      username = trade_params[:player_name]
       wallet_balance = trade_params[:wallet_balance]
       commodity_name = trade_params[:commodity_name]
       scu = trade_params[:scu]
-      shard = trade_params[:shard]
+      shard = trade_params[:shard_name]
 
       result = TradeService.sell(
         username: username,
@@ -30,11 +30,11 @@ module Api
     def buy
       trade_params = params[:trade] || {}      
 
-      username = trade_params[:username]
+      username = trade_params[:player_name]
       wallet_balance = trade_params[:wallet_balance]
       commodity_name = trade_params[:commodity_name]
       scu = trade_params[:scu]
-      shard = trade_params[:shard]
+      shard = trade_params[:shard_name]
 
 
       if username.blank? || shard.blank?

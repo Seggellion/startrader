@@ -13,6 +13,9 @@ export class AnimationController {
     this.planets = [];
     this.star = null;
     this.animate = this.animate.bind(this);
+    this._lastServerTick = null;         // last tick number we saw
+    this._lastTickWallTime = null;       // wall time when we saw it (sec)
+    this.realSecondsPerServerTick = 1;   // how often your server publishes ticks (real seconds)
 
     this.orbitPadding = 1;
     this.G = 6.67430e-38;   // Mkm^3 / kg / s^2
@@ -132,10 +135,18 @@ export class AnimationController {
     if (this.mode === 'raf') this.mode = 'idle';
   }
 
-  useTickClock(secondsPerTick) {
+useTickClock(secondsPerTick, realSecondsPerServerTick = 1) {
     this.stopRAF();
     this.mode = 'tick';
     this.secondsPerTick = secondsPerTick;
+    this.realSecondsPerServerTick = realSecondsPerServerTick;
+      
+    this._lastServerTick = null;
+    this._lastTickWallTime = performance.now() / 1000;
+    // start RAF so we can interpolate between ticks
+    this._lastNow = this._lastTickWallTime;
+    this._rafId = requestAnimationFrame(this.animate);
+
     console.log('tick Click Started: ', secondsPerTick);
     this._tickBase = null; // set on first tick we receive
   }
@@ -148,45 +159,64 @@ export class AnimationController {
 
   // Rails will call this on every tick broadcast
   onTick(serverTickNumber) {
-    if (this.mode !== 'tick') return;
+  if (this.mode !== 'tick') return;
+    console.log('OnTick! ');
 
-    // On the very first tick, rebase M0 so that:
-    //   M = n * (tick * secondsPerTick - T_PERI_EPOCH_SEC)
-    if (this._tickBase == null) {
-      this._tickBase = serverTickNumber;
-      const baseOffsetSec = this._tickBase * this.secondsPerTick;
-
-      for (const p of this.planets) {
-        if (p._T && p._n) {
-          p._M0 = this._wrap2pi(p._n * (-T_PERI_EPOCH_SEC + baseOffsetSec));
-        }
+  if (this._tickBase == null) {
+    this._tickBase = serverTickNumber;
+    const baseOffsetSec = this._tickBase * this.secondsPerTick;
+    for (const p of this.planets) {
+      if (p._T && p._n) {
+        p._M0 = this._wrap2pi(p._n * (-T_PERI_EPOCH_SEC + baseOffsetSec));
       }
     }
-
-    const ticksSinceBase = serverTickNumber - this._tickBase;
-    this.simTime = ticksSinceBase * this.secondsPerTick;
-
-    // console.log("[onTick]", { serverTickNumber, simTime: this.simTime.toFixed(2) });
-    this.renderOnce();
   }
+
+  this._lastServerTick = serverTickNumber;
+  this._lastTickWallTime = performance.now() / 1000;
+  // Optionally snap once on arrival; RAF will take over interpolation.
+      console.log('onRender! ');
+
+  this.renderOnce();
+}
 
   // --------------------
   // MAIN LOOPS
   // --------------------
-  animate() {
-    // RAF mode only
-    // console.log('animation has begun');
-    if (this.mode !== 'raf') return;
+animate() {
+  // Always keep RAF going
+  this._rafId = requestAnimationFrame(this.animate);
 
-    this._rafId = requestAnimationFrame(this.animate);
+  const now = performance.now() / 1000;
+  const dt = Math.max(0, Math.min(0.25, now - this._lastNow));
+  this._lastNow = now;
 
-    const now = performance.now() / 1000;
-    const dt = Math.max(0, Math.min(0.25, now - this._lastNow)); // clamp long pauses
-    this._lastNow = now;
-
+  if (this.mode === 'raf') {
+    // Classic continuous sim-time
     this.simTime += dt * this.timeScale;
     this._renderAtSimTime(this.simTime);
+    return;
   }
+
+  if (this.mode === 'tick' && this._tickBase != null && this._lastServerTick != null) {
+    // Base sim time from whole ticks since base…
+    const ticksSinceBase = this._lastServerTick - this._tickBase;
+    let simBase = ticksSinceBase * this.secondsPerTick;
+
+    // …then interpolate within the *current* tick using wall clock
+    const sinceTick = Math.max(0, now - (this._lastTickWallTime || now));
+    const frac = Math.max(0, Math.min(1, this.realSecondsPerServerTick > 0
+      ? sinceTick / this.realSecondsPerServerTick
+      : 0));
+    this.simTime = simBase + frac * this.secondsPerTick;
+
+    this._renderAtSimTime(this.simTime);
+    return;
+  }
+
+  // idle: do nothing
+}
+
 
   renderOnce() {
     this._renderAtSimTime(this.simTime);
@@ -223,6 +253,7 @@ export class AnimationController {
 
     const starDistances = this.calculateStarDistances();
     const neighborDistances = this.calculateDistances();
+    console.log('update HTML starDistances & NeighborDistances', starDistances, neighborDistances);
     this.updateHtmlWithDistances(starDistances, neighborDistances);
 
     this.renderer.render(this.scene, this.camera);

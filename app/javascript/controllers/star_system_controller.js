@@ -17,6 +17,7 @@ export default class extends Controller {
             this.animationController.setControls(controls);
    this.subscribeToTicks();
         this.fetchAndDisplayCelestialBodies(this.starSystemNameValue);
+        this.animationController.startAnimation();
     }
 
     selectStarSystem(event) {
@@ -39,7 +40,7 @@ export default class extends Controller {
           switch (data.type) {
             case "tick_started":
               // server says: generator is on
-              this.animationController.useTickClock(data.seconds_per_tick || 60); // default 60s/tick
+              this.animationController.useTickClock(data.seconds_per_tick, 15); // default 60s/tick
               break;
             case "tick":
               this.animationController.onTick(data.tick);
@@ -50,7 +51,7 @@ export default class extends Controller {
             case "status":
               // initial status message after subscribe
               if (data.running) {
-                this.animationController.useTickClock(data.seconds_per_tick || 60);
+                this.animationController.useTickClock(data.seconds_per_tick, 15);
                 this.animationController.onTick(data.tick);
               } else {
                 this.animationController.stopTickClock();

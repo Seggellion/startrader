@@ -3,6 +3,9 @@ module Api
         before_action :parse_json_request
         before_action :validate_secret_guid
   
+          include SecretGuidAuth
+
+
         private
   
         # 1. Parse JSON

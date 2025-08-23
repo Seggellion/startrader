@@ -67,7 +67,7 @@ module Admin
 
     def vehicle_params
       params.require(:vehicle).permit(
-        :model, :content, :category_id, :slug
+        :model, :content, :category_id, :slug, :speed
       )
     end
   end
