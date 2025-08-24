@@ -5,17 +5,12 @@ module Api
     skip_before_action :verify_authenticity_token
 
     def index
-      scope = Location.all
-      scope = scope.where(star_system_name: params[:system])      if params[:system].present?
-      scope = scope.where(classification: params[:location_type]) if params[:location_type].present?
+      scope   = Location.all
+      scope   = scope.where(star_system_name: params[:system])      if params[:system].present?
+      scope   = scope.where(classification: params[:location_type]) if params[:location_type].present?
+      records = scope.order(:name)
 
-      page = params[:page].to_i > 0 ? params[:page].to_i : 1
-      per  = params[:per].to_i  > 0 ? [params[:per].to_i, 500].min : 100
-      records = scope.order(:name).offset((page - 1) * per).limit(per)
-
-      render json: {
-        data: records.map { |loc| resource_object(loc) }
-      }
+      render json: { data: records.map { |loc| resource_object(loc) } }
     end
 
     def show
