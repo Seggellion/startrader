@@ -91,7 +91,6 @@ class TradeService
   if user_ship.nil?
     # We must have a slug to create from the catalog
     raise ActiveRecord::RecordInvalid, "ship_slug is required when ship_guid not found." if ship_slug.blank?
-byebug
     ship = Ship.find_by!(slug: ship_slug)
 
     # Pick a location for the brand-new ship:

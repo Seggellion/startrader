@@ -22,12 +22,12 @@ export class AnimationController {
 
     // 🎛️ how fast sim time runs vs real time
     // e.g. 86400 = 1 sim day per real second; 604800 = 1 week/sec
-    this.timeScale = 86400;
+    this.timeScale = 1;
 
     // ⏱️ simulation clock
     this.simTime = 0;                   // seconds since start of sim
     this._lastNow = performance.now() / 1000;
-      // Modes: 'idle' | 'raf' | 'tick'
+      // Modes: 'idle' | 'raf' | 'tick' | 'tick_step'
     this.mode = 'idle';
     this._rafId = null;
 
@@ -51,6 +51,7 @@ export class AnimationController {
     // Keep physics in REAL units (Mkm); scale only when rendering
     const aRealMkm = planet.semiMajorAxisReal; // in Mkm, from API
     planet._aRealMkm = aRealMkm;
+ 
     const T = this.calculateOrbitalPeriod(aRealMkm, planet.starMass);
     planet._aScene = planet.semiMajorAxis / (this.unitScale || 1); // for drawing
 
@@ -120,6 +121,7 @@ export class AnimationController {
   // RENDERING MODES
   // --------------------
   useRAF() {
+    console.log('useRaf started');
     if (this.mode === 'raf') return;
     this.stopRAF(); // clear any stray loop then restart clean
     this.mode = 'raf';
@@ -135,21 +137,29 @@ export class AnimationController {
     if (this.mode === 'raf') this.mode = 'idle';
   }
 
-useTickClock(secondsPerTick, realSecondsPerServerTick = 1) {
+  useTickStep(simulatedSecondsPerTick) {
     this.stopRAF();
-    this.mode = 'tick';
-    this.secondsPerTick = secondsPerTick;
-    this.realSecondsPerServerTick = realSecondsPerServerTick;
-      
+    this.mode = 'tick_step';
+    this.secondsPerTick = Number(simulatedSecondsPerTick);
     this._lastServerTick = null;
-    this._lastTickWallTime = performance.now() / 1000;
-    // start RAF so we can interpolate between ticks
-    this._lastNow = this._lastTickWallTime;
-    this._rafId = requestAnimationFrame(this.animate);
-
-    console.log('tick Click Started: ', secondsPerTick);
-    this._tickBase = null; // set on first tick we receive
+    this._tickBase = null;
+    this._lastTickWallTime = null;
+    this._lastNow = performance.now() / 1000;
+    // no RAF here — render only when onTick arrives
   }
+
+useTickClock(simulatedSecondsPerTick, realSecondsPerServerTick = 1) {
+  this.stopRAF();
+  this.mode = 'tick';
+  this.secondsPerTick = Number(simulatedSecondsPerTick);     // 604800
+  this.realSecondsPerServerTick = Number(realSecondsPerServerTick); // 15
+  this._lastServerTick = null;
+  this._tickBase = null;
+  this._lastTickWallTime = performance.now() / 1000;
+  this._lastNow = this._lastTickWallTime;
+  this._rafId = requestAnimationFrame(this.animate);
+}
+
 
   stopTickClock() {
     this.mode = 'idle';
@@ -159,7 +169,7 @@ useTickClock(secondsPerTick, realSecondsPerServerTick = 1) {
 
   // Rails will call this on every tick broadcast
   onTick(serverTickNumber) {
-  if (this.mode !== 'tick') return;
+if (this.mode !== 'tick' && this.mode !== 'tick_step') return;
     console.log('OnTick! ');
 
   if (this._tickBase == null) {
@@ -171,13 +181,14 @@ useTickClock(secondsPerTick, realSecondsPerServerTick = 1) {
       }
     }
   }
+    this._lastServerTick = serverTickNumber;
+    this._lastTickWallTime = performance.now() / 1000;
 
-  this._lastServerTick = serverTickNumber;
-  this._lastTickWallTime = performance.now() / 1000;
-  // Optionally snap once on arrival; RAF will take over interpolation.
-      console.log('onRender! ');
-
-  this.renderOnce();
+    // Compute exact sim time at the tick (no interpolation in tick_step)
+    const ticksSinceBase = this._lastServerTick - this._tickBase;
+    this.simTime = ticksSinceBase * this.secondsPerTick;
+    console.log('onRender! ');
+    this.renderOnce();
 }
 
   // --------------------
@@ -198,21 +209,33 @@ animate() {
     return;
   }
 
-  if (this.mode === 'tick' && this._tickBase != null && this._lastServerTick != null) {
-    // Base sim time from whole ticks since base…
+ if (this.mode === 'tick') {
+  // If we already have a base + last tick, do normal interpolation
+  if (this._tickBase != null && this._lastServerTick != null) {
     const ticksSinceBase = this._lastServerTick - this._tickBase;
-    let simBase = ticksSinceBase * this.secondsPerTick;
+    const simBase = ticksSinceBase * this.secondsPerTick;
 
-    // …then interpolate within the *current* tick using wall clock
     const sinceTick = Math.max(0, now - (this._lastTickWallTime || now));
-    const frac = Math.max(0, Math.min(1, this.realSecondsPerServerTick > 0
-      ? sinceTick / this.realSecondsPerServerTick
-      : 0));
+    const frac = Math.max(0, Math.min(1,
+      this.realSecondsPerServerTick > 0
+        ? sinceTick / this.realSecondsPerServerTick
+        : 0
+    ));
     this.simTime = simBase + frac * this.secondsPerTick;
-
-    this._renderAtSimTime(this.simTime);
-    return;
+  } else {
+    // 🚀 Free-run before first tick (or during gaps): keep time flowing smoothly
+    const rate = (this.secondsPerTick / this.realSecondsPerServerTick); // sim-sec per real-sec
+    this.simTime += dt * rate;
   }
+
+  this._renderAtSimTime(this.simTime);
+  return;
+}
+
+    if (this.mode === 'tick_step') {
+      // No continuous updates between ticks — do nothing here.
+      return;
+    }
 
   // idle: do nothing
 }
@@ -231,7 +254,6 @@ animate() {
       const M  = this._wrap2pi(M0 + n * simTime);
       const E  = this.solveKeplersEquation(e, M);
       const nu = this.calculateTrueAnomaly(E, e);
-
       // Physics radius in REAL units, then scale for scene
       const rReal  = p._aRealMkm * (1 - e * e) / (1 + e * Math.cos(nu));
       const rScene = (rReal / (this.unitScale || 1)) * this.orbitPadding;
@@ -293,6 +315,8 @@ animate() {
     const M = this.calculateMeanAnomaly(currentTime, timeAtPerihelion, T);
     const E = this.solveKeplersEquation(e, M);
     const ν = this.calculateTrueAnomaly(E, e);
+console.log('calculation T: ', T) 
+console.log('calculation M: ', M)
 
     const r = a * (1 - e * e) / (1 + e * Math.cos(ν));
     const rp = r * this.orbitPadding; // padded radius for rendering only

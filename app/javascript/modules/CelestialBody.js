@@ -21,9 +21,12 @@ export class CelestialBody {
   }
 
   addCelestialBody(data, size, color, name, starMassInput) {
-    const centralMass =
-      starMassInput ??
-      data.starMass ?? data.starmass ?? data.mass ?? 0;
+
+
+  const SOLAR_MASS_KG = 1.98847e30;
+   let rawMass = starMassInput ?? data.starMass ?? data.starmass ?? data.mass ?? 0;
+   // Heuristic: values << 1e20 aren’t kg; assume “solar masses” and convert.
+   const centralMass = rawMass > 1e20 ? rawMass : rawMass * SOLAR_MASS_KG;
 
     const geometry = new THREE.SphereGeometry(size, 32, 32);
     const material = new THREE.MeshBasicMaterial({ color });

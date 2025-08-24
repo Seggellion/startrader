@@ -26,10 +26,6 @@ module Admin
 
     def update
       if @vehicle.update(vehicle_params)
-        if @vehicle.content.present?
-          @vehicle.content.body = convert_h1_to_h2(@vehicle.content.body.to_s)
-          @vehicle.content.save
-        end
         redirect_to edit_admin_vehicle_path(@vehicle), notice: 'Ship was successfully updated.'
       else
         render :edit, status: :unprocessable_entity
@@ -61,13 +57,10 @@ module Admin
       @vehicle = Ship.find(params[:id])
     end
 
-    def convert_h1_to_h2(html)
-      html.gsub(/<h1>/, "<h2>").gsub(/<\/h1>/, "</h2>")
-    end
 
     def vehicle_params
       params.require(:vehicle).permit(
-        :model, :content, :category_id, :slug, :speed
+        :model, :category_id, :slug, :speed
       )
     end
   end
