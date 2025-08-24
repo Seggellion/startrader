@@ -21,7 +21,7 @@
     <tbody>
       <% @ship_travels.each do |ship_travel| %>
         <tr>
-          <td class="py-2 px-4 border"><%= ship_travel.user.username %></td>
+          <td class="py-2 px-4 border"><%= ship_travel.user_ship.user.username %></td>
           <td class="py-2 px-4 border"><%= ship_travel.user_ship.ship.model %></td>
           <td class="py-2 px-4 border"><%= ship_travel.to_location.name %></td>
                <td class="py-2 px-4 border"><%= ship_travel.arrival_tick %></td>

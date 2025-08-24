@@ -183,9 +183,11 @@ if (this.mode !== 'tick' && this.mode !== 'tick_step') return;
   }
     this._lastServerTick = serverTickNumber;
     this._lastTickWallTime = performance.now() / 1000;
-
+    console.log('serverTickNumber: ', serverTickNumber);
     // Compute exact sim time at the tick (no interpolation in tick_step)
     const ticksSinceBase = this._lastServerTick - this._tickBase;
+    console.log('ticksSinceBase: ', ticksSinceBase);
+    
     this.simTime = ticksSinceBase * this.secondsPerTick;
     console.log('onRender! ');
     this.renderOnce();
