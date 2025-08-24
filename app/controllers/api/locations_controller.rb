@@ -63,7 +63,7 @@ module Api
         "ammenities-fuel"    => bool_or_null(loc.is_refuel),
         "ammenities-repair"  => bool_or_null(loc.is_repair),
         "ammenities-rearm"   => bool_or_null(loc.is_shop_fps),
-        "trade-terminal"     => bool_or_null(loc.is_cargo_center),
+        "trade-terminal"     => bool_or_null(loc.has_trade_terminal),
         "system"             => loc.star_system_name,
         "mass"               => loc.mass,
         "apoapsis"           => loc.apoapsis,

@@ -4,7 +4,7 @@ module Admin
     module Data
       class CitiesImporter
         LOCATION_URLS = [
-          "https://api.uexcorp.space/2.0/cities"
+          "https://api.uexcorp.uk/2.0/cities"
         ].freeze
   
         # 🚦 Import all locations from all endpoints
@@ -88,15 +88,16 @@ module Admin
             is_food: location_data['is_food'].to_i == 1,
             is_shop_fps: location_data['is_shop_fps'].to_i == 1,
             is_shop_vehicle: location_data['is_shop_vehicle'].to_i == 1,
-            is_refuel: location_data['is_refuel'].to_i == 1,
-            is_repair: location_data['is_repair'].to_i == 1,
+            is_refuel: location_data['has_refuel'].to_i == 1,
+            is_repair: location_data['has_repair'].to_i == 1,
             is_nqa: location_data['is_nqa'].to_i == 1,
             is_player_owned: location_data['is_player_owned'].to_i == 1,
             is_auto_load: location_data['is_auto_load'].to_i == 1,
             has_loading_dock: location_data['has_loading_dock'].to_i == 1,
             has_docking_port: location_data['has_docking_port'].to_i == 1,
             has_freight_elevator: location_data['has_freight_elevator'].to_i == 1,
-  
+            has_trade_terminal: location_data['has_trade_terminal'].to_i == 1,
+
             # Name mappings
             star_system_name: location_data['star_system_name'],
             planet_name: location_data['planet_name'],

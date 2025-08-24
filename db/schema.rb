@@ -10,7 +10,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_19_034413) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_24_034809) do
+  create_schema "cable"
+
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -253,6 +255,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_19_034413) do
     t.integer "max_container_size", default: 0
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "has_trade_terminal"
     t.index ["api_id"], name: "index_locations_on_api_id"
     t.index ["name"], name: "index_locations_on_name", unique: true
     t.index ["parent_name"], name: "index_locations_on_parent_name"
@@ -452,6 +455,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_19_034413) do
     t.integer "interdict_window_percent", default: 15, null: false
     t.integer "interdiction_count", default: 0, null: false
     t.integer "last_interdicted_tick"
+    t.string "ship_travel_type"
     t.index ["from_location_id"], name: "index_ship_travels_on_from_location_id"
     t.index ["is_paused", "departure_tick", "arrival_tick"], name: "idx_on_is_paused_departure_tick_arrival_tick_218f541b33"
     t.index ["to_location_id"], name: "index_ship_travels_on_to_location_id"
