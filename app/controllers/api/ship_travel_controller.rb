@@ -1,14 +1,11 @@
 # app/controllers/api/ship_travel_controller.rb
 module Api
   class ShipTravelController < ApplicationController
-    MINIMUM_TICK = 2
-
     # API endpoint: skip CSRF
     skip_before_action :verify_authenticity_token
 
     # POST /api/travel
     def create
-      tick = current_ship_travel_tick
 
       user        = find_or_create_user_by_guid_or_name(travel_params[:player_guid], travel_params[:player_name])
       shard       = resolve_shard(travel_params[:shard_uuid])
@@ -45,20 +42,20 @@ module Api
 
       # Prevent double booking the same ship
       if ShipTravel.where(user_ship_id: user_ship.id, is_paused: false)
-                  .where('arrival_tick >= ?', tick)
+                  .where('arrival_tick >= ?', Tick.current)
                   .exists?
         return render json: { error: "Ship is already in transit." }, status: :unprocessable_entity
       end
 
-      travel = TravelService.new(user_ship: user_ship, to_location: destination, start_tick: tick).call
+      travel = TravelService.new(user_ship: user_ship, to_location: destination).call
       render json: {
         status:        "travel_started",
         channel_name: shard.name,
         user_ship_id:  user_ship.id,
         destination:   destination.name,
-        current_tick:  tick,
+        current_tick:  Tick.current,
         arrival_tick:  travel.arrival_tick,
-        time_remaining: travel&.seconds_remaining(tick)
+        time_remaining: travel&.seconds_remaining(Tick.current)
       }
     rescue StandardError => e
       render json: { error: e.message }, status: :unprocessable_entity
@@ -72,16 +69,15 @@ module Api
       active_travel = user_ship.active_travel
 
       if active_travel
-        tick = current_ship_travel_tick
-        phase = active_travel.current_interdictable_phase(tick)
+        phase = active_travel.current_interdictable_phase(Tick.current)
         render json: {
           in_transit:     true,
           from_location:  active_travel.from_location.name,
           to_location:    active_travel.to_location.name,
           departure_tick: active_travel.departure_tick,
           arrival_tick:   active_travel.arrival_tick,
-          current_tick:   tick,
-          progress:       active_travel.progress_fraction(tick),  # 0.0..1.0
+          current_tick:   Tick.current,
+          progress:       active_travel.progress_fraction(Tick.current),  # 0.0..1.0
           interdictable:  !active_travel.is_paused && !phase.nil?,
           interdict_phase: phase,  # null, "departure" or "arrival"
           windows: {
@@ -116,11 +112,10 @@ module Api
       travel = user_ship.active_travel
       return render json: { error: "No active travel for this ship." }, status: :unprocessable_entity if travel.nil?
 
-      tick = current_ship_travel_tick
-      phase = travel.current_interdictable_phase(tick)
+      phase = travel.current_interdictable_phase(Tick.current)
       return render json: { error: "Not in an interdictable window." }, status: :unprocessable_entity if phase.nil?
 
-      travel.interdict!(tick)
+      travel.interdict!(Tick.current)
       user_ship.update!(status: "interdicted")
 
       render json: {
@@ -143,7 +138,7 @@ module Api
     travel = user_ship.ship_travel
     return render json: { error: "No paused travel for this ship." }, status: :unprocessable_entity if travel.nil? || !travel.is_paused?
 
-      travel.resume!(current_ship_travel_tick)
+      travel.resume!(Tick.current)
       user_ship.update!(status: "in_transit")
 
       render json: {
@@ -162,11 +157,10 @@ module Api
     # POST /api/ship_travel/:id/interdict
     def interdict
       travel = ShipTravel.find(params[:id])
-      tick = current_ship_travel_tick
-      phase = travel.current_interdictable_phase(tick)
+      phase = travel.current_interdictable_phase(Tick.current)
       return render json: { error: "Not in an interdictable window." }, status: :unprocessable_entity if phase.nil?
 
-      travel.interdict!(tick)
+      travel.interdict!(Tick.current)
       travel.user_ship.update!(status: "interdicted")
 
       render json: {
@@ -178,7 +172,7 @@ module Api
     end
 
    def interdictable_index
-      tick   = current_ship_travel_tick
+      tick   = Tick.current
       limit  = params[:limit].presence&.to_i || 100
       offset = params[:offset].presence&.to_i || 0
 
@@ -209,7 +203,7 @@ module Api
   
     ship = UserShip.find_by(guid:params[:id])
     travel = ship.ship_travel
-    travel.resume!(current_ship_travel_tick)
+    travel.resume!(Tick.current)
     travel.user_ship.update!(status: "in_transit")
 
     render json: {
@@ -257,10 +251,6 @@ module Api
     end
 
     private
-
-      def current_ship_travel_tick
-        [Tick.current.to_i, MINIMUM_TICK].max
-      end
 
       def serialize_interdictable(st, phase, tick)
         {

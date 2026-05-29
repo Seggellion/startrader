@@ -14,6 +14,7 @@ class TravelService
 
   def call
     raise "Already in transit" if user_ship.active_travel.present?
+    raise "Ship is already at that location." if @from_location&.id == to_location.id
 
     start_tick = @start_tick || Tick.current
     
