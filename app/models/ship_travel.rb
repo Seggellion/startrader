@@ -121,7 +121,7 @@ scope :interdictable_now_sql, ->(tick = Tick.current) {
       paused_at_tick: nil,
       departure_tick: current_tick,
       arrival_tick: current_tick + rem,
-      total_duration_ticks: rem # the remaining leg is now the new trip duration
+      total_duration_ticks: rem
     )
   end
 end

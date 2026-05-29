@@ -4,26 +4,33 @@ class TravelService
 
   attr_reader :user_ship, :to_location
 
-  def initialize(user_ship:, to_location:, interdict_window_percent: DEFAULT_WINDOW_PERCENT)
+  def initialize(user_ship:, to_location:, interdict_window_percent: DEFAULT_WINDOW_PERCENT, start_tick: nil)
     @user_ship = user_ship
     @from_location = user_ship.location
     @to_location = to_location
     @interdict_window_percent = interdict_window_percent
+    @start_tick = start_tick
   end
 
   def call
     raise "Already in transit" if user_ship.active_travel.present?
 
-    start_tick = Tick.current
-    duration = TravelTimeCalculator.new(
+    start_tick = @start_tick || Tick.current
+    
+    # 1. Get the raw calculated duration
+    calculated_duration = TravelTimeCalculator.new(
       ship: user_ship.ship,
       from_location: @from_location,
       to_location: to_location,
       start_tick: start_tick
     ).calculate
 
+    # 2. Enforce the minimum 2-tick travel time constraint
+    duration = [calculated_duration, 2].max
+
     arrival_tick = start_tick + duration
 
+    # 3. Create the travel record with the validated duration
     travel = ShipTravel.create!(
       user_ship: user_ship,
       from_location: @from_location,
