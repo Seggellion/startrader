@@ -35,15 +35,35 @@ module Api
         user_ship.update(location: fallback) if fallback
       end
 
+      # --- NEW: Prevent traveling to the current location ---
+      if user_ship.location == destination.id
+        return render json: { error: "You are already docked at #{destination.name}." }, status: :unprocessable_entity
+      end
+      # -----------------------------------------------------
+
       # Star system travel restriction
       if user_ship.location && destination.star_system_name != user_ship.location.star_system_name
         return render json: { error: "You cannot travel outside your current star system." }, status: :unprocessable_entity
       end
 
+      Rails.logger.info "=== TRANSIT DEBUG START ==="
+      Rails.logger.info "Current Server Tick: #{Tick.current}"
+      
+      existing_travel = ShipTravel.where(user_ship_id: user_ship.id, is_paused: false).last
+      if existing_travel
+        Rails.logger.info "Found existing travel ID: #{existing_travel.id}"
+        Rails.logger.info "Existing Travel Arrival Tick: #{existing_travel.arrival_tick}"
+        Rails.logger.info "Is Arrival >= Current Tick? #{existing_travel.arrival_tick >= Tick.current}"
+      else
+        Rails.logger.info "No active travel records found for this ship."
+      end
+      Rails.logger.info "=== TRANSIT DEBUG END ==="
+
       # Prevent double booking the same ship
       if ShipTravel.where(user_ship_id: user_ship.id, is_paused: false)
                   .where('arrival_tick >= ?', Tick.current)
                   .exists?
+                  
         return render json: { error: "Ship is already in transit." }, status: :unprocessable_entity
       end
 

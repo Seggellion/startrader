@@ -31,6 +31,9 @@ class RabbitmqSender
       user.username,
       ship.guid,
       ship.status,
+      ship.ship_slug,
+      Setting.get('secret_guid'),
+      travel.from_location.name,
       travel.to_location.name
     ].join("|")
 
