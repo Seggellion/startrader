@@ -392,10 +392,18 @@ module Api
 end
 
 
-    def resolve_location_by_name(name)
-      return nil if name.blank?
-      Location.where("LOWER(name) = ?", name.downcase.strip).first
-    end
+  def resolve_location_by_name(name)
+    return nil if name.blank?
+
+    # 1. Normalize the input: lowercase and strip ALL whitespace
+    clean_name = name.to_s.downcase.gsub(/\s+/, "")
+
+    # 2. Query both columns, normalizing the DB side on the fly
+    Location.where(
+      "REPLACE(LOWER(name), ' ', '') = :query OR REPLACE(LOWER(nickname), ' ', '') = :query",
+      query: clean_name
+    ).first
+  end
 
     # Ensure a UserShip exists on this shard for the chosen hull
     def find_or_create_user_ship(user, ship, shard)
