@@ -25,6 +25,18 @@ application.register("hello", HelloController)
 import MenuItemsController from "./menu_items_controller"
 application.register("menu-items", MenuItemsController)
 
+import MarketBoardController from "./market_board_controller"
+application.register("market-board", MarketBoardController)
+
+import MarketFiltersController from "./market_filters_controller"
+application.register("market-filters", MarketFiltersController)
+
+import MarketRowController from "./market_row_controller"
+application.register("market-row", MarketRowController)
+
+import MobileTabsController from "./mobile_tabs_controller"
+application.register("mobile-tabs", MobileTabsController)
+
 import StarSystemController from "./star_system_controller"
 application.register("star-system", StarSystemController)
 

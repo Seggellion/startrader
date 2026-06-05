@@ -1,0 +1,58 @@
+<% market_facilities = local_assigns.fetch(:market_facilities, @market_facilities) %>
+<% filter_params = local_assigns.fetch(:filter_params, @filter_params) %>
+<% total_count = local_assigns.fetch(:total_count, @total_count) %>
+<% page = local_assigns.fetch(:page, @market_page) %>
+<% total_pages = local_assigns.fetch(:total_pages, @total_pages) %>
+<% previous_page = local_assigns.fetch(:previous_page, @previous_page) %>
+<% next_page = local_assigns.fetch(:next_page, @next_page) %>
+
+<%= turbo_frame_tag "market_results" do %>
+  <section class="overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/90">
+    <div class="flex flex-col gap-2 border-b border-zinc-800 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h2 class="text-lg font-semibold text-white">Market Browser</h2>
+        <p class="text-sm text-zinc-400"><%= market_quantity(total_count) %> matching market rows, showing <%= market_facilities.size %> on page <%= page %><%= total_pages.positive? ? " of #{total_pages}" : "" %>.</p>
+      </div>
+      <div class="rounded-full border border-zinc-700 px-3 py-1 font-mono text-xs uppercase text-zinc-300">
+        50 rows max
+      </div>
+    </div>
+
+    <div class="hidden grid-cols-[1.25fr_1fr_0.8fr_0.8fr_0.8fr_0.8fr_0.8fr_110px] gap-3 border-b border-zinc-800 bg-zinc-950/80 px-4 py-3 text-xs font-semibold uppercase text-zinc-400 lg:grid">
+      <span>Location</span>
+      <span>Commodity</span>
+      <span class="text-right">Buy</span>
+      <span class="text-right">Sell</span>
+      <span class="text-right">Inventory</span>
+      <span class="text-right">Demand</span>
+      <span class="text-right">Spread</span>
+      <span class="text-right">Action</span>
+    </div>
+
+    <div class="divide-y divide-zinc-800">
+      <% if market_facilities.any? %>
+        <%= render partial: "star_trader/market_row", collection: market_facilities, as: :facility %>
+      <% else %>
+        <div class="p-8 text-center text-zinc-400">
+          No facilities match the current filters.
+        </div>
+      <% end %>
+    </div>
+
+    <nav class="flex items-center justify-between border-t border-zinc-800 p-4 text-sm" aria-label="Market pagination">
+      <% if previous_page %>
+        <%= link_to "Previous", star_trader_market_path(filter_params.merge(page: previous_page)), class: "rounded-md border border-zinc-700 px-3 py-2 font-semibold text-zinc-200 hover:border-cyan-400", data: { turbo_frame: "market_results" } %>
+      <% else %>
+        <span class="rounded-md border border-zinc-800 px-3 py-2 text-zinc-600">Previous</span>
+      <% end %>
+
+      <span class="font-mono text-xs uppercase text-zinc-400">Page <%= page %><%= total_pages.positive? ? " / #{total_pages}" : "" %></span>
+
+      <% if next_page %>
+        <%= link_to "Next", star_trader_market_path(filter_params.merge(page: next_page)), class: "rounded-md border border-zinc-700 px-3 py-2 font-semibold text-zinc-200 hover:border-cyan-400", data: { turbo_frame: "market_results" } %>
+      <% else %>
+        <span class="rounded-md border border-zinc-800 px-3 py-2 text-zinc-600">Next</span>
+      <% end %>
+    </nav>
+  </section>
+<% end %>

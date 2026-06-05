@@ -111,6 +111,7 @@ end
       SQL
 
       ActiveRecord::Base.connection.execute(sql)
+      ProductionFacility.where(id: ids).find_each(&:broadcast_market_row)
       Rails.logger.info "MarketPriceUpdater: Bulk updated #{ids.size} facilities with price changes."
     end
   end

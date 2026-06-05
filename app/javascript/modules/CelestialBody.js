@@ -59,7 +59,7 @@ if (data["classification"] === "star_system") {
 }
 
 
-    if (data["classification"] === "planet") {
+    if (["planet", "moon", "space_station", "outpost", "city"].includes(data["classification"]) && data.apoapsis && data.periapsis) {
 const aReal  = (data.apoapsis + data.periapsis) / 2;      // Mkm (real units for physics)
 const aScene = aReal / this.SCALE_POS;                     // scene units (for rendering)
 const e      = (data.apoapsis - data.periapsis) / (data.apoapsis + data.periapsis);

@@ -5,7 +5,7 @@ module Api
     skip_before_action :verify_authenticity_token
 
     def index
-      scope   = Location.all
+      scope = Location.unscoped.all
       scope   = scope.where(star_system_name: params[:system])      if params[:system].present?
       scope   = scope.where(classification: params[:location_type]) if params[:location_type].present?
       records = scope.order(:name)

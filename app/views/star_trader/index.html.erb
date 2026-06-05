@@ -1,0 +1,46 @@
+<%= turbo_stream_from "market_prices" %>
+<% content_for :meta_title, @meta_title %>
+<% content_for :meta_description, @meta_description %>
+<% content_for :meta_keywords, @meta_keywords %>
+
+<section class="min-h-screen w-full bg-zinc-950 text-zinc-100" data-controller="mobile-tabs market-board">
+  <div class="mx-auto flex w-full max-w-[1800px] flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
+    <%= render "status_bar" %>
+    <%= render "market_overview" %>
+
+    <div class="lg:hidden">
+      <div class="grid grid-cols-4 gap-1 rounded-lg border border-zinc-800 bg-zinc-900/80 p-1">
+        <button type="button" class="rounded-md px-2 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-200 data-[active=true]:bg-cyan-500 data-[active=true]:text-zinc-950" data-mobile-tabs-target="tab" data-mobile-tabs-panel-param="market" data-action="mobile-tabs#show" data-active="true">Market</button>
+        <button type="button" class="rounded-md px-2 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-200 data-[active=true]:bg-cyan-500 data-[active=true]:text-zinc-950" data-mobile-tabs-target="tab" data-mobile-tabs-panel-param="map" data-action="mobile-tabs#show">Map</button>
+        <button type="button" class="rounded-md px-2 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-200 data-mobile-tabs-target="tab" data-mobile-tabs-panel-param="filters" data-action="mobile-tabs#show">Filters</button>
+        <button type="button" class="rounded-md px-2 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-200 data-mobile-tabs-target="tab" data-mobile-tabs-panel-param="details" data-action="mobile-tabs#show">Details</button>
+      </div>
+    </div>
+
+    <div class="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_380px] xl:grid-cols-[320px_minmax(0,1fr)_430px]">
+      <aside class="hidden lg:block">
+        <div class="sticky top-4">
+          <%= render "filters" %>
+        </div>
+      </aside>
+
+      <div data-mobile-tabs-target="panel" data-mobile-tabs-name-value="filters" class="hidden lg:hidden">
+        <%= render "filters" %>
+      </div>
+
+      <section data-mobile-tabs-target="panel" data-mobile-tabs-name-value="market" class="min-w-0">
+        <%= render "market_results" %>
+      </section>
+
+      <aside data-mobile-tabs-target="panel" data-mobile-tabs-name-value="map" class="hidden lg:block">
+        <div class="sticky top-4">
+          <%= render "orbital_panel", selected_facility: @selected_facility %>
+        </div>
+      </aside>
+
+      <aside data-mobile-tabs-target="panel" data-mobile-tabs-name-value="details" class="hidden lg:hidden">
+        <%= render "selected_location", facility: @selected_facility %>
+      </aside>
+    </div>
+  </div>
+</section>

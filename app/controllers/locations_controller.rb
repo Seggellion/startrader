@@ -12,8 +12,11 @@ class LocationsController < ApplicationController
     # Fetch the star (if modeled as a Location with classification 'star_system')
     star = Location.where(classification: "star_system", star_system_name: system_name).first
 
-    # Fetch planets in that system; preload the star association for starmass
-    planets = Location.where(classification: "planet", star_system_name: system_name)
+    # Fetch orbital bodies and trade-relevant places in that system.
+    orbitals = Location
+      .where(star_system_name: system_name)
+      .where(classification: %w[planet moon space_station outpost city])
+      .order(:classification, :name)
 
     payload = []
 
@@ -31,14 +34,15 @@ class LocationsController < ApplicationController
       }
     end
 
-    # Then include planets
-    planets.each do |location|
+    # Then include planets, moons, stations, and trade locations when modeled.
+    orbitals.each do |location|
       payload << {
         id: location.id,
         attributes: {
           'name': location.name,
-          'classification': 'planet',
+          'classification': location.classification,
           'system': location.star_system_name,
+          'parent': location.parent_name,
           'apoapsis': location.apoapsis,
           'periapsis': location.periapsis,
           'mass': location.mass,

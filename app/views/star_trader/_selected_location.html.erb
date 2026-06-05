@@ -1,0 +1,33 @@
+<section class="rounded-lg border border-zinc-800 bg-zinc-900/90 p-4 lg:rounded-none lg:border-0 lg:border-t lg:border-zinc-800">
+  <p class="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-400">Selected location</p>
+  <% if facility %>
+    <h2 class="mt-2 truncate text-xl font-semibold text-white" data-market-board-target="selectedLocation"><%= facility.location_name %></h2>
+    <p class="mt-1 truncate text-sm text-zinc-400" data-market-board-target="selectedContext"><%= market_location_context(facility.location) %></p>
+
+    <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+      <div class="rounded-md border border-zinc-800 bg-zinc-950/60 p-3">
+        <dt class="text-xs uppercase text-zinc-500">Commodity</dt>
+        <dd class="mt-1 truncate font-semibold text-cyan-100" data-market-board-target="selectedCommodity"><%= facility.commodity_name %></dd>
+      </div>
+      <div class="rounded-md border border-zinc-800 bg-zinc-950/60 p-3">
+        <dt class="text-xs uppercase text-zinc-500">Facility</dt>
+        <dd class="mt-1 truncate font-semibold text-zinc-100" data-market-board-target="selectedFacility"><%= facility.facility_name %></dd>
+      </div>
+      <div class="rounded-md border border-zinc-800 bg-zinc-950/60 p-3">
+        <dt class="text-xs uppercase text-zinc-500">Buy</dt>
+        <dd class="mt-1 font-mono text-emerald-200" data-market-board-target="selectedBuy"><%= market_price(facility.local_sell_price) %></dd>
+      </div>
+      <div class="rounded-md border border-zinc-800 bg-zinc-950/60 p-3">
+        <dt class="text-xs uppercase text-zinc-500">Sell</dt>
+        <dd class="mt-1 font-mono text-amber-200" data-market-board-target="selectedSell"><%= market_price(facility.local_buy_price) %></dd>
+      </div>
+    </dl>
+  <% else %>
+    <h2 class="mt-2 text-xl font-semibold text-white" data-market-board-target="selectedLocation">No selection</h2>
+    <p class="mt-1 text-sm text-zinc-400" data-market-board-target="selectedContext">Pick a market row to prepare the simulator focus.</p>
+    <span class="hidden" data-market-board-target="selectedCommodity"></span>
+    <span class="hidden" data-market-board-target="selectedFacility"></span>
+    <span class="hidden" data-market-board-target="selectedBuy"></span>
+    <span class="hidden" data-market-board-target="selectedSell"></span>
+  <% end %>
+</section>

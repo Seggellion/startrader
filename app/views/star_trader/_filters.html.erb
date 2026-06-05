@@ -1,0 +1,50 @@
+<section class="rounded-lg border border-zinc-800 bg-zinc-900/90 p-4">
+  <div class="mb-4">
+    <h2 class="text-base font-semibold text-white">Market Filters</h2>
+    <p class="mt-1 text-sm text-zinc-400">Search and refine the server-side market feed.</p>
+  </div>
+
+  <%= form_with url: star_trader_market_path, method: :get, data: { turbo_frame: "market_results", controller: "market-filters", action: "input->market-filters#queueSubmit change->market-filters#submitNow" }, html: { class: "space-y-4" } do |form| %>
+    <div>
+      <%= form.label :q, "Search", class: "block text-xs font-semibold uppercase text-zinc-400" %>
+      <%= form.search_field :q, value: @filter_params[:q], placeholder: "Location, commodity, system", class: "mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400", data: { market_filters_target: "searchInput" } %>
+    </div>
+
+    <div>
+      <%= form.label :star_system, "Star system", class: "block text-xs font-semibold uppercase text-zinc-400" %>
+      <%= form.select :star_system, options_for_select([["All systems", ""]] + @star_systems.map { |name| [name, name] }, @filter_params[:star_system]), {}, class: "mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400" %>
+    </div>
+
+    <div>
+      <%= form.label :commodity_id, "Commodity", class: "block text-xs font-semibold uppercase text-zinc-400" %>
+      <%= form.select :commodity_id, options_for_select([["All commodities", ""]] + @commodities.map { |commodity| [commodity.name, commodity.id] }, @filter_params[:commodity_id]), {}, class: "mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400" %>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <%= form.label :trade_mode, "Trade mode", class: "block text-xs font-semibold uppercase text-zinc-400" %>
+        <%= form.select :trade_mode, options_for_select([["Any", ""], ["Player can buy", "buy"], ["Player can sell", "sell"], ["Both", "both"]], @filter_params[:trade_mode]), {}, class: "mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400" %>
+      </div>
+      <div>
+        <%= form.label :location_type, "Location type", class: "block text-xs font-semibold uppercase text-zinc-400" %>
+        <%= form.select :location_type, options_for_select([["Any", ""]] + @location_types.map { |type| [type.to_s.titleize, type] }, @filter_params[:location_type]), {}, class: "mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400" %>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <%= form.label :sort, "Sort", class: "block text-xs font-semibold uppercase text-zinc-400" %>
+        <%= form.select :sort, options_for_select([["Updated", "updated"], ["Location", "location"], ["Commodity", "commodity"], ["Buy price", "buy_price"], ["Sell price", "sell_price"], ["Inventory", "inventory"], ["Demand", "demand"], ["Profit margin", "profit_margin"]], @filter_params[:sort]), {}, class: "mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400" %>
+      </div>
+      <div>
+        <%= form.label :direction, "Direction", class: "block text-xs font-semibold uppercase text-zinc-400" %>
+        <%= form.select :direction, options_for_select([["Descending", "desc"], ["Ascending", "asc"]], @filter_params[:direction]), {}, class: "mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400" %>
+      </div>
+    </div>
+
+    <div class="flex gap-2">
+      <%= form.submit "Apply", class: "flex-1 rounded-md bg-cyan-500 px-3 py-2 text-sm font-semibold text-zinc-950 hover:bg-cyan-400" %>
+      <%= link_to "Reset", root_path, class: "rounded-md border border-zinc-700 px-3 py-2 text-sm font-semibold text-zinc-200 hover:border-zinc-500" %>
+    </div>
+  <% end %>
+</section>

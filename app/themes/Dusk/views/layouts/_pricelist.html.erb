@@ -14,6 +14,9 @@
     <tbody>
       <% facilities.each do |facility| %>
         <tr>
+<td colspan="3"><%= facility.facility_name %></td> 
+        </tr>
+        <tr>
       
           <td><%= facility.commodity&.name %></td>
           <td><%= facility.local_buy_price.present? ? "#{facility.local_buy_price} AEC" : "N/A" %></td>

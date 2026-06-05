@@ -1,16 +1,7 @@
 <header >
   <!-- First Row -->
   <div class="w-full">
-  <div class="container mx-auto flex justify-between items-center px-4 lg:px-8 h-24">
-  <div class="h-full w-auto flex items-center justify-center">
-    <% if (logo = Setting.get('logo')) %>
-      <%= link_to root_path do %>
-        <%= image_tag url_for(logo), alt: 'Corporate Logo', class: 'h-24 max-h-[100px] w-auto object-contain' %>
-      <% end %>
-    <% end %>
-  </div>
-
-  <h2 style="color:white;" class="text-2xl font-bold mx-auto hidden sm:block">Orbitarium</h2>
+  <div class="container mx-auto flex justify-between items-center px-4 lg:px-8 ">
 
   <% if (announcement = Setting.find_by(key: 'announcement-bar')) && announcement.parsed_value.present? %>
     <div class="announcement-bar text-black text-center py-2">

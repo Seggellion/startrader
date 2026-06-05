@@ -1,0 +1,56 @@
+<% location = facility.location %>
+<% buy_price = facility.local_sell_price.to_d.positive? ? facility.local_sell_price : facility.price_sell %>
+<% sell_price = facility.local_buy_price.to_d.positive? ? facility.local_buy_price : facility.price_buy %>
+<% spread = market_spread(facility) %>
+
+<article id="<%= dom_id(facility, :market_row) %>"
+  class="grid gap-3 bg-zinc-900/60 p-4 transition-colors duration-700 hover:bg-zinc-800/70 lg:grid-cols-[1.25fr_1fr_0.8fr_0.8fr_0.8fr_0.8fr_0.8fr_110px] lg:items-center"
+  data-controller="market-row"
+  data-market-board-location-name-param="<%= facility.location_name %>"
+  data-market-board-facility-name-param="<%= facility.facility_name %>"
+  data-market-board-commodity-name-param="<%= facility.commodity_name %>"
+  data-market-board-system-name-param="<%= location&.star_system_name %>"
+  data-market-board-context-param="<%= market_location_context(location) %>"
+  data-market-board-buy-price-param="<%= buy_price %>"
+  data-market-board-sell-price-param="<%= sell_price %>"
+  data-action="click->market-board#selectRow">
+  <div class="min-w-0">
+    <h3 class="truncate text-base font-semibold text-white"><%= facility.location_name.presence || facility.facility_name %></h3>
+    <p class="mt-1 truncate text-sm text-zinc-400"><%= market_location_context(location) %></p>
+    <p class="mt-1 text-xs uppercase text-zinc-500 lg:hidden"><%= location&.classification.to_s.titleize.presence || "Facility" %></p>
+  </div>
+
+  <div class="min-w-0">
+    <p class="truncate font-semibold text-cyan-100"><%= facility.commodity_name %></p>
+    <p class="mt-1 truncate text-xs text-zinc-500"><%= facility.facility_name %></p>
+  </div>
+
+  <div class="flex items-center justify-between gap-3 lg:block lg:text-right">
+    <span class="text-xs uppercase text-zinc-500 lg:hidden">Buy</span>
+    <span class="font-mono text-sm text-emerald-200"><%= buy_price.to_d.positive? ? market_price(buy_price) : "-" %></span>
+  </div>
+
+  <div class="flex items-center justify-between gap-3 lg:block lg:text-right">
+    <span class="text-xs uppercase text-zinc-500 lg:hidden">Sell</span>
+    <span class="font-mono text-sm text-amber-200"><%= sell_price.to_d.positive? ? market_price(sell_price) : "-" %></span>
+  </div>
+
+  <div class="flex items-center justify-between gap-3 lg:block lg:text-right">
+    <span class="text-xs uppercase text-zinc-500 lg:hidden">Inventory</span>
+    <span class="font-mono text-sm text-zinc-100"><%= market_quantity(facility.inventory) %> / <%= market_quantity(facility.max_inventory) %></span>
+  </div>
+
+  <div class="flex items-center justify-between gap-3 lg:block lg:text-right">
+    <span class="text-xs uppercase text-zinc-500 lg:hidden">Demand</span>
+    <span class="font-mono text-sm text-zinc-100"><%= market_quantity(facility.scu_buy) %></span>
+  </div>
+
+  <div class="flex items-center justify-between gap-3 lg:block lg:text-right">
+    <span class="text-xs uppercase text-zinc-500 lg:hidden">Spread</span>
+    <span class="font-mono text-sm <%= spread.positive? ? "text-emerald-200" : "text-zinc-500" %>"><%= spread.positive? ? market_price(spread) : "-" %></span>
+  </div>
+
+  <div class="flex justify-end">
+    <button type="button" class="rounded-md border border-cyan-400/40 px-3 py-2 text-xs font-semibold uppercase text-cyan-100 hover:bg-cyan-400/10" data-action="click->market-board#focusLocation">Map</button>
+  </div>
+</article>

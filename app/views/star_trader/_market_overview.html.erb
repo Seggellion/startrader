@@ -1,0 +1,18 @@
+<section aria-label="Market overview" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+  <%= render "overview_card", label: "Best buy", facility: @overview[:best_buy], value: (@overview[:best_buy] ? market_price(@overview[:best_buy].local_sell_price) : "None") %>
+  <%= render "overview_card", label: "Best sell", facility: @overview[:best_sell], value: (@overview[:best_sell] ? market_price(@overview[:best_sell].local_buy_price) : "None") %>
+  <%= render "overview_card", label: "Volatile", facility: @overview[:volatile], value: (@overview[:volatile]&.commodity_name || "None") %>
+
+  <div class="rounded-lg border border-zinc-800 bg-zinc-900/80 p-4">
+    <p class="text-xs font-semibold uppercase text-zinc-400">Active locations</p>
+    <p class="mt-2 font-mono text-2xl text-emerald-200"><%= market_quantity(@overview[:active_locations]) %></p>
+  </div>
+  <div class="rounded-lg border border-zinc-800 bg-zinc-900/80 p-4">
+    <p class="text-xs font-semibold uppercase text-zinc-400">Commodities</p>
+    <p class="mt-2 font-mono text-2xl text-cyan-200"><%= market_quantity(@overview[:commodities]) %></p>
+  </div>
+  <div class="rounded-lg border border-zinc-800 bg-zinc-900/80 p-4">
+    <p class="text-xs font-semibold uppercase text-zinc-400">Simulation tick</p>
+    <p class="mt-2 font-mono text-2xl text-amber-200"><%= market_quantity(@overview[:tick]) %></p>
+  </div>
+</section>

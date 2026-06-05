@@ -11,7 +11,8 @@ Rails.application.routes.draw do
   delete '/logout', to: 'sessions#destroy', as: 'logout'
 
   # Public Routes
-  root 'home#index'
+  root 'star_trader#index'
+  get 'market', to: 'star_trader#market', as: :star_trader_market
   get 'news', to: 'home#news'
   get 'economy', to: 'economy#index'
   get 'account/login', to: 'account#login'

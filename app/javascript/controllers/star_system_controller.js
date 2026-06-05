@@ -9,6 +9,7 @@ export default class extends Controller {
     connect() {
         console.log('star_system');
         this.planets = [];
+        this.starSystemNameValue = this.starSystemNameValue || "Stanton";
         this.threeJS = new ThreeJSInitializer(this.element);
         this.animationController = new AnimationController(this.threeJS.renderer, this.threeJS.scene, this.threeJS.camera);
         this.celestialBody = new CelestialBody(this.threeJS.scene, this.animationController, this.threeJS.camera); // Pass animationController here
@@ -18,6 +19,11 @@ export default class extends Controller {
    this.subscribeToTicks();
         this.fetchAndDisplayCelestialBodies(this.starSystemNameValue);
        // this.animationController.startAnimation();
+    }
+
+    disconnect() {
+        this.tickSub?.unsubscribe();
+        this.threeJS?.dispose();
     }
 
     selectStarSystem(event) {
@@ -78,10 +84,27 @@ export default class extends Controller {
                                                         this.celestialBody.addCelestialBody(attributes, 10, 0xffd700, attributes.name, attributes.starMass);
                         } else if (attributes["classification"] === "planet") {
                                                         this.celestialBody.addCelestialBody(attributes, 3, 0x00ff00, attributes.name, attributes.starMass);
+                        } else if (attributes["classification"] === "moon") {
+                                                        this.celestialBody.addCelestialBody(attributes, 1.4, 0x9ca3af, attributes.name, attributes.starMass);
+                        } else if (attributes["classification"] === "space_station") {
+                                                        this.celestialBody.addCelestialBody(attributes, 0.9, 0x38bdf8, attributes.name, attributes.starMass);
+                        } else if (attributes["classification"] === "outpost" || attributes["classification"] === "city") {
+                                                        this.celestialBody.addCelestialBody(attributes, 0.7, 0xf59e0b, attributes.name, attributes.starMass);
                         }
                     });
                 }
             }).then(() => this.animationController.renderOnce()); 
+    }
+
+    focusLocation(event) {
+        const detail = event.detail || {};
+        if (detail.systemName && detail.systemName !== this.starSystemNameValue) {
+            this.starSystemNameValue = detail.systemName;
+            this.celestialBody.clearCelestialBodies();
+            this.fetchAndDisplayCelestialBodies(this.starSystemNameValue);
+        }
+
+        this.element.dataset.focusedLocation = detail.locationName || "";
     }
     
     

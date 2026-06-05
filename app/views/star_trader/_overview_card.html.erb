@@ -1,0 +1,9 @@
+<article class="rounded-lg border border-zinc-800 bg-zinc-900/80 p-4">
+  <p class="text-xs font-semibold uppercase text-zinc-400"><%= label %></p>
+  <p class="mt-2 truncate font-mono text-xl text-zinc-100"><%= value %></p>
+  <% if facility %>
+    <p class="mt-1 truncate text-sm text-zinc-400"><%= facility.location_name %></p>
+  <% else %>
+    <p class="mt-1 text-sm text-zinc-500">No market signal</p>
+  <% end %>
+</article>
