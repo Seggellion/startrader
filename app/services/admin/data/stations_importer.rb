@@ -127,7 +127,7 @@ module Admin
         request["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 RailsApp/8.0" 
         request["Accept"] = "application/json"
         
-        # request["Authorization"] = "Bearer YOUR_UEX_API_KEY" # Uncomment if UEX requires auth
+        request["Authorization"] = "Bearer 0e8690e70d2af61c0cb5f504c82a63db9058429d"
 
         response = http.request(request)
 
