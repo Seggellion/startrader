@@ -20,7 +20,8 @@
     <div data-modal-target="dialog" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
       <div class="relative p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white">
         <h3 class="text-lg font-bold mb-4">Paste Planets JSON</h3>
-        
+
+                <small><a target="_blank" href="https://api.uexcorp.space/2.0/planets">https://api.uexcorp.space/2.0/planets</a></small>
         <%= form_with url: import_planets_admin_data_path, method: :post, local: true do |f| %>
           <div class="mb-4">
             <p class="text-sm text-gray-600 mb-2">Paste the raw JSON output from the UEX API below:</p>
