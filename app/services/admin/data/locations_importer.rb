@@ -117,11 +117,40 @@ module Admin
         end
   
         # 🌐 Fetch JSON data from the API
+# 🌐 Fetch JSON data from the API
         def self.fetch_api_data(url)
-          response = Net::HTTP.get(URI(url))
-          JSON.parse(response)
+          uri = URI(url)
+          
+          # 1. Set up the HTTP request manually to allow for headers
+          http = Net::HTTP.new(uri.host, uri.port)
+          http.use_ssl = (uri.scheme == "https")
+          
+          request = Net::HTTP::Get.new(uri)
+          
+          # 2. Spoof a standard User-Agent so WAFs don't block the Ruby default bot
+          request["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 RailsApp/8.0" 
+          request["Accept"] = "application/json"
+          
+          # request["Authorization"] = "Bearer YOUR_UEX_API_KEY" # Uncomment if UEX requires auth
+
+          response = http.request(request)
+
+          # 3. Handle the response based on the HTTP Status Code
+          if response.is_a?(Net::HTTPSuccess)
+            JSON.parse(response.body)
+          elsif response.is_a?(Net::HTTPRedirection)
+            Rails.logger.error "Redirected (LocationsImporter): #{url} -> #{response['location']}"
+            nil
+          else
+            # Log the exact status code and the first 200 characters of the body to diagnose further blocks
+            Rails.logger.error "HTTP Error (LocationsImporter): #{response.code} #{response.message} at #{url} - Body: #{response.body[0..200]}"
+            nil
+          end
+        rescue JSON::ParserError => e
+          Rails.logger.error "JSON Parsing Error (LocationsImporter): #{e.message} at #{url}"
+          nil
         rescue => e
-          Rails.logger.error "Failed to fetch data (LocationsImporter): #{e.message}"
+          Rails.logger.error "Network Error (LocationsImporter): #{e.message} at #{url}"
           nil
         end
   
