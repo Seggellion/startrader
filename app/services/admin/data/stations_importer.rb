@@ -55,7 +55,7 @@ module Admin
         Rails.logger.error "Failed to import raw JSON locations: #{e.message}"
         0
       end
-      
+
       # 🚦 Import a single location for testing
       def self.import_single!
         LOCATION_URLS.each do |url|
@@ -102,28 +102,28 @@ module Admin
           is_visible: location_data['is_visible'].to_i == 1,
           is_default_system: location_data['is_default_system'].to_i == 1,
           is_affinity_influenceable: location_data['is_affinity_influenceable'].to_i == 1,
-          is_habitation: location_data['is_habitation'].to_i == 1,
-          is_refinery: location_data['is_refinery'].to_i == 1,
-          is_cargo_center: location_data['is_cargo_center'].to_i == 1,
-          is_medical: location_data['is_medical'].to_i == 1,
-          is_food: location_data['is_food'].to_i == 1,
+          is_habitation: location_data['has_habitation'].to_i == 1,
+          is_refinery: location_data['has_refinery'].to_i == 1,
+          is_cargo_center: location_data['has_cargo_center'].to_i == 1,
+          is_medical: location_data['has_clinic'].to_i == 1,
+          is_food: location_data['has_food'].to_i == 1,
           is_shop_fps: location_data['is_shop_fps'].to_i == 1,
           is_shop_vehicle: location_data['is_shop_vehicle'].to_i == 1,
-          is_refuel: location_data['is_refuel'].to_i == 1,
-          is_repair: location_data['is_repair'].to_i == 1,
+          is_refuel: location_data['has_refuel'].to_i == 1,
+          is_repair: location_data['has_repair'].to_i == 1,
           is_nqa: location_data['is_nqa'].to_i == 1,
           is_player_owned: location_data['is_player_owned'].to_i == 1,
           is_auto_load: location_data['is_auto_load'].to_i == 1,
           has_loading_dock: location_data['has_loading_dock'].to_i == 1,
           has_docking_port: location_data['has_docking_port'].to_i == 1,
           has_freight_elevator: location_data['has_freight_elevator'].to_i == 1,
-
+          has_trade_terminal:location_data['has_trade_terminal'].to_i == 1,
           # Name mappings
           star_system_name: location_data['star_system_name'],
           planet_name: location_data['planet_name'],
           orbit_name: location_data['orbit_name'],
           moon_name: location_data['moon_name'],
-          space_station_name: location_data['space_station_name'],
+          space_station_name: location_data['name'],
           outpost_name: location_data['outpost_name'],
           city_name: location_data['city_name'],
           faction_name: location_data['faction_name'],

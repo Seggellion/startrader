@@ -14,6 +14,16 @@ foreign_key: 'parent_name',
 primary_key: 'name',
 inverse_of: :parent
 
+has_many :departing_ship_travels, 
+           class_name: 'ShipTravel', 
+           foreign_key: :from_location_id, 
+           dependent: :destroy
+
+  has_many :arriving_ship_travels, 
+           class_name: 'ShipTravel', 
+           foreign_key: :to_location_id, 
+           dependent: :destroy
+
     has_many :user_ships, primary_key: :name, foreign_key: :location_name, dependent: :nullify
 
 

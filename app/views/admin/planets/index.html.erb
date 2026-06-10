@@ -1,12 +1,39 @@
 <div class="bg-white p-6 rounded shadow">
-  <div class="flex justify-between items-center mb-4">
-    <h1 class="text-2xl font-bold">Planets</h1>
-    <%= button_to 'Delete All Planets', delete_all_admin_planets_path, 
-    class: 'bg-red-500 text-white px-4 py-2 rounded', 
-    method: :delete, 
-    data: { confirm: 'Are you sure you want to delete all planets? This action cannot be undone.' } %>
-        <%= button_to 'Import Planets', import_planets_admin_data_path, class: 'bg-blue-500 text-white px-4 py-2 rounded', method: :post %>
-    <%= link_to 'Add New', new_admin_planet_path, class: 'bg-blue-500 text-white px-4 py-2 rounded' %>
+  <div data-controller="modal">
+    <div class="flex justify-between items-center mb-4">
+      <h1 class="text-2xl font-bold">Planets</h1>
+      
+      <div class="flex gap-2">
+        <%= button_to 'Delete All Planets', delete_all_admin_planets_path, 
+            class: 'bg-red-500 text-white px-4 py-2 rounded', 
+            method: :delete, 
+            data: { confirm: 'Are you sure you want to delete all planets? This action cannot be undone.' } %>
+            
+        <button data-action="click->modal#open" class="bg-blue-500 text-white px-4 py-2 rounded">
+          Import Planets
+        </button>
+        
+        <%= link_to 'Add New', new_admin_planet_path, class: 'bg-blue-500 text-white px-4 py-2 rounded' %>
+      </div>
+    </div>
+
+    <div data-modal-target="dialog" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+      <div class="relative p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white">
+        <h3 class="text-lg font-bold mb-4">Paste Planets JSON</h3>
+        
+        <%= form_with url: import_planets_admin_data_path, method: :post, local: true do |f| %>
+          <div class="mb-4">
+            <p class="text-sm text-gray-600 mb-2">Paste the raw JSON output from the UEX API below:</p>
+            <%= f.text_area :json_data, rows: 15, class: "w-full border rounded p-2 font-mono text-sm", placeholder: '{"data": [...]}' %>
+          </div>
+          
+          <div class="flex justify-end gap-2">
+            <button type="button" data-action="click->modal#close" class="bg-gray-300 text-black px-4 py-2 rounded">Cancel</button>
+            <%= f.submit 'Import JSON', class: "bg-blue-500 text-white px-4 py-2 rounded cursor-pointer" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
   </div>
 
   <table class="min-w-full bg-white mt-4 border">
@@ -16,6 +43,7 @@
         <th class="py-2 px-4 border">Type</th>
         <th class="py-2 px-4 border">Parent</th>
         <th class="py-2 px-4 border">Date</th>
+        <th class="py-2 px-4 border">Actions</th>
       </tr>
     </thead>
     <tbody>

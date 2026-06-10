@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_24_034809) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_10_053145) do
   create_schema "cable"
 
   # These are extensions that must be enabled in order to support this database
