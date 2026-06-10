@@ -22,6 +22,10 @@ application.register("google-map", GoogleMapController)
 import HelloController from "./hello_controller"
 application.register("hello", HelloController)
 
+import ModalController from "./modal_controller"
+application.register("modal", ModalController)
+
+
 import MenuItemsController from "./menu_items_controller"
 application.register("menu-items", MenuItemsController)
 

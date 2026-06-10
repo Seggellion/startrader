@@ -29,6 +29,33 @@ module Admin
         0
       end
 
+
+      # 📥 Import locations from a raw JSON string
+      def self.import_raw_json!(json_string)
+        imported_count = 0
+        data = JSON.parse(json_string)
+
+        return 0 unless data&.any?
+
+        # Safely extract the array, whether it's wrapped in a 'data' key or pasted directly as an array
+        locations_array = data['data'] || data
+
+        locations_array.each do |location_data|
+          if import_location(location_data)
+            imported_count += 1
+          end
+        end
+
+        Rails.logger.info "Successfully imported #{imported_count} locations via raw JSON."
+        imported_count
+      rescue JSON::ParserError => e
+        Rails.logger.error "Failed to parse pasted JSON (StationsImporter): #{e.message}"
+        0
+      rescue => e
+        Rails.logger.error "Failed to import raw JSON locations: #{e.message}"
+        0
+      end
+      
       # 🚦 Import a single location for testing
       def self.import_single!
         LOCATION_URLS.each do |url|
@@ -127,7 +154,7 @@ module Admin
         request["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 RailsApp/8.0" 
         request["Accept"] = "application/json"
         
-        request["Authorization"] = "Bearer 0e8690e70d2af61c0cb5f504c82a63db9058429d"
+        request['Authorization'] = "Bearer #{Setting.get("uex_api_token")}"
 
         response = http.request(request)
 

@@ -1,6 +1,9 @@
 module Admin
   class DataController < ApplicationController
  
+
+
+
     def import_ships
         if Admin::Data::ShipsImporter.import_all!
           flash[:notice] = "One ship imported successfully!"
@@ -56,14 +59,21 @@ module Admin
         redirect_to admin_cities_path
       end
 
-      def import_stations
-        if Admin::Data::StationsImporter.import_all!
-          flash[:notice] = "All Stations imported successfully!"
+    def import_stations
+      json_payload = params[:json_data]
+      
+      if json_payload.present?
+        imported_count = Admin::Data::StationsImporter.import_raw_json!(json_payload)
+        
+        if imported_count > 0
+          redirect_to admin_space_stations_path, notice: "Successfully imported #{imported_count} space stations."
         else
-          flash[:alert] = "Failed to import locations."
+          redirect_to admin_space_stations_path, alert: "Import failed. Please verify the JSON format."
         end
-        redirect_to admin_space_stations_path
+      else
+        redirect_to admin_space_stations_path, alert: "No JSON data was provided."
       end
+    end
       
       def import_moons
         if Admin::Data::MoonsImporter.import_all!
