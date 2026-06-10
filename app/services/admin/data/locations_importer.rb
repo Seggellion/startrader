@@ -117,7 +117,6 @@ module Admin
         end
   
         # 🌐 Fetch JSON data from the API
-# 🌐 Fetch JSON data from the API
         def self.fetch_api_data(url)
           uri = URI(url)
           
@@ -156,8 +155,7 @@ module Admin
   
         # 🧮 Determine classification based on data
     
-        
-
+  
         def self.determine_classification(data)
             # Star System: has an id_star_system but no other parent references
             if data['id_star_system'].to_i.zero? &&
