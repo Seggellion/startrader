@@ -51,6 +51,7 @@ module Admin
           pad_type: data['pad_type'],
           game_version: data['game_version'],
           company_name: data['company_name'],
+          url_photo: data['url_photo'],
           url_store: data['url_store'],
           url_brochure: data['url_brochure'],
           url_hotsite: data['url_hotsite'],

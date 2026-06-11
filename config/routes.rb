@@ -84,6 +84,7 @@ Rails.application.routes.draw do
     post 'user_ships/:guid/interdict', to: 'ship_travel#interdict_by_guid', as: :interdict_by_guid
     post 'user_ships/:guid/resume',    to: 'ship_travel#resume_by_guid',    as: :resume_by_guid
 
+    resources :ships, only: [:index]
 
     get "interdictable_ships", to: "ship_travel#interdictable_index"
     get 'location/:user_ship_id', to: 'travel#location', as: 'location'
@@ -137,11 +138,18 @@ Rails.application.routes.draw do
     root to: 'dashboard#index'
   post "tick/start", to: "tick_controls#start", as: :start_tick
   post "tick/stop",  to: "tick_controls#stop",  as: :stop_tick
-    resources :ships, controller: :vehicles, as: :ships
+    
 
     resources :planets, :user_ships, :user_ship_cargos, :star_bitizen_runs, :shards, :shard_users, :ship_travels, :cities, :outposts, :terminals, :moons, :vehicles, :space_stations, :star_systems, :production_facilities, only: [:index, :new, :create, :edit, :update, :destroy] do
       collection do
         delete :delete_all
+      end
+    end
+
+    resources :ships do
+      collection do
+        delete :delete_all
+        post :import_starbitizen
       end
     end
 
@@ -158,6 +166,7 @@ Rails.application.routes.draw do
         post :import_moons
         post :import_outposts
         post :import_stations
+        post :import_ships
         post :import_star_systems
         post :import_cities
       end

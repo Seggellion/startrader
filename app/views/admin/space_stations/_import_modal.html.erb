@@ -1,0 +1,17 @@
+    <div data-modal-target="dialog" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+      <div class="relative p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white">
+        <h3 class="text-lg font-bold mb-4">Paste Space Stations JSON</h3>
+        <small><a target="_blank" href="https://api.uexcorp.space/2.0/space_stations">https://api.uexcorp.space/2.0/space_stations</a></small>
+        <%= form_with url: import_stations_admin_data_path, method: :post, local: true do |f| %>
+          <div class="mb-4">
+            <p class="text-sm text-gray-600 mb-2">Paste the raw JSON output from the UEX API below:</p>
+            <%= f.text_area :json_data, rows: 15, class: "w-full border rounded p-2 font-mono text-sm", placeholder: '{"data": [...]}' %>
+          </div>
+          
+          <div class="flex justify-end gap-2">
+            <button type="button" data-action="click->modal#close" class="bg-gray-300 text-black px-4 py-2 rounded">Cancel</button>
+            <%= f.submit 'Import JSON', class: "bg-blue-500 text-white px-4 py-2 rounded cursor-pointer" %>
+          </div>
+        <% end %>
+      </div>
+    </div>

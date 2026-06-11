@@ -1,0 +1,42 @@
+<div data-modal-target="dialog" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+    <div class="relative p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white">
+      <h3 class="text-lg font-bold mb-4">Paste Ships JSON</h3>
+      
+      <%= form_with url: import_ships_admin_data_path, method: :post, local: true do |f| %>
+        <div class="mb-4">
+          <p class="text-sm text-gray-600 mb-2">Paste the raw JSON array or object from the API below:</p>
+          <%= f.text_area :json_data, rows: 15, class: "w-full border rounded p-2 font-mono text-sm", placeholder: '{"data": [...]}' %>
+        </div>
+        
+        <div class="flex justify-end gap-2">
+          <button type="button" data-action="click->modal#close" class="bg-gray-300 text-black px-4 py-2 rounded">Cancel</button>
+          <%= f.submit 'Import JSON', class: "bg-blue-500 text-white px-4 py-2 rounded cursor-pointer" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div data-modal-target="dialog" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-20 mx-auto p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white">
+    <div class="mt-3">
+      <h3 class="text-xl leading-6 font-bold text-gray-900 mb-4">Import Star Bitizen Data</h3>
+      
+      <%= form_with url: import_starbitizen_admin_ships_path, method: :post, local: true do |form| %>
+        <div class="mb-4">
+          <%= form.label :json_data, "Paste JSON Array:", class: "block text-sm font-medium text-gray-700 mb-2" %>
+          <%= form.text_area :json_data, 
+              rows: 15, 
+              class: "w-full border rounded p-2 font-mono text-sm focus:ring-blue-500 focus:border-blue-500", 
+              placeholder: "[\n  {\n    \"shipname\": \"Carrack Expedition\",\n    \"cargocapacity\": \"456\"\n  }\n]" %>
+        </div>
+        
+        <div class="flex justify-end gap-3 mt-6">
+          <button type="button" data-action="click->modal#close" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
+            Cancel
+          </button>
+          <%= form.submit "Update Ships", class: "px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

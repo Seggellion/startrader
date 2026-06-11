@@ -25,6 +25,8 @@ application.register("hello", HelloController)
 import ModalController from "./modal_controller"
 application.register("modal", ModalController)
 
+import SearchController from "./search_controller"
+application.register("search", SearchController)
 
 import MenuItemsController from "./menu_items_controller"
 application.register("menu-items", MenuItemsController)

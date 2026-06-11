@@ -4,14 +4,21 @@ module Admin
 
 
 
-    def import_ships
-        if Admin::Data::ShipsImporter.import_all!
-          flash[:notice] = "One ship imported successfully!"
+def import_ships
+      json_payload = params[:json_data]
+      
+      if json_payload.present?
+        imported_count = Admin::Data::ShipsImporter.import_raw_json!(json_payload)
+        
+        if imported_count > 0
+          redirect_to admin_ships_path, notice: "Successfully imported #{imported_count} ships."
         else
-          flash[:alert] = "Failed to import ships."
+          redirect_to admin_ships_path, alert: "Import failed. Please verify the JSON format."
         end
-        redirect_to admin_vehicles_path
+      else
+        redirect_to admin_ships_path, alert: "No JSON data was provided."
       end
+    end
   
       def import_commodities
         if Admin::Data::CommoditiesImporter.import_all!
