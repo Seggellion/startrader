@@ -1,0 +1,207 @@
+<%
+  page_class = "min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8"
+  panel_class = "rounded-lg border border-slate-800 bg-slate-900/80 shadow-xl shadow-black/20"
+  label_class = "text-xs font-semibold uppercase tracking-wide text-slate-500"
+  value_class = "mt-1 text-sm font-medium text-slate-100"
+  muted_value_class = "mt-1 text-sm text-slate-400"
+  button_class = "rounded-md border border-cyan-400/30 px-3 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-400/10 hover:text-white"
+  th_class = "px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400"
+  td_class = "px-4 py-4 align-top text-sm text-slate-300"
+
+  role = (@user.user_type == 0 || @user.user_type.to_s == "0" || @user.user_type.to_s == "admin") ? "Administrator" : "User"
+  active_ship = @user.active_ship
+  active_travel = active_ship&.active_travel
+  destination_name = active_travel&.to_location&.name
+  active_ship_name = active_ship&.ship&.model.presence || active_ship&.ship_slug.presence || (active_ship ? "Unknown ship" : "No active ship")
+  active_location = if active_ship.blank?
+    "No active ship"
+  elsif active_ship.status.to_s == "in_transit"
+    ["Traveling to #{destination_name.presence || "Unknown destination"}", active_travel&.arrival_tick.present? ? "Arriving at tick #{active_travel.arrival_tick}" : nil].compact.join(" ")
+  else
+    active_ship.location_name.presence || "Unknown location"
+  end
+
+  status_badge_class = lambda do |status|
+    case status.to_s
+    when "in_transit"
+      "border border-sky-400/30 bg-sky-400/10 text-sky-200"
+    when "docked", "landed", "available"
+      "border border-emerald-400/30 bg-emerald-400/10 text-emerald-200"
+    when "destroyed", "disabled"
+      "border border-rose-400/30 bg-rose-400/10 text-rose-200"
+    else
+      "border border-slate-600 bg-slate-800 text-slate-300"
+    end
+  end
+
+  avatar_source = lambda do |user|
+    if user.respond_to?(:avatar) && user.avatar.respond_to?(:attached?) && user.avatar.attached?
+      url_for(user.avatar)
+    else
+      avatar_value = user.has_attribute?(:avatar) ? user[:avatar].to_s : ""
+      if avatar_value.present? && (avatar_value.match?(/\Ahttps?:\/\//) || avatar_value.start_with?("/") || avatar_value.match?(/\.(png|jpg|jpeg|gif|webp|svg)\z/i))
+        avatar_value
+      else
+        "https://crafatar.com/avatars/#{user.uid}?size=128&overlay"
+      end
+    end
+  end
+
+  pretty_json = lambda do |value|
+    JSON.pretty_generate(value.presence || {})
+  rescue JSON::GeneratorError, TypeError
+    value.to_s
+  end
+%>
+
+<div class="<%= page_class %>">
+  <div class="mx-auto max-w-7xl space-y-6">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div>
+        <%= link_to "Back to Users", admin_users_path, class: "text-sm font-semibold text-cyan-300 hover:text-cyan-100" %>
+        <h1 class="mt-3 text-3xl font-bold text-white"><%= @user.username.presence || "User ##{@user.id}" %></h1>
+        <p class="mt-2 text-sm text-slate-400">Profile, account metadata, inventory, and fleet details.</p>
+      </div>
+      <%= link_to "Edit User", edit_admin_user_path(@user), class: button_class %>
+    </div>
+
+    <div class="<%= panel_class %> p-5">
+      <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+        <div class="flex items-center gap-4">
+          <%= image_tag avatar_source.call(@user), alt: "#{@user.username.presence || "User"} avatar", class: "h-20 w-20 rounded-full border border-slate-700 bg-slate-800 object-cover" %>
+          <div>
+            <p class="text-xl font-bold text-white"><%= @user.username.presence || "Unnamed user" %></p>
+            <p class="mt-1 font-mono text-sm text-slate-400"><%= @user.uid.presence || "No UID" %></p>
+            <% if role == "Administrator" %>
+              <span class="mt-3 inline-flex rounded-full border border-amber-300/30 bg-amber-300/10 px-2.5 py-1 text-xs font-semibold text-amber-200">Administrator</span>
+            <% else %>
+              <span class="mt-3 inline-flex rounded-full border border-slate-600 bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-300">User</span>
+            <% end %>
+          </div>
+        </div>
+        <div class="rounded-lg border border-slate-800 bg-slate-950/70 px-4 py-3 text-right">
+          <p class="<%= label_class %>">Wallet Balance</p>
+          <p class="mt-1 text-2xl font-bold text-emerald-200"><%= number_to_currency(@user.wallet_balance || 0) %></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-3">
+      <div class="<%= panel_class %> p-5 lg:col-span-2">
+        <h2 class="text-lg font-semibold text-white">Account Details</h2>
+        <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <% {
+            "Provider" => @user.provider,
+            "Twitch ID" => @user.twitch_id,
+            "First Name" => @user.first_name,
+            "Last Name" => @user.last_name,
+            "Country" => @user.country,
+            "Role" => role,
+            "Last Login" => (@user.last_login ? @user.last_login.strftime("%b %d, %Y %H:%M") : "Never"),
+            "Created At" => (@user.created_at ? @user.created_at.strftime("%b %d, %Y %H:%M") : nil),
+            "Updated At" => (@user.updated_at ? @user.updated_at.strftime("%b %d, %Y %H:%M") : nil)
+          }.each do |label, value| %>
+            <div>
+              <p class="<%= label_class %>"><%= label %></p>
+              <p class="<%= value.present? ? value_class : muted_value_class %>"><%= value.presence || "-" %></p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="<%= panel_class %> p-5">
+        <h2 class="text-lg font-semibold text-white">Active Ship</h2>
+        <div class="mt-5 space-y-4">
+          <div>
+            <p class="<%= label_class %>">Ship</p>
+            <p class="<%= value_class %>"><%= active_ship_name %></p>
+          </div>
+          <div>
+            <p class="<%= label_class %>">Status</p>
+            <span class="mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold <%= status_badge_class.call(active_ship&.status) %>"><%= (active_ship&.status.presence || "No active ship").to_s.titleize %></span>
+          </div>
+          <div>
+            <p class="<%= label_class %>">Location / Destination</p>
+            <p class="<%= value_class %>"><%= active_location %></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-2">
+      <div class="<%= panel_class %> p-5">
+        <h2 class="text-lg font-semibold text-white">Global Inventory JSON</h2>
+        <pre class="mt-4 max-h-96 overflow-auto rounded-md border border-slate-800 bg-slate-950 p-4 text-xs text-slate-300"><%= pretty_json.call(@user.global_inventory) %></pre>
+      </div>
+      <div class="<%= panel_class %> p-5">
+        <h2 class="text-lg font-semibold text-white">Purchased Items JSON</h2>
+        <pre class="mt-4 max-h-96 overflow-auto rounded-md border border-slate-800 bg-slate-950 p-4 text-xs text-slate-300"><%= pretty_json.call(@user.purchased_items) %></pre>
+      </div>
+    </div>
+
+    <div class="<%= panel_class %>">
+      <div class="border-b border-slate-800 p-5">
+        <h2 class="text-lg font-semibold text-white">User Ships</h2>
+        <p class="mt-1 text-sm text-slate-400">All ships registered to this player, including cargo where available.</p>
+      </div>
+
+      <% if @user.user_ships.any? %>
+        <div class="divide-y divide-slate-800">
+          <% @user.user_ships.each do |user_ship| %>
+            <section class="p-5">
+              <div class="grid gap-4 lg:grid-cols-4">
+                <% {
+                  "Ship" => (user_ship.ship&.model.presence || user_ship.ship_slug.presence || "Unknown ship"),
+                  "GUID" => user_ship.guid,
+                  "Shard" => user_ship.shard_name,
+                  "Status" => user_ship.status,
+                  "Location" => (user_ship.location_name.presence || "Unknown location"),
+                  "Total SCU" => user_ship.total_scu,
+                  "Used SCU" => user_ship.used_scu,
+                  "Created At" => (user_ship.created_at ? user_ship.created_at.strftime("%b %d, %Y %H:%M") : nil),
+                  "Updated At" => (user_ship.updated_at ? user_ship.updated_at.strftime("%b %d, %Y %H:%M") : nil)
+                }.each do |label, value| %>
+                  <div>
+                    <p class="<%= label_class %>"><%= label %></p>
+                    <p class="<%= value.present? ? value_class : muted_value_class %>"><%= value.presence || "-" %></p>
+                  </div>
+                <% end %>
+              </div>
+
+              <div class="mt-5 overflow-x-auto rounded-lg border border-slate-800">
+                <table class="min-w-full divide-y divide-slate-800">
+                  <thead class="bg-slate-950/70">
+                    <tr>
+                      <th class="<%= th_class %>">Commodity</th>
+                      <th class="<%= th_class %>">SCU</th>
+                      <th class="<%= th_class %>">Buy Price</th>
+                      <th class="<%= th_class %>">Sell Price</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-800">
+                    <% if user_ship.user_ship_cargos.any? %>
+                      <% user_ship.user_ship_cargos.each do |cargo| %>
+                        <tr class="bg-slate-950/30">
+                          <td class="<%= td_class %>"><%= cargo.commodity_name.presence || "Unknown commodity" %></td>
+                          <td class="<%= td_class %>"><%= cargo.scu || 0 %></td>
+                          <td class="<%= td_class %>"><%= number_to_currency(cargo.buy_price || 0) %></td>
+                          <td class="<%= td_class %>"><%= number_to_currency(cargo.sell_price || 0) %></td>
+                        </tr>
+                      <% end %>
+                    <% else %>
+                      <tr>
+                        <td colspan="4" class="px-4 py-5 text-sm text-slate-500">No cargo recorded for this ship.</td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="p-5 text-sm text-slate-500">No user ships found.</p>
+      <% end %>
+    </div>
+  </div>
+</div>
