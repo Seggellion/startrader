@@ -2,7 +2,7 @@ module Api
     class ShipsController < ApplicationController
       # Renders public ship data in the specific legacy format
       def index
-        @ships = Ship.all
+        @ships = Ship.where(is_spaceship:true, is_ground_vehicle:false)
         
         formatted_ships = @ships.map do |ship|
           {
