@@ -107,6 +107,73 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     assert_equal guid, travel.reload.travel_guid
   end
 
+  test "interdictable index returns the client-facing response shape" do
+    user = User.create!(
+      username: "Seggellion",
+      twitch_id: "seggellion-twitch",
+      uid: "seggellion-guid",
+      user_type: "player"
+    )
+    user_ship = UserShip.create!(
+      user: user,
+      ship: @ship,
+      shard: @shard,
+      shard_name: @shard.name,
+      guid: "ship-guid-for-interdictable",
+      ship_slug: @ship.slug,
+      location: @from_location,
+      total_scu: @ship.scu,
+      used_scu: 0,
+      status: "in_transit"
+    )
+    ShipTravel.create!(
+      user_ship: user_ship,
+      from_location: @from_location,
+      to_location: @to_location,
+      travel_guid: "travel-guid-for-interdictable",
+      departure_tick: 8,
+      arrival_tick: 10,
+      total_duration_ticks: 2,
+      interdict_window_percent: 50
+    )
+
+    get "/api/interdictable_ships"
+
+    assert_response :success
+    assert_equal 10, response_json["current_tick"]
+    assert_equal 1, response_json["count"]
+    assert_kind_of Array, response_json["ships"]
+
+    ship = response_json["ships"].first
+    expected_keys = %w[
+      travel_guid ship_guid ship_model player_name shard_name shard_uuid
+      from_location to_location phase departure_tick arrival_tick total_duration
+      windows ticks_to_arrival progress
+    ]
+    assert_equal expected_keys.sort, ship.keys.sort
+
+    assert_equal "travel-guid-for-interdictable", ship["travel_guid"]
+    assert_equal "ship-guid-for-interdictable", ship["ship_guid"]
+    assert_equal @ship.model, ship["ship_model"]
+    assert_equal "Seggellion", ship["player_name"]
+    assert_equal @shard.name, ship["shard_name"]
+    assert_equal @shard.channel_uuid, ship["shard_uuid"]
+    assert_equal @from_location.name, ship["from_location"]
+    assert_equal @to_location.name, ship["to_location"]
+    assert_equal "arrival", ship["phase"]
+    assert_equal 8, ship["departure_tick"]
+    assert_equal 10, ship["arrival_tick"]
+    assert_equal 2, ship["total_duration"]
+    assert_equal [8, 8], ship.dig("windows", "departure")
+    assert_equal [10, 10], ship.dig("windows", "arrival")
+    assert_equal 0, ship["ticks_to_arrival"]
+    assert_equal 1.0, ship["progress"]
+
+    %w[ship_travel_id ship_name player shard from to window_percent].each do |removed_key|
+      refute_includes ship, removed_key
+    end
+  end
+
   test "duplicate travel_guid is rejected" do
     guid = "client-travel-guid-5"
     post "/api/travel", params: { ship_travel: travel_payload(travel_guid: guid) }, as: :json

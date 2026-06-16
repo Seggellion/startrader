@@ -228,7 +228,7 @@ module Api
 
       scope = ShipTravel
                 .interdictable_now_sql(tick)
-                .includes(:user_ship, :from_location, :to_location)
+                .includes(:from_location, :to_location, user_ship: [:ship, :user, :shard])
                 .order(:arrival_tick)
 
       if params[:shard_uuid].present?
@@ -305,19 +305,18 @@ module Api
 
       def serialize_interdictable(st, phase, tick)
         {
-          ship_travel_id: st.id,
           travel_guid:    st.travel_guid,
           ship_guid:   st.user_ship.guid,
-          ship_name:      st.user_ship.ship.model,          # adjust to your field
-          player:         st.user_ship.user.username,       # adjust if you use username
-          shard:          st.user_ship.shard_name,
-          from:           st.from_location.name,
-          to:             st.to_location.name,
-          phase:          phase,                            # "departure" or "arrival"
+          ship_model:     st.user_ship.ship.model,
+          player_name:    st.user_ship.user.username,
+          shard_name:     st.user_ship.shard_name,
+          shard_uuid:     st.user_ship.shard&.channel_uuid,
+          from_location:  st.from_location.name,
+          to_location:    st.to_location.name,
+          phase:          phase,
           departure_tick: st.departure_tick,
           arrival_tick:   st.arrival_tick,
           total_duration: st.duration_ticks,
-          window_percent: st.interdict_window_percent,
           windows: {
             departure: st.departure_window_range.to_a.minmax,
             arrival:   st.arrival_window_range.to_a.minmax
