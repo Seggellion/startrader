@@ -79,6 +79,7 @@ Rails.application.routes.draw do
 
   # API Namespace
   namespace :api do
+    post 'travel', to: 'ship_travel#create'
     resources :ship_travel, only: [:create, :show]
 
     post 'user_ships/:guid/interdict', to: 'ship_travel#interdict_by_guid', as: :interdict_by_guid
@@ -87,7 +88,7 @@ Rails.application.routes.draw do
     resources :ships, only: [:index]
 
     get "interdictable_ships", to: "ship_travel#interdictable_index"
-    get 'location/:user_ship_id', to: 'travel#location', as: 'location'
+    get 'location/:user_ship_id', to: 'ship_travel#location', as: 'location'
     post 'distance_calculator', to: 'distance_calculator#calculate'
     post 'set_tick', to: 'tick#set'
     post 'increment_tick', to: 'tick#increment'

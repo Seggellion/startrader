@@ -4,30 +4,12 @@ class ShipArrivalJob < ApplicationJob
   def perform
     current_tick = Tick.current
   
-    # Find all ships scheduled to arrive at or before the current tick
-    
-ShipTravel.where("arrival_tick <= ?", current_tick).where.not(arrival_tick: 0).find_each do |travel|
-      # Determine the appropriate status based on the location classification
-      status = case travel.to_location.classification
-               when "space_station" then "docked"
-               when "planet", "moon" then "in orbit"
-               when "city", "outpost" then "landed"
-               else "floating" # Fallback status in case of unexpected classification
-               end
-  
-      # Update the UserShip to reflect arrival at the new location
-      travel.user_ship.update!(
-        location_name: travel.to_location.name,
-        status: status
-      )
-      
-     # TwitchNotificationService.notify_arrival(travel.user.username, travel.to_location.name)
-
-      # Clean up the completed ShipTravel record
-      RabbitmqSender.send_ship_report(travel)
-    
-      travel.destroy
-
+    # Find all ships scheduled to arrive at or before the current tick.
+    ShipTravel.where("arrival_tick <= ?", current_tick)
+              .where.not(arrival_tick: 0)
+              .where(completed_at_tick: nil)
+              .find_each do |travel|
+      ShipTravelArrivalProcessor.new(travel: travel, current_tick: current_tick).call
     end
   end
   

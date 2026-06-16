@@ -4,15 +4,19 @@ class ShipTravel < ApplicationRecord
   belongs_to :from_location, class_name: 'Location'
   belongs_to :to_location,   class_name: 'Location'
 
+  validates :travel_guid, presence: true, uniqueness: true
+
   # "Active" means in-flight and not paused
   scope :active, -> {
-    where(is_paused: false).where('arrival_tick >= ?', Tick.current)
+    where(is_paused: false, completed_at_tick: nil).where('arrival_tick >= ?', Tick.current)
   }
 
   scope :in_flight_now, ->(tick = Tick.current) {
-    where(is_paused: false)
+    where(is_paused: false, completed_at_tick: nil)
       .where('departure_tick <= ? AND arrival_tick >= ?', tick, tick)
   }
+
+  scope :completed, -> { where.not(completed_at_tick: nil) }
 
   # Optional: narrow by shard or star system
   scope :for_shard, ->(shard) {
@@ -32,6 +36,7 @@ scope :interdictable_now_sql, ->(tick = Tick.current) {
   window_sql = "CEIL((total_duration_ticks * interdict_window_percent)::numeric / 100.0)"
 
   where(is_paused: false)
+    .where(completed_at_tick: nil)
     .where(
       [
         "((:tick BETWEEN departure_tick AND (departure_tick + #{window_sql} - 1)) OR
@@ -70,7 +75,7 @@ scope :interdictable_now_sql, ->(tick = Tick.current) {
 
   # returns :departure, :arrival, or nil
   def current_interdictable_phase(current_tick = Tick.current)
-    return nil if is_paused
+    return nil if is_paused || completed_at_tick.present?
     return :departure if departure_window_range.cover?(current_tick)
     return :arrival   if arrival_window_range.cover?(current_tick)
     nil
@@ -88,6 +93,10 @@ scope :interdictable_now_sql, ->(tick = Tick.current) {
     dur = duration_ticks.to_f
     return 0.0 if dur <= 0
     (distance_from_departure_in_ticks(current_tick) / dur).clamp(0.0, 1.0)
+  end
+
+  def due_for_arrival?(current_tick = Tick.current)
+    !is_paused && completed_at_tick.nil? && arrival_tick.to_i.positive? && arrival_tick <= current_tick
   end
 
   # --- Interdiction controls ---

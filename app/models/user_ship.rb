@@ -11,8 +11,13 @@ class UserShip < ApplicationRecord
 
   validates :total_scu, :used_scu, presence: true
 
-  has_one :active_travel, -> { where(is_paused: false).where('arrival_tick >= ?', Tick.current) }, class_name: 'ShipTravel'
-  has_one :ship_travel
+  has_many :ship_travels, dependent: :destroy
+  has_one :active_travel, -> {
+    where(is_paused: false, completed_at_tick: nil).where('arrival_tick >= ?', Tick.current)
+  }, class_name: 'ShipTravel'
+  has_one :ship_travel, -> {
+    where(completed_at_tick: nil).order(updated_at: :desc)
+  }, class_name: 'ShipTravel'
   
   # keep shard_user in sync if missing but user_id+shard_id exist
   before_validation :infer_shard_user

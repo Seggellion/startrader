@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_10_053145) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_16_000000) do
   create_schema "cable"
 
   # These are extensions that must be enabled in order to support this database
@@ -456,9 +456,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_10_053145) do
     t.integer "interdiction_count", default: 0, null: false
     t.integer "last_interdicted_tick"
     t.string "ship_travel_type"
+    t.string "travel_guid", null: false
+    t.integer "completed_at_tick"
+    t.index ["completed_at_tick"], name: "index_ship_travels_on_completed_at_tick"
     t.index ["from_location_id"], name: "index_ship_travels_on_from_location_id"
     t.index ["is_paused", "departure_tick", "arrival_tick"], name: "idx_on_is_paused_departure_tick_arrival_tick_218f541b33"
     t.index ["to_location_id"], name: "index_ship_travels_on_to_location_id"
+    t.index ["travel_guid"], name: "index_ship_travels_on_travel_guid", unique: true
     t.index ["user_ship_id"], name: "index_ship_travels_on_user_ship_id"
   end
 

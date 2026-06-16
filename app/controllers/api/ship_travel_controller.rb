@@ -7,25 +7,31 @@ module Api
     # POST /api/travel
     def create
 
-      user        = find_or_create_user_by_guid_or_name(travel_params[:player_guid], travel_params[:player_name])
-      shard       = resolve_shard(travel_params[:shard_uuid])
+      permitted_params = travel_params
+
+      if permitted_params[:travel_guid].blank?
+        return render json: { error: "travel_guid is required." }, status: :unprocessable_entity
+      end
+
+      user        = find_or_create_user_by_guid_or_name(permitted_params[:player_guid], permitted_params[:player_name])
+      shard       = resolve_shard(permitted_params[:shard_uuid])
       #ship        = resolve_ship(travel_params[:ship_guid], travel_params[:ship_slug])
-      destination = resolve_location_by_name(travel_params[:to_location])
+      destination = resolve_location_by_name(permitted_params[:to_location])
 
       return render json: { error: "Location not found." }, status: :not_found if destination.nil?
 
     user_ship = resolve_user_ship_by_guid_or_slug(
       user:        user,
       shard:       shard,
-      ship_guid:   travel_params[:ship_guid],
-      ship_slug:   travel_params[:ship_slug]
+      ship_guid:   permitted_params[:ship_guid],
+      ship_slug:   permitted_params[:ship_slug]
     )
 
      # user_ship = find_or_create_user_ship(user, ship, shard)
 
       # If caller provided a from_location, ensure the server knows it (helpful for first-time players)
-      if travel_params[:from_location].present?
-        from_loc = resolve_location_by_name(travel_params[:from_location])
+      if permitted_params[:from_location].present?
+        from_loc = resolve_location_by_name(permitted_params[:from_location])
         user_ship.update(location: from_loc) if from_loc && user_ship.location.nil?
       end
 
@@ -36,7 +42,7 @@ module Api
       end
 
       # --- NEW: Prevent traveling to the current location ---
-      if user_ship.location == destination.id
+      if user_ship.location_name == destination.name
         return render json: { error: "You are already docked at #{destination.name}." }, status: :unprocessable_entity
       end
       # -----------------------------------------------------
@@ -49,7 +55,7 @@ module Api
       Rails.logger.info "=== TRANSIT DEBUG START ==="
       Rails.logger.info "Current Server Tick: #{Tick.current}"
       
-      existing_travel = ShipTravel.where(user_ship_id: user_ship.id, is_paused: false).last
+      existing_travel = ShipTravel.where(user_ship_id: user_ship.id, is_paused: false, completed_at_tick: nil).last
       if existing_travel
         Rails.logger.info "Found existing travel ID: #{existing_travel.id}"
         Rails.logger.info "Existing Travel Arrival Tick: #{existing_travel.arrival_tick}"
@@ -60,18 +66,23 @@ module Api
       Rails.logger.info "=== TRANSIT DEBUG END ==="
 
       # Prevent double booking the same ship
-      if ShipTravel.where(user_ship_id: user_ship.id, is_paused: false)
+      if ShipTravel.where(user_ship_id: user_ship.id, is_paused: false, completed_at_tick: nil)
                   .where('arrival_tick >= ?', Tick.current)
                   .exists?
                   
         return render json: { error: "Ship is already in transit." }, status: :unprocessable_entity
       end
 
-      travel = TravelService.new(user_ship: user_ship, to_location: destination).call
+      travel = TravelService.new(
+        user_ship: user_ship,
+        to_location: destination,
+        travel_guid: permitted_params[:travel_guid]
+      ).call
       render json: {
         status:        "travel_started",
         channel_name: shard.name,
         user_ship_id:  user_ship.id,
+        travel_guid:   travel.travel_guid,
         destination:   destination.name,
         current_tick:  Tick.current,
         arrival_tick:  travel.arrival_tick,
@@ -86,12 +97,16 @@ module Api
       user_ship = UserShip.find_by(id: params[:user_ship_id])
       return render json: { error: "User ship not found." }, status: :not_found if user_ship.nil?
 
+      process_due_arrival_for(user_ship)
+      user_ship.reload
+
       active_travel = user_ship.active_travel
 
       if active_travel
         phase = active_travel.current_interdictable_phase(Tick.current)
         render json: {
           in_transit:     true,
+          travel_guid:    active_travel.travel_guid,
           from_location:  active_travel.from_location.name,
           to_location:    active_travel.to_location.name,
           departure_tick: active_travel.departure_tick,
@@ -112,13 +127,25 @@ module Api
           render json: {
             in_transit: false,
             paused: true,
+            travel_guid: paused.travel_guid,
             paused_at_tick: paused.paused_at_tick,
             remaining_ticks_from_arrival: paused.remaining_ticks_from_arrival,
             from_location: paused.from_location.name,
             to_location: paused.to_location.name
           }
         else
-          render json: { in_transit: false, location: user_ship.location&.name || "Unknown" }
+          completed = latest_completed_travel_for(user_ship)
+
+          if completed
+            render json: {
+              in_transit: false,
+              arrived: true,
+              location: user_ship.location&.name || completed.to_location.name,
+              travel_guid: completed.travel_guid
+            }
+          else
+            render json: { in_transit: false, location: user_ship.location&.name || "Unknown" }
+          end
         end
       end
 
@@ -142,6 +169,7 @@ module Api
         status: "interdicted",
         user_ship_guid: user_ship.guid,
         ship_travel_id: travel.id,
+        travel_guid: travel.travel_guid,
         phase: phase,
         paused_at_tick: travel.paused_at_tick,
         remaining_ticks_from_arrival: travel.remaining_ticks_from_arrival
@@ -165,6 +193,7 @@ module Api
         status: "resumed",
         user_ship_guid: user_ship.guid,
         ship_travel_id: travel.id,
+        travel_guid: travel.travel_guid,
         departure_tick: travel.departure_tick,
         arrival_tick: travel.arrival_tick,
         remaining_duration: travel.total_duration_ticks
@@ -185,6 +214,7 @@ module Api
 
       render json: {
         status: "interdicted",
+        travel_guid: travel.travel_guid,
         phase: phase,
         paused_at_tick: travel.paused_at_tick,
         remaining_ticks_from_arrival: travel.remaining_ticks_from_arrival
@@ -228,6 +258,7 @@ module Api
 
     render json: {
       status: "resumed",
+      travel_guid: travel.travel_guid,
       departure_tick: travel.departure_tick,
       arrival_tick: travel.arrival_tick,
       remaining_duration: travel.total_duration_ticks
@@ -275,6 +306,7 @@ module Api
       def serialize_interdictable(st, phase, tick)
         {
           ship_travel_id: st.id,
+          travel_guid:    st.travel_guid,
           ship_guid:   st.user_ship.guid,
           ship_name:      st.user_ship.ship.model,          # adjust to your field
           player:         st.user_ship.user.username,       # adjust if you use username
@@ -299,6 +331,7 @@ module Api
       # New payload shape
       params.require(:ship_travel).permit(
         :ship_guid,
+        :travel_guid,
         :ship_slug,
         :player_guid,
         :player_name,
@@ -306,6 +339,25 @@ module Api
         :from_location,
         :shard_uuid
       )
+    end
+
+    def process_due_arrival_for(user_ship)
+      travel = user_ship.ship_travels
+                        .where(is_paused: false, completed_at_tick: nil)
+                        .where.not(arrival_tick: 0)
+                        .where("arrival_tick <= ?", Tick.current)
+                        .order(arrival_tick: :desc, updated_at: :desc)
+                        .first
+
+      ShipTravelArrivalProcessor.new(travel: travel, current_tick: Tick.current).call if travel
+    end
+
+    def latest_completed_travel_for(user_ship)
+      user_ship.ship_travels
+               .completed
+               .where(to_location: user_ship.location)
+               .order(completed_at_tick: :desc, updated_at: :desc)
+               .first
     end
 
     def find_or_create_user_by_guid_or_name(player_guid, player_name)

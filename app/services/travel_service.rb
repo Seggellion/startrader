@@ -1,18 +1,20 @@
 # app/services/travel_service.rb
 class TravelService
-  DEFAULT_WINDOW_PERCENT = Setting.get("interdiction_window_percent")
+  DEFAULT_WINDOW_PERCENT = 15
 
-  attr_reader :user_ship, :to_location
+  attr_reader :user_ship, :to_location, :travel_guid
 
-  def initialize(user_ship:, to_location:, interdict_window_percent: DEFAULT_WINDOW_PERCENT, start_tick: nil)
+  def initialize(user_ship:, to_location:, travel_guid:, interdict_window_percent: nil, start_tick: nil)
     @user_ship = user_ship
     @from_location = user_ship.location
     @to_location = to_location
-    @interdict_window_percent = interdict_window_percent
+    @travel_guid = travel_guid
+    @interdict_window_percent = interdict_window_percent || Setting.get("interdiction_window_percent") || DEFAULT_WINDOW_PERCENT
     @start_tick = start_tick
   end
 
   def call
+    raise ArgumentError, "travel_guid is required." if travel_guid.blank?
     raise "Already in transit" if user_ship.active_travel.present?
     raise "Ship is already at that location." if @from_location&.id == to_location.id
 
@@ -36,6 +38,7 @@ class TravelService
       user_ship: user_ship,
       from_location: @from_location,
       to_location: to_location,
+      travel_guid: travel_guid,
       departure_tick: start_tick,
       arrival_tick: arrival_tick,
       total_duration_ticks: duration,
