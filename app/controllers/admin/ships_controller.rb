@@ -24,50 +24,18 @@ module Admin
     def edit
     end
 
-# app/controllers/admin/ships_controller.rb
+    def import_starbitizen
+      begin
+        result = Admin::Data::StarbitizenShipImporter.import_raw_json!(params[:json_data])
+        flash_key = result.failed_count.positive? ? :alert : :notice
 
-def import_starbitizen
-  begin
-    # Parse the pasted string, and use Array.wrap to guarantee 
-    # it's an array, even if the user pastes a single JSON object.
-    raw_parsed_json = JSON.parse(params[:json_data])
-    json_payload = Array.wrap(raw_parsed_json)
-    
-    updated_count = 0
-    not_found_ships = []
-
-    json_payload.each do |data|
-      # Case-insensitive lookup to prevent mismatches
-      ship = Ship.where('lower(name) = ?', data["shipname"].to_s.downcase).first
-
-      if ship
-        # Update the record with mapped JSON values
-        ship.update(
-          scu: data["cargocapacity"],
-          length: data["keel"],
-          msrp: data["msrp"],
-          hp: data["hp"],
-          is_docking: data["requiresdocking"].to_s.downcase == "true",
-          fuel_quantum: data["qfuel"],
-          qnt_fuel_capacity: data["qfuel"]
-        )
-        updated_count += 1
-      else
-        not_found_ships << data["shipname"]
+        redirect_to admin_ships_path, flash_key => result.message
+      rescue JSON::ParserError
+        redirect_to admin_ships_path, alert: "Invalid JSON format. Please ensure you pasted valid JSON."
+      rescue => e
+        redirect_to admin_ships_path, alert: "An error occurred: #{e.message}"
       end
     end
-
-    message = "Successfully updated #{updated_count} ships."
-    message += " Could not find: #{not_found_ships.join(', ')}." if not_found_ships.any?
-    
-    redirect_to admin_ships_path, notice: message
-
-  rescue JSON::ParserError
-    redirect_to admin_ships_path, alert: "Invalid JSON format. Please ensure you pasted valid JSON."
-  rescue => e
-    redirect_to admin_ships_path, alert: "An error occurred: #{e.message}"
-  end
-end
 
     def update
       if @ship.update(ship_params)
