@@ -57,7 +57,7 @@ gem 'omniauth'
 gem 'open-uri'
 gem 'omniauth-rails_csrf_protection'
 gem 'google-cloud-storage'
-
+gem 'rack-cors'
 # Custom Gems
 
 gem 'byebug'
