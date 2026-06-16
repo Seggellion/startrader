@@ -44,6 +44,9 @@ class LocationResolver
   ].freeze
 
   MIN_SCORE = 80
+  MIN_CODE_QUERY_LENGTH = 5
+  MIN_TOKEN_MATCH_COUNT = 2
+  MIN_ALPHA_TOKEN_LENGTH = 3
 
   def self.resolve(name)
     new(name).resolve
@@ -92,6 +95,7 @@ class LocationResolver
       score = score_location(location, meaningful_query_tokens, query_variants)
 
       next if score < MIN_SCORE
+      # Equal scores keep Location.find_each's deterministic primary-key order.
       next if best && score <= best[:score]
 
       best = {
@@ -121,6 +125,8 @@ class LocationResolver
 
         if query_compact == location_compact
           score = [score, 100].max
+        elsif significant_code_query?(query_compact) && location_compact.include?(query_compact)
+          score = [score, 92].max
         elsif query_compact.start_with?(location_compact)
           leftover = query_compact.delete_prefix(location_compact)
 
@@ -133,6 +139,10 @@ class LocationResolver
       if location_words.present? && (location_words - meaningful_query_tokens).empty?
         score = [score, 85].max
       end
+    end
+
+    if safe_token_match?(meaningful_query_tokens, query_variants, location_names)
+      score = [score, token_match_score(meaningful_query_tokens, query_variants)].max
     end
 
     if mentions_trade_terminal? && location.has_trade_terminal?
@@ -148,6 +158,66 @@ class LocationResolver
     end
 
     score
+  end
+
+  def safe_token_match?(meaningful_query_tokens, query_variants, location_names)
+    return false unless token_match_candidate?(meaningful_query_tokens, query_variants)
+
+    location_tokens = searchable_tokens(location_names)
+
+    (meaningful_query_tokens - location_tokens).empty?
+  end
+
+  def token_match_candidate?(meaningful_query_tokens, query_variants)
+    return true if query_variants.any? { |variant| significant_code_query?(compact(variant)) }
+    return false if meaningful_query_tokens.length < MIN_TOKEN_MATCH_COUNT
+
+    meaningful_query_tokens.any? { |token| significant_alpha_token?(token) }
+  end
+
+  def token_match_score(meaningful_query_tokens, query_variants)
+    return 91 if query_variants.any? { |variant| significant_code_query?(compact(variant)) }
+
+    numeric_token_count = meaningful_query_tokens.count { |token| token.match?(/\A\d+\z/) }
+    88 + [numeric_token_count, 2].min
+  end
+
+  def searchable_tokens(values)
+    values.flat_map { |value| derived_tokens(value) }.uniq
+  end
+
+  def derived_tokens(value)
+    tokens = words(value)
+
+    (
+      tokens +
+      tokens.flat_map { |token| split_alpha_numeric_token(token) } +
+      code_sequence_tokens(tokens)
+    ).uniq
+  end
+
+  def split_alpha_numeric_token(token)
+    return [] unless token.match?(/[a-z]/) && token.match?(/\d/)
+
+    token.scan(/[a-z]+|\d+/)
+  end
+
+  def code_sequence_tokens(tokens)
+    tokens.each_cons(2).filter_map do |left, right|
+      joined = "#{left}#{right}"
+      joined if significant_code_query?(joined)
+    end
+  end
+
+  def significant_code_query?(value)
+    value.length >= MIN_CODE_QUERY_LENGTH &&
+      value.match?(/[a-z]/) &&
+      value.match?(/\d/)
+  end
+
+  def significant_alpha_token?(token)
+    token.match?(/[a-z]/) &&
+      token.gsub(/[^a-z]/, "").length >= MIN_ALPHA_TOKEN_LENGTH
   end
 
   def variants

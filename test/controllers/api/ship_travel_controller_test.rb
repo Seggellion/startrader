@@ -50,6 +50,36 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     assert_equal guid, ShipTravel.find_by!(travel_guid: guid).travel_guid
   end
 
+  test "create resolves destination from short facility code" do
+    destination = create_shubin_22_location
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "client-travel-guid-facility-code",
+        to_location: "SM0-22"
+      )
+    }, as: :json
+
+    assert_response :success
+    assert_equal destination.name, response_json["destination"]
+    assert_equal destination, ShipTravel.find_by!(travel_guid: "client-travel-guid-facility-code").to_location
+  end
+
+  test "create resolves destination from nickname-style location" do
+    destination = create_shubin_22_location
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "client-travel-guid-shubin-22",
+        to_location: "Shubin 22"
+      )
+    }, as: :json
+
+    assert_response :success
+    assert_equal destination.name, response_json["destination"]
+    assert_equal destination, ShipTravel.find_by!(travel_guid: "client-travel-guid-shubin-22").to_location
+  end
+
   test "location response includes travel_guid while in transit" do
     guid = "client-travel-guid-2"
     post "/api/travel", params: { ship_travel: travel_payload(travel_guid: guid) }, as: :json
@@ -206,6 +236,15 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
       from_location: @from_location.name,
       shard_uuid: @shard.channel_uuid
     }.merge(overrides)
+  end
+
+  def create_shubin_22_location
+    Location.create!(
+      name: "Shubin Mining Facility SM0-22",
+      classification: "outpost",
+      star_system_name: "Stanton",
+      planet_name: "MicroTech"
+    )
   end
 
   def response_json
