@@ -118,7 +118,6 @@ module Admin
             is_shop_vehicle: bool(location_data, 'is_shop_vehicle'),
             is_refuel: bool(location_data, 'has_refuel', 'is_refuel'),
             is_repair: bool(location_data, 'has_repair', 'is_repair'),
-            is_rearm: bool(location_data, 'has_repair', 'is_repair'),
             is_nqa: bool(location_data, 'is_nqa'),
             is_player_owned: bool(location_data, 'is_player_owned'),
             is_auto_load: bool(location_data, 'is_auto_load'),
