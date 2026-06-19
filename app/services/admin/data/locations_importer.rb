@@ -93,7 +93,7 @@ module Admin
             has_loading_dock: location_data['has_loading_dock'].to_i == 1,
             has_docking_port: location_data['has_docking_port'].to_i == 1,
             has_freight_elevator: location_data['has_freight_elevator'].to_i == 1,
-  
+            has_trade_terminal: location_data['has_trade_terminal'].to_i == 1,
             # Name mappings
             star_system_name: location_data['star_system_name'],
             planet_name: location_data['planet_name'],

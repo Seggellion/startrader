@@ -141,9 +141,23 @@ Rails.application.routes.draw do
   post "tick/stop",  to: "tick_controls#stop",  as: :stop_tick
     
 
-    resources :planets, :user_ships, :user_ship_cargos, :star_bitizen_runs, :shards, :shard_users, :ship_travels, :cities, :outposts, :terminals, :moons, :vehicles, :space_stations, :star_systems, :production_facilities, only: [:index, :new, :create, :edit, :update, :destroy] do
+    resources :planets, :user_ships, :user_ship_cargos, :star_bitizen_runs, :shards, :shard_users, :ship_travels, :terminals, :moons, :vehicles, :space_stations, :star_systems, :production_facilities, only: [:index, :new, :create, :edit, :update, :destroy] do
       collection do
         delete :delete_all
+      end
+    end
+
+    resources :cities, only: [:index, :new, :create, :edit, :update, :destroy] do
+      collection do
+        delete :delete_all
+        post :import_raw_json
+      end
+    end
+
+    resources :outposts, only: [:index, :new, :create, :edit, :update, :destroy] do
+      collection do
+        delete :delete_all
+        post :import_raw_json
       end
     end
 

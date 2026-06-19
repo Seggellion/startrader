@@ -47,6 +47,22 @@ module Admin
       redirect_to admin_cities_path, notice: 'All cities have been deleted successfully.'
     end
 
+    def import_raw_json
+      json_payload = params[:raw_json].presence || params[:json_data]
+
+      if json_payload.present?
+        imported_count = Admin::Data::CitiesImporter.import_raw_json!(json_payload)
+
+        if imported_count > 0
+          redirect_to admin_cities_path, notice: "Successfully imported #{imported_count} cities."
+        else
+          redirect_to admin_cities_path, alert: "Import failed. Please verify the JSON format."
+        end
+      else
+        redirect_to admin_cities_path, alert: "No JSON data was provided."
+      end
+    end
+
     def destroy
       @location = Location.find(params[:id])
       @location.destroy
@@ -91,7 +107,8 @@ module Admin
         :is_auto_load,
         :has_loading_dock,
         :has_docking_port,
-        :has_freight_elevator
+        :has_freight_elevator,
+        :has_trade_terminal
       )
     end
     
