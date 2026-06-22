@@ -36,6 +36,10 @@ class UserShip < ApplicationRecord
     update!(used_scu: new_used_scu)
   end
 
+  def recalculate_used_scu!
+    update!(used_scu: user_ship_cargos.sum(:scu))
+  end
+
   private
 
   def infer_shard_user

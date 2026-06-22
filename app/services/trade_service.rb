@@ -171,8 +171,6 @@ class TradeService
         cargo.buy_price = facility.local_buy_price
         cargo.commodity_name = commodity.name
         cargo.save!
-    
-        user_ship.add_cargo_scu(scu)
 
 # Find existing StarBitizenRun for the same commodity, ship, and buy location
 star_bitizen_run = StarBitizenRun.find_by(
@@ -312,9 +310,7 @@ star_bitizen_run = StarBitizenRun.find_by(
                 end
 
         cargo_to_sell.scu <= 0 ? cargo_to_sell.destroy! : cargo_to_sell.save!
-    
-        user_ship.remove_cargo_scu(scu_to_sell)
-    
+
         facility.update!(inventory: [facility.inventory + scu_to_sell, facility.max_inventory].min)
       end
     

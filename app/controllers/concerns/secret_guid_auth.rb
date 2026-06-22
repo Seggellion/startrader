@@ -10,11 +10,15 @@ module SecretGuidAuth
 
   def authenticate_secret_guid!
     provided = request.headers['X-Secret-Guid'].presence || params[:secret_guid].presence
-    expected = Setting.get('secret_guid').to_s.presence
+    expected = Setting.get('secret_guid').to_s.presence || Setting.get('secret-guid').to_s.presence
 
     unless provided && expected && secure_equal?(provided, expected)
-      render json: { error: 'Unauthorized' }, status: :unauthorized and return
+      render json: secret_guid_auth_error_response, status: :unauthorized and return
     end
+  end
+
+  def secret_guid_auth_error_response
+    { error: 'Unauthorized' }
   end
 
   # Use a timing-safe compare by hashing to equalize length first
