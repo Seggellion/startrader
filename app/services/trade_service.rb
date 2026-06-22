@@ -393,8 +393,10 @@ star_bitizen_run = StarBitizenRun.find_by(
       
         {
           status: 'success',
-          location: location_name,
-          commodities: commodities
+          message: {
+            location: location_name,
+            commodities: commodities
+          }
         }
       end
       

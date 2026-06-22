@@ -42,11 +42,13 @@ module Api
         render json: { status: 'error', message: 'Missing required parameters' }, status: :unprocessable_entity and return
       end
     
-      if commodity_name.blank?
-        # ✅ List all commodities available for purchase at the user's location
+      if commodity_name.blank? && scu.blank?
         result = TradeService.list_available_commodities(username: username)
+      elsif commodity_name.blank?
+        render json: { status: 'error', message: 'Missing commodity name for purchase.' }, status: :unprocessable_entity and return
+      elsif scu.blank?
+        render json: { status: 'error', message: 'Missing SCU amount for purchase.' }, status: :unprocessable_entity and return
       else
-        # ✅ Proceed with buying the commodity
         result = TradeService.buy(
           username: username,
           wallet_balance: wallet_balance,
@@ -76,39 +78,6 @@ module Api
     rescue StandardError => e
       render json: { status: 'error', message: e.message }, status: :unprocessable_entity
     end
-
-    def self.list_available_commodities(username:)
-      
-  user = User.where("LOWER(username) = ?", username.downcase).first!
-  user_ship = user.user_ships.order(updated_at: :desc).first
-
-  if user_ship.nil?
-    raise ShipNotFoundError, "No ship found for user '#{username}'."
-  end
-
-  location_name = user_ship.location_name
-  location = Location.where("name ILIKE ?", "%#{location_name}%").first!
-  commodities = ProductionFacility.where("? ILIKE '%' || location_name || '%'", location.name)
-                                   .where("local_buy_price > 0")  # ✅ Only show buyable commodities
-                                   .includes(:commodity)
-                                   .map do |facility|
-    {
-      commodity_name: facility.commodity.name,
-      price: facility.local_buy_price
-    }
-  end
-
-  if commodities.empty?
-    return { status: 'error', message: "No commodities available for purchase at #{location_name}." }
-  end
-
-  {
-    status: 'success',
-    location: location_name,
-    commodities: commodities
-  }
-end
-
 
     private
 

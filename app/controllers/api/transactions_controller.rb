@@ -92,7 +92,7 @@ module Api
         )
   
         transaction.transaction_items.create!(created_transaction_items)
-  
+  # Move the commodity list in to a JSON object in to the message.
         render json: {
           success: true,
           total_gold: total_price,
