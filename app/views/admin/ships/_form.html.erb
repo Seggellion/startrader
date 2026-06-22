@@ -1,0 +1,225 @@
+<%
+  page_class = "min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8"
+  panel_class = "rounded-lg border border-slate-800 bg-slate-900/80 shadow-xl shadow-black/20"
+  section_class = "rounded-lg border border-slate-800 bg-slate-950/60 p-5"
+  label_class = "block text-sm font-semibold text-slate-200"
+  input_class = "mt-2 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20"
+  checkbox_class = "h-4 w-4 rounded border-slate-600 bg-slate-950 text-cyan-400 focus:ring-cyan-400 focus:ring-offset-slate-950"
+  secondary_button_class = "rounded-md border border-slate-700 px-4 py-2 text-center text-sm font-semibold text-slate-200 transition hover:border-slate-500 hover:bg-slate-800 hover:text-white"
+  submit_label = ship.persisted? ? "Update Ship" : "Create Ship"
+  heading = ship.persisted? ? "Edit Ship" : "New Ship"
+  intro = ship.persisted? ? "Update #{ship.model.presence || ship.name.presence || "this ship"} without disrupting imported ship metadata." : "Create a ship record with the same fields used by the admin import workflow."
+
+  identity_text_fields = %i[name name_full alt_ship_name slug company_name vehicle_type career role game_version pad_type]
+  identity_number_fields = %i[manufacturer_id size component_size year_introduced]
+  cargo_integer_fields = %i[scu crew length beam height]
+  cargo_decimal_fields = %i[width mass liquid_storage_capacity]
+  cargo_text_fields = %i[crew_range container_sizes]
+  fuel_decimal_fields = %i[hyd_fuel_capacity qnt_fuel_capacity fuel_hydrogen fuel_quantum]
+  fuel_integer_fields = %i[speed afterburner_speed ifcs_pitch_max ifcs_yaw_max ifcs_roll_max]
+  defense_integer_fields = %i[
+    hp armor_physical_dmg_reduction armor_energy_dmg_reduction
+    armor_distortion_dmg_reduction armor_em_signal_reduction
+    armor_ir_signal_reduction armor_cs_signal_reduction capacitor_crew_load
+    capacitor_crew_regen capacitor_turret_load capacitor_turret_regen
+  ]
+  image_link_fields = %i[ship_image_primary ship_image_secondary image_topdown url_store url_brochure url_hotsite url_video]
+  import_integer_fields = %i[api_id id_company id_parent date_added date_modified msrp]
+  import_text_fields = %i[ids_vehicles_loaners uuid]
+  role_flags = %i[
+    is_addon is_boarding is_bomber is_cargo is_carrier is_civilian is_concept
+    is_construction is_datarunner is_docking is_emp is_exploration
+    is_ground_vehicle is_hangar is_industrial is_interdiction is_loading_dock
+    is_medical is_military is_mining is_passenger is_qed is_racing is_refinery
+    is_refuel is_repair is_research is_salvage is_scanning is_science
+    is_showdown_winner is_spaceship is_starter is_stealth is_tractor_beam
+    is_quantum_capable
+  ]
+%>
+
+<div class="<%= page_class %>">
+  <div class="mx-auto max-w-7xl space-y-6">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <%= link_to "Back to Ships", admin_ships_path, class: "text-sm font-semibold text-cyan-300 hover:text-cyan-100" %>
+        <h1 class="mt-3 text-3xl font-bold text-white"><%= heading %></h1>
+        <p class="mt-2 max-w-3xl text-sm text-slate-400"><%= intro %></p>
+      </div>
+    </div>
+
+    <div class="<%= panel_class %> p-5">
+      <% if ship.errors.any? %>
+        <div class="mb-6 rounded-lg border border-rose-400/30 bg-rose-400/10 p-4 text-sm text-rose-100">
+          <p class="font-semibold"><%= pluralize(ship.errors.count, "error") %> prevented this ship from being saved.</p>
+          <ul class="mt-2 list-disc space-y-1 pl-5">
+            <% ship.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <%= form_with model: [:admin, ship], local: true, class: "space-y-6" do |form| %>
+        <section class="<%= section_class %>">
+          <div class="mb-5">
+            <h2 class="text-lg font-bold text-white">Identity</h2>
+            <p class="mt-1 text-sm text-slate-500">Core naming, classification, and version details.</p>
+          </div>
+
+          <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <%= form.label :model, "Model *", class: label_class %>
+              <%= form.text_field :model, class: input_class, autocomplete: "off", required: true %>
+            </div>
+            <% identity_text_fields.each do |field| %>
+              <div>
+                <%= form.label field, field.to_s.humanize, class: label_class %>
+                <%= form.text_field field, class: input_class, autocomplete: "off" %>
+              </div>
+            <% end %>
+            <% identity_number_fields.each do |field| %>
+              <div>
+                <%= form.label field, field.to_s.humanize, class: label_class %>
+                <%= form.number_field field, step: 1, class: input_class %>
+              </div>
+            <% end %>
+          </div>
+        </section>
+
+        <section class="<%= section_class %>">
+          <div class="mb-5">
+            <h2 class="text-lg font-bold text-white">Cargo, Crew, And Dimensions</h2>
+            <p class="mt-1 text-sm text-slate-500">Storage capacity, crew details, and physical dimensions.</p>
+          </div>
+
+          <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <% cargo_integer_fields.each do |field| %>
+              <div>
+                <%= form.label field, field.to_s.humanize, class: label_class %>
+                <%= form.number_field field, step: 1, class: input_class %>
+              </div>
+            <% end %>
+            <% cargo_decimal_fields.each do |field| %>
+              <div>
+                <%= form.label field, field.to_s.humanize, class: label_class %>
+                <%= form.number_field field, step: "any", class: input_class %>
+              </div>
+            <% end %>
+            <% cargo_text_fields.each do |field| %>
+              <div>
+                <%= form.label field, field.to_s.humanize, class: label_class %>
+                <%= form.text_field field, class: input_class, autocomplete: "off" %>
+              </div>
+            <% end %>
+          </div>
+        </section>
+
+        <section class="<%= section_class %>">
+          <div class="mb-5">
+            <h2 class="text-lg font-bold text-white">Fuel And Movement</h2>
+            <p class="mt-1 text-sm text-slate-500">Fuel stores, movement speed, and IFCS limits.</p>
+          </div>
+
+          <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <% fuel_decimal_fields.each do |field| %>
+              <div>
+                <%= form.label field, field.to_s.humanize, class: label_class %>
+                <%= form.number_field field, step: "any", class: input_class %>
+              </div>
+            <% end %>
+            <% fuel_integer_fields.each do |field| %>
+              <div>
+                <%= form.label field, field.to_s.humanize, class: label_class %>
+                <%= form.number_field field, step: 1, class: input_class %>
+              </div>
+            <% end %>
+          </div>
+        </section>
+
+        <section class="<%= section_class %>">
+          <div class="mb-5">
+            <h2 class="text-lg font-bold text-white">Defense And Combat</h2>
+            <p class="mt-1 text-sm text-slate-500">Hull, shields, armor reduction, and capacitor stats.</p>
+          </div>
+
+          <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <% defense_integer_fields.each do |field| %>
+              <div>
+                <%= form.label field, field.to_s.humanize, class: label_class %>
+                <%= form.number_field field, step: 1, class: input_class %>
+              </div>
+            <% end %>
+            <div>
+              <%= form.label :shield_face_type, "Shield face type", class: label_class %>
+              <%= form.text_field :shield_face_type, class: input_class, autocomplete: "off" %>
+            </div>
+          </div>
+        </section>
+
+        <section class="<%= section_class %>">
+          <div class="mb-5">
+            <h2 class="text-lg font-bold text-white">Images And Links</h2>
+            <p class="mt-1 text-sm text-slate-500">Image paths and public reference URLs.</p>
+          </div>
+
+          <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <% image_link_fields.each do |field| %>
+              <div>
+                <%= form.label field, field.to_s.humanize, class: label_class %>
+                <%= form.text_field field, class: input_class, autocomplete: "off" %>
+              </div>
+            <% end %>
+            <div class="sm:col-span-2 lg:col-span-3">
+              <%= form.label :url_photos, "Url photos", class: label_class %>
+              <%= form.text_area :url_photos, rows: 5, class: input_class, placeholder: "[]" %>
+              <p class="mt-1 text-xs text-slate-500">Preserves the importer-friendly JSON-like array text, such as [].</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="<%= section_class %>">
+          <div class="mb-5">
+            <h2 class="text-lg font-bold text-white">API And Import Metadata</h2>
+            <p class="mt-1 text-sm text-slate-500">Identifiers and imported source timestamps.</p>
+          </div>
+
+          <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <% import_integer_fields.each do |field| %>
+              <div>
+                <%= form.label field, field.to_s.humanize, class: label_class %>
+                <%= form.number_field field, step: 1, class: input_class %>
+              </div>
+            <% end %>
+            <% import_text_fields.each do |field| %>
+              <div>
+                <%= form.label field, field.to_s.humanize, class: label_class %>
+                <%= form.text_field field, class: input_class, autocomplete: "off" %>
+              </div>
+            <% end %>
+          </div>
+        </section>
+
+        <section class="<%= section_class %>">
+          <div class="mb-5">
+            <h2 class="text-lg font-bold text-white">Role Flags</h2>
+            <p class="mt-1 text-sm text-slate-500">Capabilities and classification booleans persisted on the ship record.</p>
+          </div>
+
+          <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <% role_flags.each do |field| %>
+              <label class="flex items-center gap-3 rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-200">
+                <%= form.check_box field, class: checkbox_class %>
+                <span><%= field.to_s.humanize %></span>
+              </label>
+            <% end %>
+          </div>
+        </section>
+
+        <div class="flex flex-col-reverse gap-3 border-t border-slate-800 pt-5 sm:flex-row sm:justify-end">
+          <%= link_to "Cancel", admin_ships_path, class: secondary_button_class %>
+          <%= form.submit submit_label, class: "rounded-md bg-cyan-400 px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-cyan-300" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

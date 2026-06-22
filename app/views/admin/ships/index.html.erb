@@ -22,7 +22,7 @@
         <%= render 'import_starbitizen_modal' %>
       </div>
             
-            <%= link_to 'Add New', new_admin_ship_path, class: 'bg-blue-500 text-white px-4 py-2 rounded' %>
+            <%= link_to 'Add New Ship', new_admin_ship_path, class: 'bg-blue-500 text-white px-4 py-2 rounded' %>
             </div>
         </div>
 
@@ -46,8 +46,8 @@
     </thead>
     <tbody>
       <% @ships.each do |ship| %>
-        <tr data-search-target="item" data-name="<%= ship.name.to_s.downcase %> <%= ship.company_name.to_s.downcase %>">
-          <td class="py-2 px-4 border font-medium"><%= ship.name %></td>
+        <tr data-search-target="item" data-name="<%= [ship.model, ship.name, ship.company_name].compact.join(' ').downcase %>">
+          <td class="py-2 px-4 border font-medium"><%= ship.name.presence || ship.model %></td>
           <td class="py-2 px-4 border"><%= ship.company_name %></td>
           <td class="py-2 px-4 border"><%= ship.scu %></td>
           <td class="py-2 px-4 border"><%= ship.crew %></td>
