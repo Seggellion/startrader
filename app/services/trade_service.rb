@@ -130,8 +130,10 @@ class TradeService
       location_name = user_ship.location_name
       location = Location.find_by!(name: location_name)
 
-      facility = ProductionFacility.where("location_name ILIKE ? AND commodity_name = ?", "%#{location.name}%", commodity.name).first
-    
+      facility = facilities_selling_to_player
+        .where("location_name ILIKE ? AND commodity_name = ?", "%#{location.name}%", commodity.name)
+        .first
+
       if facility.nil?
         raise InsufficientInventoryError, "No matching facility found for #{location.name} and #{commodity.name}."
       elsif facility.inventory <= 0
@@ -143,7 +145,8 @@ class TradeService
       end
 
       # ✅ Calculate the maximum affordable SCU based on wallet and cargo space
-      max_affordable_scu = (shard_user.wallet_balance / facility.local_buy_price.to_f).floor
+      buy_price = player_buy_price(facility)
+      max_affordable_scu = (shard_user.wallet_balance / buy_price.to_f).floor
       max_cargo_space = user_ship.available_cargo_space
       max_facility_inventory = facility.inventory
     
@@ -155,7 +158,7 @@ class TradeService
       scu = [scu.to_i, max_affordable_scu, max_cargo_space, max_facility_inventory].select { |v| v > 0 }.min
       raise InsufficientInventoryError, "Not enough cargo inventory at facility. Available: #{facility.inventory} SCU." if scu > facility.inventory
     
-      total_cost = facility.local_buy_price.to_f * scu
+      total_cost = buy_price.to_f * scu
       loading_time = (scu * 2) + 10  # Example calculation
     
       # ✅ Validate Commodity Availability
@@ -168,7 +171,7 @@ class TradeService
     
         cargo = user_ship.user_ship_cargos.find_or_initialize_by(commodity_id: commodity.id)
         cargo.scu = cargo.scu.to_i + scu
-        cargo.buy_price = facility.local_buy_price
+        cargo.buy_price = buy_price
         cargo.commodity_name = commodity.name
         cargo.save!
 
@@ -185,7 +188,7 @@ star_bitizen_run = StarBitizenRun.find_by(
     if star_bitizen_run
       # ✅ Update existing StarBitizenRun record
       star_bitizen_run.update!(
-        local_buy_price: facility.local_buy_price, # Update to latest buy price
+        local_buy_price: buy_price, # Update to latest buy price
         scu: star_bitizen_run.scu + scu, # Add to existing SCU
         profit: 0 # Reset profit until sold
       )
@@ -195,7 +198,7 @@ star_bitizen_run = StarBitizenRun.find_by(
         user: user,
         commodity: commodity,
         commodity_name: commodity.name,
-        local_buy_price: facility.local_buy_price,
+        local_buy_price: buy_price,
         local_sell_price: nil, # Will be updated later
         scu: scu,
         buy_location_name: location.name,
@@ -237,36 +240,14 @@ star_bitizen_run = StarBitizenRun.find_by(
     
       location_name = user_ship.location_name
       location = Location.find_by!(name: location_name)
-        
-    
-      # ✅ If no commodity is specified, return a list of commodities that the facility at this location is buying
-      if commodity_name.blank?
-        buyable_commodities = ProductionFacility.where(location_name: location.name)
-                                                .where("local_sell_price > 0") # ✅ Facility must be buying
-                                                .includes(:commodity)
-                                                .map do |facility|
-          {
-            commodity_name: facility.commodity.name,
-            sell_price: facility.local_sell_price
-          }
-        end
-    
-        if buyable_commodities.empty?
-          return { status: 'error', message: "No commodities can be sold at #{location_name}." }
-        end
-    
-        return {
-          status: 'success',
-          location: location_name,
-          commodities: buyable_commodities
-        }
-      end
-    
+
       # ✅ Find the specified commodity
       commodity = Commodity.where("name ILIKE ?", commodity_name).first!
 
-      facility = ProductionFacility.where("location_name ILIKE ? AND commodity_name = ? AND price_sell > 0", "%#{location.name}%", commodity.name).first
-      
+      facility = facilities_buying_from_player
+        .where("location_name ILIKE ? AND commodity_name = ?", "%#{location.name}%", commodity.name)
+        .first
+
       if facility.nil?
         raise InsufficientInventoryError, "No matching facility found for #{location.name} and #{commodity.name}."
       elsif facility.inventory == facility.max_inventory
@@ -277,13 +258,14 @@ star_bitizen_run = StarBitizenRun.find_by(
       raise InsufficientInventoryError, "No inventory of #{commodity_name} to sell." if cargo_to_sell.nil?
     
     max_scu = (scu.blank? || scu.to_i <= 0) ? cargo_to_sell.scu : scu.to_i
-      max_facility_demand = facility.inventory
+      max_facility_demand = facility_buy_capacity(facility) || cargo_to_sell.scu
       scu_to_sell = [max_scu, max_facility_demand].select { |v| v > 0 }.min
     
       raise InsufficientInventoryError, "Not enough inventory to sell. You have #{cargo_to_sell.scu} SCU of #{commodity_name}." if cargo_to_sell.scu < scu_to_sell
     
       # ✅ Calculate Profit
-      total_revenue = facility.local_sell_price.to_f * scu_to_sell
+      sell_price = player_sell_price(facility)
+      total_revenue = sell_price.to_f * scu_to_sell
     
       ActiveRecord::Base.transaction do
         
@@ -302,7 +284,7 @@ star_bitizen_run = StarBitizenRun.find_by(
                 # Update trade record
                 if star_bitizen_run.present?
                   star_bitizen_run.update!(
-                    local_sell_price: facility.local_sell_price,
+                    local_sell_price: sell_price,
                     sell_location_name: location.name,
                     profit: total_revenue,
                     scu: scu_to_sell
@@ -323,7 +305,41 @@ star_bitizen_run = StarBitizenRun.find_by(
         message: "Sold #{scu_to_sell} SCU of #{commodity_name} at #{location_name}."
       }
     end
-       
+
+    def self.list_sellable_commodities(username:, shard:)
+      user = User.where("LOWER(username) = ?", username.downcase).first!
+      shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard.downcase).first
+      raise ShipNotFoundError, "No ship found for user '#{username}'." if shard_user.nil?
+
+      user_ship = shard_user.user_ships.order(updated_at: :desc).first
+      raise ShipNotFoundError, "No ship found for user '#{username}'." unless user_ship
+
+      location_name = user_ship.location_name
+      location = Location.where("name ILIKE ?", "%#{location_name}%").first!
+
+      commodities = facilities_selling_to_player_for_sell_command
+        .where("location_name ILIKE ?", "%#{location.name}%")
+        .map do |facility|
+          {
+            commodity_name: facility.commodity_name,
+            sell_price: player_sell_price(facility),
+            scu: facility.scu_sell_stock
+          }
+        end
+
+      if commodities.empty?
+        return { status: 'error', message: "No commodities can be sold at #{location_name}." }
+      end
+
+      {
+        status: 'success',
+        message: {
+          location: location_name,
+          commodities: commodities
+        }
+      }
+    end
+
     def self.find_or_create_user(username, shard)
         normalized_username = username.downcase.strip
         
@@ -362,26 +378,24 @@ star_bitizen_run = StarBitizenRun.find_by(
       
         location_name = user_ship.location_name
         location = Location.where("name ILIKE ?", "%#{location_name}%").first!
-        
-        commodities = ProductionFacility
+
+        commodities = facilities_selling_to_player
         .where("facility_name ILIKE ?", "%#{location.name}%") # ✅ Try facility_name first
-        .where("local_buy_price > 0")  # ✅ Only show buyable commodities
         .includes(:commodity)
-      
+
         # If no results were found, try searching by location_name
         if commodities.empty?
-          commodities = ProductionFacility
+          commodities = facilities_selling_to_player
             .where("location_name ILIKE ?", "%#{location.name}%") # ✅ Fallback to location_name
-            .where("local_buy_price > 0")
             .includes(:commodity)
         end
-        
+
         commodities = commodities.map do |facility|
           {
             commodity_name: facility.commodity.name,
-            price: facility.local_buy_price
+            price: player_buy_price(facility)
           }
-        end              
+        end
 
         if commodities.empty?
           return { status: 'error', message: "No commodities available for purchase at #{location_name}." }
@@ -395,7 +409,36 @@ star_bitizen_run = StarBitizenRun.find_by(
           }
         }
       end
-      
+
+      def self.facilities_selling_to_player
+        ProductionFacility.where("COALESCE(NULLIF(local_buy_price, 0), NULLIF(price_buy, 0), 0) > 0")
+      end
+
+      def self.facilities_buying_from_player
+        ProductionFacility
+          .where("consumption_rate > 0")
+          .where("status_sell > 0")
+          .where("COALESCE(price_sell, 0) > 0 OR COALESCE(local_sell_price, 0) > 0")
+      end
+
+      def self.facilities_selling_to_player_for_sell_command
+        ProductionFacility
+          .where("status_sell > 0")
+          .where("COALESCE(price_sell, 0) > 0 OR COALESCE(local_sell_price, 0) > 0")
+      end
+
+      def self.player_buy_price(facility)
+        facility.local_buy_price.to_d.positive? ? facility.local_buy_price : facility.price_buy
+      end
+
+      def self.player_sell_price(facility)
+        facility.local_sell_price.to_d.positive? ? facility.local_sell_price : facility.price_sell
+      end
+
+      def self.facility_buy_capacity(facility)
+        return nil if facility.max_inventory.to_i.zero?
+        facility.max_inventory.to_i - facility.inventory.to_i
+      end
 
 
   end

@@ -7,20 +7,32 @@ module Api
     def sell
 
       trade_params = params[:trade] || {}
-    
+
       username = trade_params[:player_name]
       wallet_balance = trade_params[:wallet_balance]
       commodity_name = trade_params[:commodity_name]
       scu = trade_params[:scu]
       shard = trade_params[:shard_name]
 
-      result = TradeService.sell(
-        username: username,
-        wallet_balance: wallet_balance,
-        commodity_name: commodity_name,
-        scu: scu,
-        shard: shard
-      )
+      if username.blank? || shard.blank?
+        render json: { status: 'error', message: 'Missing required parameters' }, status: :unprocessable_entity and return
+      end
+
+      if commodity_name.blank? && scu.blank?
+        result = TradeService.list_sellable_commodities(username: username, shard: shard)
+      elsif commodity_name.blank?
+        render json: { status: 'error', message: 'Missing commodity name for sale.' }, status: :unprocessable_entity and return
+      elsif scu.blank?
+        render json: { status: 'error', message: 'Missing SCU amount for sale.' }, status: :unprocessable_entity and return
+      else
+        result = TradeService.sell(
+          username: username,
+          wallet_balance: wallet_balance,
+          commodity_name: commodity_name,
+          scu: scu,
+          shard: shard
+        )
+      end
 
       render json: result, status: :ok
     rescue StandardError => e
