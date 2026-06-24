@@ -13,6 +13,8 @@ class TradeServiceTest < ActiveSupport::TestCase
     Ship.delete_all
     Shard.delete_all
     Location.delete_all
+    Setting.delete_all
+    Setting.create!(key: "seconds_per_tick", value: "5", setting_type: "text")
 
     @shard = Shard.create!(name: "TestShard", region: "us", channel_uuid: "shard-guid")
     @user = User.create!(
@@ -110,5 +112,34 @@ class TradeServiceTest < ActiveSupport::TestCase
     refute_nil commodity
     assert_equal 384.56, commodity[:sell_price].to_f
     assert_equal 0, commodity[:scu]
+  end
+
+  test "loading ticks preserve existing cargo loading balance" do
+    assert_equal 50, TradeService.loading_ticks_for_scu(20)
+  end
+
+  test "loading time converts loading ticks to real seconds" do
+    assert_equal 250, TradeService.loading_time_seconds_for_scu(20)
+
+    Setting.find_by!(key: "seconds_per_tick").update!(value: "2")
+
+    assert_equal 100, TradeService.loading_time_seconds_for_scu(20)
+  end
+
+  test "buy returns loading_time as real seconds" do
+    result = TradeService.buy(
+      username: @user.username,
+      wallet_balance: @shard_user.wallet_balance,
+      commodity_name: @terminal_buy_commodity.name,
+      scu: 2,
+      shard: @shard.name,
+      ship_guid: @user_ship.guid,
+      ship_slug: @ship.slug
+    )
+
+    assert_equal "success", result[:status]
+    assert_equal 14, result[:loading_ticks]
+    assert_equal 70, result[:loading_time]
+    assert_kind_of Numeric, result[:loading_time]
   end
 end

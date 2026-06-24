@@ -8,7 +8,7 @@ class TickControlsController < ApplicationController
     TickJob.ensure_scheduled!  # kick off the first job if none queued
       ActionCable.server.broadcast("tick", {
     type: "tick_started",
-    seconds_per_tick: Tick::SIMULATED_HOURS_PER_TICK
+    seconds_per_tick: Tick.seconds_per_tick
   })
     redirect_back fallback_location: root_path, notice: "Tick engine started."
   end

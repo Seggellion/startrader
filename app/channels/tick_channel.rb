@@ -7,7 +7,7 @@ class TickChannel < ApplicationCable::Channel
       type: "status",
       running: running,
       tick: Tick.current,
-      seconds_per_tick: Tick::SIMULATED_HOURS_PER_TICK
+      seconds_per_tick: Tick.seconds_per_tick
     })
   end
 

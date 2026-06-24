@@ -2,6 +2,9 @@
   # app/services/trade_service.rb
 
 class TradeService
+    BASE_LOADING_TICKS = 10
+    LOADING_TICKS_PER_SCU = 2
+
     class InsufficientCreditsError < StandardError; end
     class InsufficientCapacityError < StandardError; end
     class CommodityNotAvailableError < StandardError; end
@@ -159,7 +162,7 @@ class TradeService
       raise InsufficientInventoryError, "Not enough cargo inventory at facility. Available: #{facility.inventory} SCU." if scu > facility.inventory
     
       total_cost = buy_price.to_f * scu
-      loading_time = (scu * 2) + 10  # Example calculation
+      loading_time_seconds = loading_time_seconds_for_scu(scu)
     
       # ✅ Validate Commodity Availability
       raise CommodityNotAvailableError, "Commodity not available at this location." unless facility.commodity.is_sellable
@@ -220,10 +223,11 @@ star_bitizen_run = StarBitizenRun.find_by(
       {
         status: 'success',
         wallet_balance: shard_user.wallet_balance,
-        loading_time: loading_time,
+        loading_time: loading_time_seconds,
+        loading_ticks: loading_ticks_for_scu(scu),
         scu: scu,
         capital: total_cost,
-        message: "Purchased #{scu} SCU of #{commodity_name} at #{location_name}. Loading will complete in #{loading_time / 60} minutes."
+        message: "Purchased #{scu} SCU of #{commodity_name} at #{location_name}"
       }
     end    
 
@@ -439,6 +443,18 @@ star_bitizen_run = StarBitizenRun.find_by(
         return nil if facility.max_inventory.to_i.zero?
         facility.max_inventory.to_i - facility.inventory.to_i
       end
+
+      def self.loading_time_seconds_for_scu(scu)
+        loading_ticks_for_scu(scu) * Tick.seconds_per_tick
+      end
+
+      def self.loading_ticks_for_scu(scu)
+        (scu.to_i * loading_ticks_per_scu) + base_loading_ticks
+      end
+
+      def self.base_loading_ticks = BASE_LOADING_TICKS
+
+      def self.loading_ticks_per_scu = LOADING_TICKS_PER_SCU
 
 
   end

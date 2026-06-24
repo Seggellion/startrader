@@ -5,13 +5,19 @@ class Tick < ApplicationRecord
 
   after_save :update_market_prices, if: :saved_change_to_current_tick?
 
- SECONDS_PER_TICK = Setting.get('seconds_per_tick').to_i
+  DEFAULT_SECONDS_PER_TICK = 1
+  DEFAULT_HOURS_PER_TICK = 1
 
- SIMULATED_HOURS_PER_TICK  = Setting.get('hours_per_tick').to_i * 3600
+  def self.seconds_per_tick
+    positive_number_setting("seconds_per_tick", DEFAULT_SECONDS_PER_TICK)
+  end
 
- 
-  def self.seconds_per_tick = SECONDS_PER_TICK
-    def self.hours_per_tick = SIMULATED_HOURS_PER_TICK
+  def self.simulated_seconds_per_tick
+    positive_number_setting("hours_per_tick", DEFAULT_HOURS_PER_TICK) * 3600
+  end
+
+  # Existing callers expect this value in seconds, despite the method name.
+  def self.hours_per_tick = simulated_seconds_per_tick
 
   def self.current
     first_or_create(current_tick: 0, sequence: 1).current_tick
@@ -35,7 +41,7 @@ class Tick < ApplicationRecord
   ActionCable.server.broadcast("tick", {
     type: "tick",
     tick: Tick.current,
-    seconds_per_tick: Tick::SIMULATED_HOURS_PER_TICK
+    seconds_per_tick: Tick.seconds_per_tick
   })
   end
 
@@ -102,4 +108,15 @@ class Tick < ApplicationRecord
   def update_market_prices    
     MarketPriceUpdater.update_prices! if current_tick % 1 == 0
   end
+
+  def self.positive_number_setting(key, fallback)
+    raw_value = Setting.get(key)
+    value = Float(raw_value)
+    return fallback if value <= 0
+
+    value.to_i == value ? value.to_i : value
+  rescue ArgumentError, TypeError
+    fallback
+  end
+  private_class_method :positive_number_setting
 end

@@ -1,0 +1,63 @@
+require "test_helper"
+
+class TickTest < ActiveSupport::TestCase
+  setup do
+    ActiveRecord::Base.connection.execute("DELETE FROM ticks")
+    Setting.delete_all
+  end
+
+  test "seconds_per_tick reads settings dynamically" do
+    Setting.create!(key: "seconds_per_tick", value: "5", setting_type: "text")
+
+    assert_equal 5, Tick.seconds_per_tick
+
+    Setting.find_by!(key: "seconds_per_tick").update!(value: "2")
+
+    assert_equal 2, Tick.seconds_per_tick
+  end
+
+  test "seconds_per_tick falls back safely for missing blank zero and invalid settings" do
+    assert_equal 1, Tick.seconds_per_tick
+
+    Setting.create!(key: "seconds_per_tick", value: "", setting_type: "text")
+    assert_equal 1, Tick.seconds_per_tick
+
+    Setting.find_by!(key: "seconds_per_tick").update!(value: "0")
+    assert_equal 1, Tick.seconds_per_tick
+
+    Setting.find_by!(key: "seconds_per_tick").update!(value: "not-a-number")
+    assert_equal 1, Tick.seconds_per_tick
+  end
+
+  test "simulated seconds per tick is separate from real seconds per tick" do
+    Setting.create!(key: "hours_per_tick", value: "2", setting_type: "text")
+
+    assert_equal 7200, Tick.simulated_seconds_per_tick
+    assert_equal 7200, Tick.hours_per_tick
+  end
+
+  test "increment broadcasts real seconds per tick" do
+    Setting.create!(key: "seconds_per_tick", value: "5", setting_type: "text")
+    broadcasts = []
+    server = Object.new
+    server.define_singleton_method(:broadcast) do |channel, payload|
+      broadcasts << [channel, payload]
+    end
+
+    MarketPriceUpdater.stub(:update_prices!, nil) do
+      Tick.create!(current_tick: 10, sequence: 1)
+
+      ActionCable.stub(:server, server) do
+        ShipArrivalJob.stub(:perform_later, nil) do
+          Tick.increment!
+        end
+      end
+    end
+
+    tick_broadcast = broadcasts.find { |channel, payload| channel == "tick" && payload[:type] == "tick" }
+
+    refute_nil tick_broadcast
+    assert_equal 11, tick_broadcast.last[:tick]
+    assert_equal 5, tick_broadcast.last[:seconds_per_tick]
+  end
+end

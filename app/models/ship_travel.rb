@@ -58,7 +58,7 @@ scope :interdictable_now_sql, ->(tick = Tick.current) {
   end
 
   def seconds_remaining(current_tick)
-    [arrival_tick - current_tick, 0].max * Tick::SECONDS_PER_TICK
+    [arrival_tick - current_tick, 0].max * Tick.seconds_per_tick
   end
 
   def departure_window_range

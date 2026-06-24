@@ -13,6 +13,8 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     Ship.delete_all
     Shard.delete_all
     Location.delete_all
+    Setting.delete_all
+    Setting.create!(key: "seconds_per_tick", value: "5", setting_type: "text")
 
     @shard = Shard.create!(name: "TestShard", region: "us", channel_uuid: "shard-guid")
     @user = User.create!(
@@ -106,6 +108,8 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "success", response_json["status"]
     assert_kind_of String, response_json["message"]
     assert_includes response_json["message"], "Purchased 2 SCU of Terminal Buys This"
+    assert_equal 70, response_json["loading_time"]
+    assert_equal 14, response_json["loading_ticks"]
     assert_equal 2, @user_ship.reload.used_scu
     assert_equal 998, @facility.reload.inventory
     assert_equal 1, UserShipCargo.where(user_ship: @user_ship, commodity: @commodity, scu: 2).count

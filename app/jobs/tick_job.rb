@@ -14,7 +14,7 @@ class TickJob < ApplicationJob
     Rails.logger.info "TickJob completed successfully."
 
     # keep the chain going while running
-    self.class.set(wait: 30.seconds).perform_later if TickControl.instance.running?
+    self.class.set(wait: Tick.seconds_per_tick.seconds).perform_later if TickControl.instance.running?
   end
 
   # kick off one job if none queued
