@@ -87,12 +87,12 @@ class TradeServiceTest < ActiveSupport::TestCase
 
   test "available and sellable commodity lists use opposite terminal trade directions" do
     buy_names = TradeService
-      .list_available_commodities(username: @user.username)
-      .dig(:message, :commodities)
+      .list_available_commodities(username: @user.username, shard: @shard.name)
+      .fetch(:commodities)
       .map { |commodity| commodity[:commodity_name] }
     sell_names = TradeService
       .list_sellable_commodities(username: @user.username, shard: @shard.name)
-      .dig(:message, :commodities)
+      .fetch(:commodities)
       .map { |commodity| commodity[:commodity_name] }
 
     assert_includes buy_names, "Terminal Buys This"
@@ -103,10 +103,54 @@ class TradeServiceTest < ActiveSupport::TestCase
     refute @terminal_sell_commodity.is_sellable
   end
 
+  test "available commodity list keeps message human-readable and data top-level" do
+    response = TradeService.list_available_commodities(username: @user.username, shard: @shard.name)
+
+    assert_equal "success", response[:status]
+    assert_kind_of String, response[:message]
+    assert_equal @location.name, response[:location]
+    assert_kind_of Array, response[:commodities]
+    refute_kind_of Hash, response[:message]
+  end
+
+  test "sellable commodity list keeps message human-readable and data top-level" do
+    response = TradeService.list_sellable_commodities(username: @user.username, shard: @shard.name)
+
+    assert_equal "success", response[:status]
+    assert_kind_of String, response[:message]
+    assert_equal @location.name, response[:location]
+    assert_kind_of Array, response[:commodities]
+    refute_kind_of Hash, response[:message]
+  end
+
+  test "available commodity empty list keeps data top-level" do
+    ProductionFacility.delete_all
+
+    response = TradeService.list_available_commodities(username: @user.username, shard: @shard.name)
+
+    assert_equal "error", response[:status]
+    assert_kind_of String, response[:message]
+    assert_equal @location.name, response[:location]
+    assert_equal [], response[:commodities]
+    refute_kind_of Hash, response[:message]
+  end
+
+  test "sellable commodity empty list keeps data top-level" do
+    ProductionFacility.delete_all
+
+    response = TradeService.list_sellable_commodities(username: @user.username, shard: @shard.name)
+
+    assert_equal "error", response[:status]
+    assert_kind_of String, response[:message]
+    assert_equal @location.name, response[:location]
+    assert_equal [], response[:commodities]
+    refute_kind_of Hash, response[:message]
+  end
+
   test "sellable list comes from terminal sell-side fields without requiring stock or cargo" do
     commodities = TradeService
       .list_sellable_commodities(username: @user.username, shard: @shard.name)
-      .dig(:message, :commodities)
+      .fetch(:commodities)
     commodity = commodities.find { |item| item[:commodity_name] == "Terminal Sells This" }
 
     refute_nil commodity

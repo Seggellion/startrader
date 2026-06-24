@@ -20,7 +20,7 @@ class Tick < ApplicationRecord
   def self.hours_per_tick = simulated_seconds_per_tick
 
   def self.current
-    first_or_create(current_tick: 0, sequence: 1).current_tick
+    instance.current_tick
   end
 
   def self.current_sequence
@@ -32,21 +32,30 @@ class Tick < ApplicationRecord
   end
 
   def self.increment!
-    
-    tick = first_or_create(current_tick: 0, sequence: 1)
-    ShipArrivalJob.perform_later
-    tick.update!(current_tick: tick.current_tick + 1, sequence: tick.sequence + 1)
-    tick.process_tick # Runs optimized processing logic
-    tick.send(:correct_ship_statuses) if tick.current_tick % 3 == 0
-  ActionCable.server.broadcast("tick", {
-    type: "tick",
-    tick: Tick.current,
-    seconds_per_tick: Tick.seconds_per_tick
-  })
+    tick = nil
+
+    transaction do
+      tick = instance
+      tick.with_lock do
+        tick.update!(
+          current_tick: tick.current_tick.to_i + 1,
+          sequence: tick.sequence.to_i + 1
+        )
+        tick.process_tick
+      end
+    end
+
+    run_tick_side_effect("ShipArrivalJob") { ShipArrivalJob.perform_now }
+    run_tick_side_effect("ShipTravel.cleanup_stale_after_arrival!") do
+      ShipTravel.cleanup_stale_after_arrival!(tick.current_tick)
+    end
+    run_tick_side_effect("Tick.correct_ship_statuses") { tick.send(:correct_ship_statuses) } if tick.current_tick % 3 == 0
+    broadcast_tick(tick.current_tick)
+
+    tick.current_tick
   end
 
   def process_tick
-    # ✅ Process production/consumption in bulk
     batch_produce_resources
     batch_consume_resources
     update!(processed_at: Time.current)
@@ -55,58 +64,62 @@ class Tick < ApplicationRecord
   private
 
   def batch_produce_resources
-    # Generate commodities only for facilities that haven't hit `max_inventory`
-    facilities = ProductionFacility.where("inventory < max_inventory")
-
-    updates = facilities.map do |facility|
-      new_inventory = [facility.inventory + facility.production_rate, facility.max_inventory].min
-      "(#{facility.id}, #{new_inventory})"
-    end
-
-    # Bulk update inventories
-    unless updates.empty?
-      sql = <<-SQL
-        UPDATE production_facilities
-        SET inventory = data.new_inventory
-        FROM (VALUES #{updates.join(",")}) AS data(id, new_inventory)
-        WHERE production_facilities.id = data.id
-      SQL
-      ActiveRecord::Base.connection.execute(sql)
-    end
+    ActiveRecord::Base.connection.execute(<<~SQL.squish)
+      UPDATE production_facilities
+      SET inventory = LEAST(
+        COALESCE(inventory, 0) + COALESCE(production_rate, 0),
+        COALESCE(max_inventory, 0)
+      )
+      WHERE COALESCE(inventory, 0) < COALESCE(max_inventory, 0)
+    SQL
   end
 
   def batch_consume_resources
-    # Consume resources in bulk using a similar approach
-    facilities = ProductionFacility.where("inventory > 0")
-
-    updates = facilities.map do |facility|
-      new_inventory = [facility.inventory - facility.consumption_rate, 0].max
-      "(#{facility.id}, #{new_inventory})"
-    end
-
-    unless updates.empty?
-      sql = <<-SQL
-        UPDATE production_facilities
-        SET inventory = data.new_inventory
-        FROM (VALUES #{updates.join(",")}) AS data(id, new_inventory)
-        WHERE production_facilities.id = data.id
-      SQL
-      ActiveRecord::Base.connection.execute(sql)
-    end
+    ActiveRecord::Base.connection.execute(<<~SQL.squish)
+      UPDATE production_facilities
+      SET inventory = GREATEST(
+        COALESCE(inventory, 0) - COALESCE(consumption_rate, 0),
+        0
+      )
+      WHERE COALESCE(inventory, 0) > 0
+    SQL
   end
 
   def correct_ship_statuses
-    ActiveRecord::Base.connection.execute(<<-SQL)
+    current_tick = Tick.current.to_i
+    ActiveRecord::Base.connection.execute(<<~SQL.squish)
       UPDATE user_ships
       SET status = 'aimlessly floating in space'
       WHERE status = 'in_transit'
-      AND id NOT IN (SELECT user_ship_id FROM ship_travels WHERE arrival_tick > #{Tick.current})
+      AND id NOT IN (SELECT user_ship_id FROM ship_travels WHERE arrival_tick > #{current_tick})
     SQL
   end
-  
 
-  def update_market_prices    
-    MarketPriceUpdater.update_prices! if current_tick % 1 == 0
+
+  def update_market_prices
+    self.class.run_tick_side_effect("MarketPriceUpdater") do
+      MarketPriceUpdater.update_prices! if current_tick % 1 == 0
+    end
+  end
+
+  def self.broadcast_tick(current_tick)
+    run_tick_side_effect("ActionCable.tick_broadcast") do
+      ActionCable.server.broadcast("tick", {
+        type: "tick",
+        tick: current_tick,
+        seconds_per_tick: Tick.seconds_per_tick
+      })
+    end
+  end
+
+  def self.run_tick_side_effect(name)
+    yield
+  rescue => error
+    Rails.logger.error(
+      "event=\"tick_side_effect_failed\" side_effect=#{name.inspect} " \
+        "error_class=#{error.class.name.inspect} error_message=#{error.message.inspect}"
+    )
+    nil
   end
 
   def self.positive_number_setting(key, fallback)

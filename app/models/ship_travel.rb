@@ -18,6 +18,12 @@ class ShipTravel < ApplicationRecord
 
   scope :completed, -> { where.not(completed_at_tick: nil) }
 
+  scope :stale_after_arrival, ->(tick = Tick.current) {
+    where(is_paused: false, completed_at_tick: nil)
+      .where("arrival_tick > 0")
+      .where("arrival_tick < ?", tick)
+  }
+
   # Optional: narrow by shard or star system
   scope :for_shard, ->(shard) {
     joins(:user_ship).where(user_ships: { shard_name: shard }) if shard.present?
@@ -99,6 +105,18 @@ scope :interdictable_now_sql, ->(tick = Tick.current) {
     !is_paused && completed_at_tick.nil? && arrival_tick.to_i.positive? && arrival_tick <= current_tick
   end
 
+  def self.cleanup_stale_after_arrival!(tick = Tick.current)
+    cleaned_count = 0
+
+    stale_after_arrival(tick).find_each do |travel|
+      travel.cleanup_stale_after_arrival!
+      cleaned_count += 1
+    end
+
+    Rails.logger.info("Cleaned #{cleaned_count} stale ShipTravel records after tick #{tick}.") if cleaned_count.positive?
+    cleaned_count
+  end
+
   # --- Interdiction controls ---
 
   # Pauses travel and records remaining distance to arrival.
@@ -132,5 +150,10 @@ scope :interdictable_now_sql, ->(tick = Tick.current) {
       arrival_tick: current_tick + rem,
       total_duration_ticks: rem
     )
+  end
+
+  def cleanup_stale_after_arrival!
+    user_ship.update!(status: "aimlessly floating in space") if user_ship.status.to_s.downcase == "in_transit"
+    destroy!
   end
 end

@@ -48,8 +48,10 @@ class TickTest < ActiveSupport::TestCase
       Tick.create!(current_tick: 10, sequence: 1)
 
       ActionCable.stub(:server, server) do
-        ShipArrivalJob.stub(:perform_later, nil) do
-          Tick.increment!
+        ShipArrivalJob.stub(:perform_now, nil) do
+          ShipTravel.stub(:cleanup_stale_after_arrival!, nil) do
+            Tick.increment!
+          end
         end
       end
     end
@@ -59,5 +61,60 @@ class TickTest < ActiveSupport::TestCase
     refute_nil tick_broadcast
     assert_equal 11, tick_broadcast.last[:tick]
     assert_equal 5, tick_broadcast.last[:seconds_per_tick]
+  end
+
+  test "increment processes arrivals and stale cleanup after advancing the tick" do
+    events = []
+    server = Object.new
+    server.define_singleton_method(:broadcast) { |_channel, _payload| }
+
+    MarketPriceUpdater.stub(:update_prices!, nil) do
+      Tick.create!(current_tick: 10, sequence: 1)
+
+      ActionCable.stub(:server, server) do
+        ShipArrivalJob.stub(:perform_now, -> { events << [:arrival, Tick.current] }) do
+          ShipTravel.stub(:cleanup_stale_after_arrival!, ->(tick = Tick.current) { events << [:cleanup, tick] }) do
+            Tick.increment!
+          end
+        end
+      end
+    end
+
+    assert_equal [[:arrival, 11], [:cleanup, 11]], events
+  end
+
+  test "market price failures do not stop the tick increment" do
+    server = Object.new
+    server.define_singleton_method(:broadcast) { |_channel, _payload| }
+
+    Tick.create!(current_tick: 10, sequence: 1)
+
+    MarketPriceUpdater.stub(:update_prices!, -> { raise "market unavailable" }) do
+      ActionCable.stub(:server, server) do
+        ShipArrivalJob.stub(:perform_now, nil) do
+          ShipTravel.stub(:cleanup_stale_after_arrival!, nil) do
+            assert_nothing_raised { Tick.increment! }
+          end
+        end
+      end
+    end
+
+    assert_equal 11, Tick.current
+  end
+
+  test "non-critical after-tick side effect failures do not stop the tick increment" do
+    MarketPriceUpdater.stub(:update_prices!, nil) do
+      Tick.create!(current_tick: 10, sequence: 1)
+    end
+
+    ActionCable.stub(:server, Object.new.tap { |server| server.define_singleton_method(:broadcast) { |_channel, _payload| } }) do
+      ShipArrivalJob.stub(:perform_now, -> { raise "arrival unavailable" }) do
+        ShipTravel.stub(:cleanup_stale_after_arrival!, nil) do
+          assert_nothing_raised { Tick.increment! }
+        end
+      end
+    end
+
+    assert_equal 11, Tick.current
   end
 end

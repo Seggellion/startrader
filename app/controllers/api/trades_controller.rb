@@ -53,9 +53,9 @@ module Api
       if username.blank? || shard.blank?
         render json: { status: 'error', message: 'Missing required parameters' }, status: :unprocessable_entity and return
       end
-    
+
       if commodity_name.blank? && scu.blank?
-        result = TradeService.list_available_commodities(username: username)
+        result = TradeService.list_available_commodities(username: username, shard: shard)
       elsif commodity_name.blank?
         render json: { status: 'error', message: 'Missing commodity name for purchase.' }, status: :unprocessable_entity and return
       elsif scu.blank?

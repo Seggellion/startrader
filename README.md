@@ -17,11 +17,11 @@ The **Star Bitizen Trade Game API** facilitates a **text-based space trading gam
 ---
 
 ## 🛠️ **Tech Stack**
-- **Backend:** Ruby on Rails 8 (API-only mode)
+- **Backend:** Ruby on Rails 8
 - **Database:** PostgreSQL
-- **Background Jobs:** Sidekiq with Redis
-- **Testing:** RSpec
-- **Task Scheduling:** Cron or Sidekiq Scheduler
+- **Background Jobs:** Active Job with Delayed Job
+- **Testing:** Minitest
+- **Task Recovery:** Delayed Job self-chaining plus the tick watchdog rake task
 
 ---
 
@@ -32,6 +32,39 @@ The **Star Bitizen Trade Game API** facilitates a **text-based space trading gam
 - **Travel Mechanics:** Calculate travel time based on planetary alignments.
 - **Production Facilities:** Generate and consume resources using a "tick" system.
 - **Resource Consumption:** Automatically adjust supply and demand through periodic ticks.
+
+---
+
+## Tick Operations
+
+The production Procfile must keep both dynos running:
+
+```bash
+web: bundle exec rails server -p $PORT
+worker: bundle exec rake jobs:work
+```
+
+The tick loop is controlled through `TickControl`, runs through `TickJob`, and is repaired by `TickWatchdogJob`. The watchdog is safe to run periodically from Heroku Scheduler:
+
+```bash
+bundle exec rake tick:ensure
+```
+
+Manual controls:
+
+```bash
+bundle exec rake tick:start
+bundle exec rake tick:stop
+bundle exec rake tick:health
+```
+
+Optional boot recovery can be enabled with:
+
+```bash
+TICK_BOOTSTRAP=true
+```
+
+The tick runner uses PostgreSQL advisory locks so duplicate queued jobs or multiple worker dynos do not process the same tick concurrently.
 
 ---
 

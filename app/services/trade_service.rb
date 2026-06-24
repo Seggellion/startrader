@@ -332,15 +332,19 @@ star_bitizen_run = StarBitizenRun.find_by(
         end
 
       if commodities.empty?
-        return { status: 'error', message: "No commodities can be sold at #{location_name}." }
+        return {
+          status: 'error',
+          message: "No commodities can be sold at #{location_name}.",
+          location: location_name,
+          commodities: []
+        }
       end
 
       {
         status: 'success',
-        message: {
-          location: location_name,
-          commodities: commodities
-        }
+        message: "Commodities available to sell at #{location_name}.",
+        location: location_name,
+        commodities: commodities
       }
     end
 
@@ -372,10 +376,13 @@ star_bitizen_run = StarBitizenRun.find_by(
       end
       
 
-      def self.list_available_commodities(username:)
+      def self.list_available_commodities(username:, shard:)
         user = User.where("LOWER(username) = ?", username.downcase).first!
-        user_ship = user.user_ships.order(updated_at: :desc).first
-        
+        shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard.downcase).first
+        raise ShipNotFoundError, "No ship found for user '#{username}'." if shard_user.nil?
+
+        user_ship = shard_user.user_ships.order(updated_at: :desc).first
+
         if user_ship.nil?
           raise ShipNotFoundError, "No ship found for user '#{username}'."
         end
@@ -402,15 +409,19 @@ star_bitizen_run = StarBitizenRun.find_by(
         end
 
         if commodities.empty?
-          return { status: 'error', message: "No commodities available for purchase at #{location_name}." }
+          return {
+            status: 'error',
+            message: "No commodities available for purchase at #{location_name}.",
+            location: location_name,
+            commodities: []
+          }
         end
-      
+
         {
           status: 'success',
-          message: {
-            location: location_name,
-            commodities: commodities
-          }
+          message: "Commodities available for purchase at #{location_name}.",
+          location: location_name,
+          commodities: commodities
         }
       end
 

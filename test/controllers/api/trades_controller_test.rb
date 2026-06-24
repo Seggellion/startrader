@@ -91,12 +91,12 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal "success", response_json["status"]
-    assert_kind_of Hash, response_json["message"]
-    assert_equal @location.name, response_json.dig("message", "location")
-    assert_kind_of Array, response_json.dig("message", "commodities")
-    refute_empty response_json.dig("message", "commodities")
-    refute_includes response_json, "location"
-    refute_includes response_json, "commodities"
+    assert_kind_of String, response_json["message"]
+    assert_equal @location.name, response_json["location"]
+    assert_kind_of Array, response_json["commodities"]
+    refute_empty response_json["commodities"]
+    refute_includes response_json["message"], "location"
+    refute_includes response_json["message"], "commodities"
   end
 
   test "buy with valid commodity name and scu still performs purchase with standard response keys" do
@@ -170,16 +170,16 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal "success", response_json["status"]
-    assert_kind_of Hash, response_json["message"]
-    assert_equal @location.name, response_json.dig("message", "location")
-    commodities = response_json.dig("message", "commodities")
+    assert_kind_of String, response_json["message"]
+    assert_equal @location.name, response_json["location"]
+    commodities = response_json["commodities"]
     assert_kind_of Array, commodities
     assert_equal 1, commodities.size
     assert_equal @sell_commodity.name, commodities.first["commodity_name"]
     assert_equal 384.56, commodities.first["sell_price"].to_f
     assert_equal 0, commodities.first["scu"]
-    refute_includes response_json, "location"
-    refute_includes response_json, "commodities"
+    refute_includes response_json["message"], "location"
+    refute_includes response_json["message"], "commodities"
   end
 
   test "buy and sell listings use different terminal market directions for the same location" do
@@ -188,14 +188,14 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     }, as: :json
 
     assert_response :success
-    buy_names = response_json.dig("message", "commodities").map { |commodity| commodity["commodity_name"] }
+    buy_names = response_json["commodities"].map { |commodity| commodity["commodity_name"] }
 
     post "/api/sell", params: {
       trade: base_trade_payload.except(:commodity_name, :scu)
     }, as: :json
 
     assert_response :success
-    sell_names = response_json.dig("message", "commodities").map { |commodity| commodity["commodity_name"] }
+    sell_names = response_json["commodities"].map { |commodity| commodity["commodity_name"] }
 
     assert_includes buy_names, "Terminal Buys This"
     refute_includes buy_names, "Terminal Sells This"
@@ -212,7 +212,12 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
         called = true
         assert_equal @user.username, username
         assert_equal @shard.name, shard
-        { status: "success", message: { location: @location.name, commodities: [] } }
+        {
+          status: "success",
+          message: "Commodities available to sell at #{@location.name}.",
+          location: @location.name,
+          commodities: []
+        }
       }) do
         post "/api/sell", params: {
           trade: base_trade_payload.except(:commodity_name, :scu)

@@ -5,18 +5,16 @@ class TickControlsController < ApplicationController
 
   def start
     TickControl.instance.start!
-    TickJob.ensure_scheduled!  # kick off the first job if none queued
-      ActionCable.server.broadcast("tick", {
-    type: "tick_started",
-    seconds_per_tick: Tick.seconds_per_tick
-  })
+    ActionCable.server.broadcast("tick", {
+      type: "tick_started",
+      seconds_per_tick: Tick.seconds_per_tick
+    })
     redirect_back fallback_location: root_path, notice: "Tick engine started."
   end
 
   def stop
     TickControl.instance.stop!
-    TickJob.cancel_all!        # prevent future runs
-      ActionCable.server.broadcast("tick", { type: "tick_stopped" })
+    ActionCable.server.broadcast("tick", { type: "tick_stopped" })
     redirect_back fallback_location: root_path, notice: "Tick engine stopped."
   end
 end

@@ -86,6 +86,7 @@ Rails.application.routes.draw do
     post 'user_ships/:guid/resume',    to: 'ship_travel#resume_by_guid',    as: :resume_by_guid
 
     resources :ships, only: [:index]
+    resources :commodities, only: [:index]
     post 'jettison', to: 'ships#dump_cargo'
 
     get "interdictable_ships", to: "ship_travel#interdictable_index"
