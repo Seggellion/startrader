@@ -34,7 +34,8 @@ class RabbitmqSender
       ship.ship_slug,
       Setting.get('secret_guid'),
       travel.from_location.name,
-      travel.to_location.name
+      travel.to_location.name,
+      travel.travel_guid
     ].join("|")
 
     exchange = RABBITMQ_CHANNEL.topic(exchange_name, durable: true)
