@@ -85,60 +85,26 @@ class TradeService
       shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard.downcase).first
       shard_user.update(wallet_balance:wallet_balance)
       shard = Shard.find_by_name(shard)
-      # ✅ Get the user's most recent UserShip to determine location
- user_ship =
-    if ship_guid.present?
-      shard_user.user_ships.find_by(guid: ship_guid)
-    end
-
-  if user_ship.nil?
-    # We must have a slug to create from the catalog
-    raise ActiveRecord::RecordInvalid, "ship_slug is required when ship_guid not found." if ship_slug.blank?
-    ship = Ship.find_by!(slug: ship_slug)
-
-    # Pick a location for the brand-new ship:
-    # 1) caller-provided location_name, else
-    
-    # 2) the most recent ship's location, else hard fail (we need a concrete place to buy from).
-    fallback_loc = shard_user.user_ships.order(updated_at: :desc).first&.location_name
-    new_ship_location = Location.find_by_name("Orison").name
-   
-    raise LocationMismatchError, "location_name required to create ship (no prior ship to infer from)." if new_ship_location.blank?
-
-    user_ship = shard_user.user_ships.create!(
-      guid: ship_guid.presence || SecureRandom.uuid,
-      ship: ship,                                  # establishes UserShip.ship relation
-      ship_slug: ship.slug,                   # optional caching, if your model has it
-      shard: shard, 
-      shard_user: shard_user,      
-      user: user,
-      total_scu: ship.scu, 
-      used_scu: 0,                # optional convenience
-      location_name: new_ship_location
-      # total_scu/used_scu or other fields can be initialized here if your schema requires it
-    )
-  end
-
-
-      
-      if user_ship.nil?
-        raise ShipNotFoundError, "No ship found for user '#{username}'."
-      end
+      user_ship = resolve_trade_ship(
+        user: user,
+        shard_user: shard_user,
+        shard: shard,
+        ship_guid: ship_guid,
+        ship_slug: ship_slug,
+        create_missing: true
+      )
       
 
       if shard_user.wallet_balance == 0
         raise InsufficientCreditsError, "INSF FNDS '#{username}'."
       end
       
-      location_name = user_ship.location_name
-      location = Location.find_by!(name: location_name)
-
-      facility = facilities_selling_to_player
-        .where("location_name ILIKE ? AND commodity_name = ?", "%#{location.name}%", commodity.name)
-        .first
+      candidate_facilities = buyable_facilities_for_trade_location(user_ship.location_name).to_a
+      facility = candidate_facilities.find { |candidate| candidate.commodity_name.to_s.casecmp?(commodity.name) }
+      location_name = facility&.location_name.presence || trade_facility_location_name(user_ship.location_name, candidate_facilities)
 
       if facility.nil?
-        raise InsufficientInventoryError, "No matching facility found for #{location.name} and #{commodity.name}."
+        raise InsufficientInventoryError, "No matching facility found for #{location_name} and #{commodity.name}."
       elsif facility.inventory <= 0
         raise InsufficientInventoryError, "#{facility.location_name} Facility does not have enough inventory to sell."
       end
@@ -161,7 +127,7 @@ class TradeService
       scu = [scu.to_i, max_affordable_scu, max_cargo_space, max_facility_inventory].select { |v| v > 0 }.min
       raise InsufficientInventoryError, "Not enough cargo inventory at facility. Available: #{facility.inventory} SCU." if scu > facility.inventory
     
-      total_cost = buy_price.to_f * scu
+      total_cost = transaction_total_capital(scu: scu, unit_price: buy_price)
       loading_time_seconds = loading_time_seconds_for_scu(scu)
     
       # ✅ Validate Commodity Availability
@@ -183,7 +149,7 @@ star_bitizen_run = StarBitizenRun.find_by(
   user: user,
   user_ship: user_ship,
   commodity_name: commodity.name,
-  buy_location_name: location.name,
+  buy_location_name: location_name,
   shard: shard,
   local_sell_price: nil
 )
@@ -204,7 +170,7 @@ star_bitizen_run = StarBitizenRun.find_by(
         local_buy_price: buy_price,
         local_sell_price: nil, # Will be updated later
         scu: scu,
-        buy_location_name: location.name,
+        buy_location_name: location_name,
         sell_location_name: nil, # Will be updated later
         profit: 0,
         user_ship_cargo_id: user_ship.user_ship_cargos.last.id,
@@ -227,6 +193,7 @@ star_bitizen_run = StarBitizenRun.find_by(
         loading_ticks: loading_ticks_for_scu(scu),
         scu: scu,
         capital: total_cost,
+        total_capital: total_cost,
         message: "Purchased #{scu} SCU of #{commodity_name} at #{location_name}"
       }
     end    
@@ -269,7 +236,7 @@ star_bitizen_run = StarBitizenRun.find_by(
     
       # ✅ Calculate Profit
       sell_price = player_sell_price(facility)
-      total_revenue = sell_price.to_f * scu_to_sell
+      total_revenue = transaction_total_capital(scu: scu_to_sell, unit_price: sell_price)
     
       ActiveRecord::Base.transaction do
         
@@ -304,6 +271,7 @@ star_bitizen_run = StarBitizenRun.find_by(
       {
         status: 'success',
         profit: total_revenue,
+        total_capital: total_revenue,
         wallet_balance: shard_user.wallet_balance,
         scu: scu_to_sell,
         message: "Sold #{scu_to_sell} SCU of #{commodity_name} at #{location_name}."
@@ -376,30 +344,24 @@ star_bitizen_run = StarBitizenRun.find_by(
       end
       
 
-      def self.list_available_commodities(username:, shard:)
+      def self.list_available_commodities(username:, shard:, ship_guid: nil, ship_slug: nil)
         user = User.where("LOWER(username) = ?", username.downcase).first!
         shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard.downcase).first
         raise ShipNotFoundError, "No ship found for user '#{username}'." if shard_user.nil?
 
-        user_ship = shard_user.user_ships.order(updated_at: :desc).first
+        user_ship = resolve_trade_ship(
+          user: user,
+          shard_user: shard_user,
+          shard: Shard.find_by_name(shard),
+          ship_guid: ship_guid,
+          ship_slug: ship_slug,
+          create_missing: false
+        )
+        raise ShipNotFoundError, "No ship found for user '#{username}'." if user_ship.nil?
 
-        if user_ship.nil?
-          raise ShipNotFoundError, "No ship found for user '#{username}'."
-        end
-      
         location_name = user_ship.location_name
-        location = Location.where("name ILIKE ?", "%#{location_name}%").first!
-
-        commodities = facilities_selling_to_player
-        .where("facility_name ILIKE ?", "%#{location.name}%") # ✅ Try facility_name first
-        .includes(:commodity)
-
-        # If no results were found, try searching by location_name
-        if commodities.empty?
-          commodities = facilities_selling_to_player
-            .where("location_name ILIKE ?", "%#{location.name}%") # ✅ Fallback to location_name
-            .includes(:commodity)
-        end
+        commodities = buyable_facilities_for_trade_location(location_name).includes(:commodity).to_a
+        response_location_name = trade_facility_location_name(location_name, commodities)
 
         commodities = commodities.map do |facility|
           {
@@ -411,16 +373,16 @@ star_bitizen_run = StarBitizenRun.find_by(
         if commodities.empty?
           return {
             status: 'error',
-            message: "No commodities available for purchase at #{location_name}.",
-            location: location_name,
+            message: "No commodities available for purchase at #{response_location_name}.",
+            location: response_location_name,
             commodities: []
           }
         end
 
         {
           status: 'success',
-          message: "Commodities available for purchase at #{location_name}.",
-          location: location_name,
+          message: "Commodities available for purchase at #{response_location_name}.",
+          location: response_location_name,
           commodities: commodities
         }
       end
@@ -453,6 +415,65 @@ star_bitizen_run = StarBitizenRun.find_by(
       def self.facility_buy_capacity(facility)
         return nil if facility.max_inventory.to_i.zero?
         facility.max_inventory.to_i - facility.inventory.to_i
+      end
+
+      def self.resolve_trade_ship(user:, shard_user:, shard:, ship_guid: nil, ship_slug: nil, create_missing: false)
+        user_ship = shard_user.user_ships.find_by(guid: ship_guid) if ship_guid.present?
+        return user_ship if user_ship.present?
+        return shard_user.user_ships.order(updated_at: :desc).first unless create_missing
+
+        raise ActiveRecord::RecordInvalid, "ship_slug is required when ship_guid not found." if ship_slug.blank?
+
+        ship = Ship.find_by!(slug: ship_slug)
+        new_ship_location = Location.find_by_name("Orison")&.name
+        raise LocationMismatchError, "location_name required to create ship (no prior ship to infer from)." if new_ship_location.blank?
+
+        shard_user.user_ships.create!(
+          guid: ship_guid.presence || SecureRandom.uuid,
+          ship: ship,
+          ship_slug: ship.slug,
+          shard: shard,
+          shard_user: shard_user,
+          user: user,
+          total_scu: ship.scu,
+          used_scu: 0,
+          location_name: new_ship_location
+        )
+      end
+
+      def self.buyable_facilities_for_trade_location(location_name)
+        facilities_selling_to_player
+          .where("LOWER(location_name) IN (?)", trade_location_names(location_name).map(&:downcase))
+          .includes(:commodity)
+      end
+
+      def self.trade_location_names(location_name)
+        location = resolved_trade_location(location_name)
+        names = [location.name]
+
+        child_locations = Location.where(
+          "LOWER(parent_name) = :name OR LOWER(planet_name) = :name OR LOWER(moon_name) = :name",
+          name: location.name.downcase
+        )
+        names.concat(child_locations.pluck(:name))
+        names.compact_blank.uniq
+      end
+
+      def self.resolved_trade_location(location_name)
+        Location.find_by!("LOWER(name) = ?", location_name.to_s.downcase)
+      rescue ActiveRecord::RecordNotFound
+        Location.where("name ILIKE ?", "%#{ActiveRecord::Base.sanitize_sql_like(location_name.to_s)}%").first!
+      end
+
+      def self.trade_facility_location_name(default_location_name, facilities)
+        facility_location_names = facilities.map(&:location_name).compact_blank.uniq
+        return facility_location_names.first if facility_location_names.one?
+
+        resolved_trade_location(default_location_name).name
+      end
+
+      def self.transaction_total_capital(scu:, unit_price:)
+        (scu.to_d * unit_price.to_d).round(2).to_f
       end
 
       def self.loading_time_seconds_for_scu(scu)

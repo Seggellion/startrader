@@ -627,6 +627,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_24_190000) do
 
   create_table "tick_controls", force: :cascade do |t|
     t.boolean "running", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.integer "singleton_key", default: 1, null: false
     t.datetime "last_tick_started_at"
     t.datetime "last_tick_completed_at"
@@ -637,8 +639,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_24_190000) do
     t.datetime "last_heartbeat_at"
     t.integer "failure_count", default: 0, null: false
     t.datetime "last_recovered_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
     t.index ["singleton_key"], name: "index_tick_controls_on_singleton_key", unique: true
   end
 

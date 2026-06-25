@@ -54,8 +54,13 @@ module Api
         render json: { status: 'error', message: 'Missing required parameters' }, status: :unprocessable_entity and return
       end
 
-      if commodity_name.blank? && scu.blank?
-        result = TradeService.list_available_commodities(username: username, shard: shard)
+      if (commodity_name.blank? && scu.blank?) || blank_scu_listing_request?(trade_params)
+        result = TradeService.list_available_commodities(
+          username: username,
+          shard: shard,
+          ship_guid: ship_guid,
+          ship_slug: ship_slug
+        )
       elsif commodity_name.blank?
         render json: { status: 'error', message: 'Missing commodity name for purchase.' }, status: :unprocessable_entity and return
       elsif scu.blank?
@@ -92,6 +97,10 @@ module Api
     end
 
     private
+
+    def blank_scu_listing_request?(trade_params)
+      (trade_params.key?(:scu) || trade_params.key?('scu')) && trade_params[:scu].blank?
+    end
 
     def trade_params
       params.permit(:username, :wallet_balance, :commodity_name, :scu, :location, :shard)

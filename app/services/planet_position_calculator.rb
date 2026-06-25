@@ -60,8 +60,8 @@ class PlanetPositionCalculator
     t     = period_seconds(a_mkm, m_c)
     n     = 2 * Math::PI / t                                                # rad/s
 
-    # seconds simulated since tick 0 (server is authoritative)
-    elapsed_sec = tick * Tick::SIMULATED_HOURS_PER_TICK
+    # Simulated seconds since tick 0 (server is authoritative).
+    elapsed_sec = simulated_elapsed_seconds(tick)
 
     # JS-equivalent mean anomaly: M = n * (elapsed_sec - T_PERI_EPOCH_SEC)
     m = wrap2pi(n * (elapsed_sec - T_PERI_EPOCH_SEC))
@@ -87,7 +87,7 @@ class PlanetPositionCalculator
     t     = period_seconds(a_mkm, m_c)
     n     = 2 * Math::PI / t
 
-    elapsed_sec = tick * Tick::SIMULATED_HOURS_PER_TICK
+    elapsed_sec = simulated_elapsed_seconds(tick)
     m = wrap2pi(n * (elapsed_sec - T_PERI_EPOCH_SEC))
 
     e_anom = solve_keplers_equation(e, m)
@@ -108,7 +108,7 @@ class PlanetPositionCalculator
     t     = period_seconds(a_mkm, m_c)
     n     = 2 * Math::PI / t
 
-    elapsed_sec = tick * Tick::SIMULATED_HOURS_PER_TICK
+    elapsed_sec = simulated_elapsed_seconds(tick)
     m = n * (elapsed_sec - T_PERI_EPOCH_SEC)
 
     phase_shift = case location.name
@@ -173,4 +173,9 @@ def self.calculate_space_station_position(location, tick)
     end
     e_anom
   end
+
+  def self.simulated_elapsed_seconds(tick)
+    tick.to_f * Tick.simulated_seconds_per_tick
+  end
+  private_class_method :simulated_elapsed_seconds
 end

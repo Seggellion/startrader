@@ -95,6 +95,8 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     assert_equal @location.name, response_json["location"]
     assert_kind_of Array, response_json["commodities"]
     refute_empty response_json["commodities"]
+    refute response_json.key?("total_capital")
+    response_json["commodities"].each { |commodity| refute commodity.key?("total_capital") }
     refute_includes response_json["message"], "location"
     refute_includes response_json["message"], "commodities"
   end
@@ -110,6 +112,8 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     assert_includes response_json["message"], "Purchased 2 SCU of Terminal Buys This"
     assert_equal 70, response_json["loading_time"]
     assert_equal 14, response_json["loading_ticks"]
+    assert_equal 19.24, response_json["capital"]
+    assert_equal 19.24, response_json["total_capital"]
     assert_equal 2, @user_ship.reload.used_scu
     assert_equal 998, @facility.reload.inventory
     assert_equal 1, UserShipCargo.where(user_ship: @user_ship, commodity: @commodity, scu: 2).count
@@ -125,6 +129,19 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
       { "status" => "error", "message" => "Missing commodity name for purchase." },
       response_json
     )
+  end
+
+  test "buy with blank scu lists commodities even when commodity name contains parsed amount" do
+    post "/api/buy", params: {
+      trade: base_trade_payload.merge(commodity_name: "5", scu: "")
+    }, as: :json
+
+    assert_response :success
+    assert_equal "success", response_json["status"]
+    assert_equal @location.name, response_json["location"]
+    assert_kind_of Array, response_json["commodities"]
+    assert_includes response_json["commodities"].map { |commodity| commodity["commodity_name"] }, @commodity.name
+    refute response_json.key?("total_capital")
   end
 
   test "buy missing only scu returns validation error" do
@@ -178,6 +195,8 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     assert_equal @sell_commodity.name, commodities.first["commodity_name"]
     assert_equal 384.56, commodities.first["sell_price"].to_f
     assert_equal 0, commodities.first["scu"]
+    refute response_json.key?("total_capital")
+    commodities.each { |commodity| refute commodity.key?("total_capital") }
     refute_includes response_json["message"], "location"
     refute_includes response_json["message"], "commodities"
   end
@@ -264,6 +283,8 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "success", response_json["status"]
     assert_kind_of String, response_json["message"]
     assert_includes response_json["message"], "Sold 2 SCU of Terminal Sells This"
+    assert_equal 769.12, response_json["profit"]
+    assert_equal 769.12, response_json["total_capital"]
     assert_equal 1, cargo.reload.scu
     assert_equal 2, @sell_facility.reload.inventory
     assert_in_delta 10_769.12, @shard_user.reload.wallet_balance.to_f, 0.01

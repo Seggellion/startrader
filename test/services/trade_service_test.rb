@@ -186,4 +186,113 @@ class TradeServiceTest < ActiveSupport::TestCase
     assert_equal 70, result[:loading_time]
     assert_kind_of Numeric, result[:loading_time]
   end
+
+  test "listed commodity at child trade location can be bought from same ship" do
+    crusader = Location.create!(
+      name: "Crusader",
+      classification: "planet",
+      star_system_name: "Stanton"
+    )
+    orison = Location.create!(
+      name: "Orison",
+      classification: "city",
+      star_system_name: "Stanton",
+      parent_name: crusader.name,
+      planet_name: crusader.name
+    )
+    waste = Commodity.create!(name: "Waste", is_sellable: true)
+    waste_facility = ProductionFacility.create!(
+      facility_name: "Orison Commodity Terminal",
+      location_name: orison.name,
+      commodity_name: waste.name,
+      production_rate: 5,
+      consumption_rate: 0,
+      inventory: 100,
+      max_inventory: 200,
+      local_buy_price: 9.62,
+      local_sell_price: nil,
+      price_buy: 12.0,
+      price_sell: 0.0,
+      scu_buy: 10,
+      status_buy: 7,
+      status_sell: 0
+    )
+    @user_ship.update!(location_name: crusader.name, total_scu: 10, used_scu: 0)
+
+    listed = TradeService.list_available_commodities(
+      username: @user.username,
+      shard: @shard.name,
+      ship_guid: @user_ship.guid,
+      ship_slug: @ship.slug
+    )
+
+    assert_equal "success", listed[:status]
+    assert_equal orison.name, listed[:location]
+    assert_includes listed[:commodities].map { |commodity| commodity[:commodity_name] }, waste.name
+
+    result = TradeService.buy(
+      username: @user.username,
+      wallet_balance: @shard_user.wallet_balance,
+      commodity_name: "waste",
+      scu: "5",
+      shard: @shard.name,
+      ship_guid: @user_ship.guid,
+      ship_slug: @ship.slug
+    )
+
+    assert_equal "success", result[:status]
+    assert_includes result[:message], "at Orison"
+    assert_equal 5, result[:scu]
+    assert_equal 48.1, result[:total_capital]
+    assert_equal 95, waste_facility.reload.inventory
+    assert_equal 1, UserShipCargo.where(user_ship: @user_ship, commodity: waste, scu: 5).count
+  end
+
+  test "buy error uses child trade location when parent has no matching commodity facility" do
+    crusader = Location.create!(
+      name: "Crusader",
+      classification: "planet",
+      star_system_name: "Stanton"
+    )
+    orison = Location.create!(
+      name: "Orison",
+      classification: "city",
+      star_system_name: "Stanton",
+      parent_name: crusader.name,
+      planet_name: crusader.name
+    )
+    waste = Commodity.create!(name: "Waste", is_sellable: true)
+    agricium = Commodity.create!(name: "Agricium", is_sellable: true)
+    ProductionFacility.create!(
+      facility_name: "Orison Commodity Terminal",
+      location_name: orison.name,
+      commodity_name: waste.name,
+      production_rate: 5,
+      consumption_rate: 0,
+      inventory: 100,
+      max_inventory: 200,
+      local_buy_price: 9.62,
+      local_sell_price: nil,
+      price_buy: 12.0,
+      price_sell: 0.0,
+      scu_buy: 10,
+      status_buy: 7,
+      status_sell: 0
+    )
+    @user_ship.update!(location_name: crusader.name, total_scu: 10, used_scu: 0)
+
+    error = assert_raises(TradeService::InsufficientInventoryError) do
+      TradeService.buy(
+        username: @user.username,
+        wallet_balance: @shard_user.wallet_balance,
+        commodity_name: agricium.name,
+        scu: "5",
+        shard: @shard.name,
+        ship_guid: @user_ship.guid,
+        ship_slug: @ship.slug
+      )
+    end
+
+    assert_equal "No matching facility found for Orison and Agricium.", error.message
+  end
 end

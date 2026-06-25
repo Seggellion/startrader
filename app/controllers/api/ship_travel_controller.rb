@@ -424,6 +424,7 @@ module Api
   raise ActiveRecord::RecordInvalid, "ship_slug is required when ship_guid not found." if ship_slug.blank?
 
   ship = Ship.find_by(slug: ship_slug)
+
   raise ActiveRecord::RecordNotFound, "Ship not found for slug #{ship_slug.inspect}." if ship.nil?
 
   # 3) Create a new UserShip derived from the catalog row
