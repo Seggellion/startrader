@@ -120,7 +120,7 @@ class TradeService
       max_facility_inventory = facility.inventory
     
       if max_cargo_space <= 0
-        raise InsufficientCapacityError, "Ship '#{user_ship.id}' has no available cargo space."
+        raise InsufficientCapacityError, "No cargo space"
       end
 
       # ✅ Default SCU to the maximum possible if not provided or if too large
@@ -193,7 +193,6 @@ star_bitizen_run = StarBitizenRun.find_by(
         loading_ticks: loading_ticks_for_scu(scu),
         scu: scu,
         capital: total_cost,
-        total_capital: total_cost,
         message: "Purchased #{scu} SCU of #{commodity_name} at #{location_name}"
       }
     end    
@@ -271,10 +270,10 @@ star_bitizen_run = StarBitizenRun.find_by(
       {
         status: 'success',
         profit: total_revenue,
-        total_capital: total_revenue,
+        capital: total_revenue,
         wallet_balance: shard_user.wallet_balance,
         scu: scu_to_sell,
-        message: "Sold #{scu_to_sell} SCU of #{commodity_name} at #{location_name}."
+        message: "Sold #{scu_to_sell} SCU of #{commodity_name} at #{location_name}"
       }
     end
 

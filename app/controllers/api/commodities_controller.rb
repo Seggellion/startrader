@@ -38,8 +38,8 @@ module Api
           attributes: {
             name: facility.commodity_display_name,
             location: location_label,
-            buy: facility.purchasable? ? facility.api_buy_price : 0,
-            sell: facility.sellable? ? facility.api_sell_price : 0,
+            sell: facility.purchasable? ? facility.api_buy_price : 0,
+            buy: facility.sellable? ? facility.api_sell_price : 0,
             vice: facility.vice?,
             "updated-at": facility.updated_at.iso8601(3),
             "out-of-date": facility.out_of_date?
