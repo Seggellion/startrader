@@ -2,10 +2,13 @@ require "test_helper"
 
 class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
   setup do
+    StarBitizenRun.delete_all
     ShipTravel.delete_all
+    UserShipCargo.delete_all
     UserShip.delete_all
     ShardUser.delete_all
     User.delete_all
+    Commodity.delete_all
     Ship.delete_all
     Shard.delete_all
     Location.delete_all
@@ -124,6 +127,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     post "/api/user_ships/#{travel.user_ship.guid}/interdict"
     assert_response :success
     assert_equal guid, response_json["travel_guid"]
+    assert_equal [], response_json["user_ship_cargo"]
 
     get "/api/location/#{travel.user_ship_id}"
     assert_response :success
@@ -135,6 +139,49 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal guid, response_json["travel_guid"]
     assert_equal guid, travel.reload.travel_guid
+  end
+
+  test "interdict by guid includes user ship cargo in the existing cargo JSON shape" do
+    guid = "client-travel-guid-with-cargo"
+    post "/api/travel", params: { ship_travel: travel_payload(travel_guid: guid) }, as: :json
+    travel = ShipTravel.find_by!(travel_guid: guid)
+    commodity = Commodity.create!(name: "Agricium", is_sellable: true)
+    UserShipCargo.create!(
+      user_ship: travel.user_ship,
+      commodity: commodity,
+      commodity_name: commodity.name,
+      scu: 2,
+      buy_price: 27.50
+    )
+
+    expected_cargo = TradeService.user_ship_cargo_json(travel.user_ship).as_json
+
+    post "/api/user_ships/#{travel.user_ship.guid}/interdict"
+
+    assert_response :success
+    assert_equal "interdicted", response_json["status"]
+    assert_equal guid, response_json["travel_guid"]
+    assert_equal expected_cargo, response_json["user_ship_cargo"]
+    assert_equal [{ "commodity_name" => "Agricium", "scu" => 2 }], response_json["user_ship_cargo"]
+    response_json["user_ship_cargo"].each do |cargo|
+      refute_includes cargo.keys, "id"
+      refute_includes cargo.keys, "commodity_id"
+      refute_includes cargo.keys, "created_at"
+      refute_includes cargo.keys, "updated_at"
+    end
+  end
+
+  test "interdict by guid returns an empty cargo array when the ship has no cargo" do
+    guid = "client-travel-guid-empty-cargo"
+    post "/api/travel", params: { ship_travel: travel_payload(travel_guid: guid) }, as: :json
+    travel = ShipTravel.find_by!(travel_guid: guid)
+
+    post "/api/user_ships/#{travel.user_ship.guid}/interdict"
+
+    assert_response :success
+    assert_equal "interdicted", response_json["status"]
+    assert_equal guid, response_json["travel_guid"]
+    assert_equal [], response_json["user_ship_cargo"]
   end
 
   test "interdictable index returns the client-facing response shape" do

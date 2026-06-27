@@ -172,7 +172,8 @@ module Api
         travel_guid: travel.travel_guid,
         phase: phase,
         paused_at_tick: travel.paused_at_tick,
-        remaining_ticks_from_arrival: travel.remaining_ticks_from_arrival
+        remaining_ticks_from_arrival: travel.remaining_ticks_from_arrival,
+        user_ship_cargo: TradeService.user_ship_cargo_json(user_ship)
       }
     rescue ActiveRecord::RecordNotFound
       render json: { error: "User ship not found." }, status: :not_found
@@ -217,7 +218,8 @@ module Api
         travel_guid: travel.travel_guid,
         phase: phase,
         paused_at_tick: travel.paused_at_tick,
-        remaining_ticks_from_arrival: travel.remaining_ticks_from_arrival
+        remaining_ticks_from_arrival: travel.remaining_ticks_from_arrival,
+        user_ship_cargo: TradeService.user_ship_cargo_json(travel.user_ship)
       }
     end
 

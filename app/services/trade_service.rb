@@ -44,12 +44,7 @@ class TradeService
       end
     
       # Gather Cargo Information
-      cargo = user_ship.user_ship_cargos.includes(:commodity).map do |cargo_item|
-        {
-          commodity_name: cargo_item.commodity.name,
-          scu: cargo_item.scu
-        }
-      end
+      cargo = user_ship_cargo_json(user_ship)
     
       # Retrieve Ship Travel Information
       ship_travel = ShipTravel.where(user_ship_id: user_ship.id).order(created_at: :desc).first
@@ -73,9 +68,18 @@ class TradeService
         },
         cargo: cargo,
       }
-      
+
     end
-    
+
+    def self.user_ship_cargo_json(user_ship)
+      user_ship.user_ship_cargos.includes(:commodity).map do |cargo_item|
+        {
+          commodity_name: cargo_item.commodity&.name || cargo_item.commodity_name,
+          scu: cargo_item.scu
+        }
+      end
+    end
+
 
     def self.buy(username:, wallet_balance:, commodity_name:, scu:, shard:, ship_guid:, ship_slug:)
 
