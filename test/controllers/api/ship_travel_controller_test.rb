@@ -17,6 +17,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     Setting.create!(key: "interdiction_window_percent", value: "50", setting_type: "text")
     Setting.create!(key: "seconds_per_tick", value: "30", setting_type: "text")
     Setting.create!(key: "hours_per_tick", value: "1", setting_type: "text")
+    Setting.create!(key: "secret_guid", value: "test-secret", setting_type: "text")
 
     ActiveRecord::Base.connection.execute("DELETE FROM ticks")
     Tick.create!(current_tick: 10, sequence: 1)
@@ -270,6 +271,152 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     assert_equal 1, ShipTravel.where(travel_guid: guid).count
   end
 
+  test "cancel rejects request with no secret guid" do
+    user = create_cancel_user
+    user_ship, _travel = create_active_cancel_travel(user: user)
+
+    delete "/api/cancel", params: cancel_payload(player_guid: user.uid, ship_guid: user_ship.guid), as: :json
+
+    assert_response :unauthorized
+    assert_equal({ "error" => "Unauthorized" }, response_json)
+    assert_equal 1, ShipTravel.count
+  end
+
+  test "cancel rejects request with invalid secret guid" do
+    user = create_cancel_user
+    user_ship, _travel = create_active_cancel_travel(user: user)
+
+    delete "/api/cancel",
+      params: cancel_payload(player_guid: user.uid, ship_guid: user_ship.guid),
+      headers: { "X-Secret-Guid" => "wrong-secret" },
+      as: :json
+
+    assert_response :unauthorized
+    assert_equal({ "error" => "Unauthorized" }, response_json)
+    assert_equal 1, ShipTravel.count
+  end
+
+  test "cancel succeeds with valid secret guid header" do
+    user = create_cancel_user
+    user_ship, travel = create_active_cancel_travel(user: user)
+
+    assert_difference "ShipTravel.count", -1 do
+      delete "/api/cancel",
+        params: cancel_payload(player_guid: user.uid, ship_guid: user_ship.guid),
+        headers: { "X-Secret-Guid" => "test-secret" },
+        as: :json
+    end
+
+    assert_response :success
+    assert_equal "travel_cancelled", response_json["status"]
+    assert_equal user_ship.id, response_json["user_ship_id"]
+    assert_equal user_ship.guid, response_json["ship_guid"]
+    assert_equal travel.travel_guid, response_json["travel_guid"]
+    assert_equal @shard.channel_uuid, response_json["channel_uuid"]
+    assert_equal "Floating aimlessly in space", user_ship.reload.status
+  end
+
+  test "cancel succeeds with valid secret guid param" do
+    user = create_cancel_user
+    user_ship, _travel = create_active_cancel_travel(user: user)
+
+    assert_difference "ShipTravel.count", -1 do
+      delete "/api/cancel",
+        params: cancel_payload(player_guid: user.uid, ship_guid: user_ship.guid, secret_guid: "test-secret"),
+        as: :json
+    end
+
+    assert_response :success
+    assert_equal "travel_cancelled", response_json["status"]
+  end
+
+  test "cancel requires shard uuid" do
+    user = create_cancel_user
+    user_ship, _travel = create_active_cancel_travel(user: user)
+
+    delete "/api/cancel",
+      params: cancel_payload(player_guid: user.uid, ship_guid: user_ship.guid).except(:shard_uuid),
+      headers: { "X-Secret-Guid" => "test-secret" },
+      as: :json
+
+    assert_response :unprocessable_entity
+    assert_equal({ "error" => "shard_uuid is required." }, response_json)
+    assert_equal 1, ShipTravel.count
+  end
+
+  test "cancel does not accept legacy shard name matching" do
+    user = create_cancel_user
+    user_ship, _travel = create_active_cancel_travel(user: user)
+
+    delete "/api/cancel",
+      params: {
+        player_guid: user.uid,
+        ship_guid: user_ship.guid,
+        shard: @shard.name
+      },
+      headers: { "X-Secret-Guid" => "test-secret" },
+      as: :json
+
+    assert_response :unprocessable_entity
+    assert_equal({ "error" => "shard_uuid is required." }, response_json)
+    assert_equal 1, ShipTravel.count
+  end
+
+  test "cancel resolves shard by channel uuid" do
+    user = create_cancel_user
+    user_ship, _travel = create_active_cancel_travel(user: user)
+
+    delete "/api/cancel",
+      params: cancel_payload(player_guid: user.uid, ship_guid: user_ship.guid, shard_uuid: @shard.channel_uuid),
+      headers: { "X-Secret-Guid" => "test-secret" },
+      as: :json
+
+    assert_response :success
+    assert_equal @shard.channel_uuid, response_json["channel_uuid"]
+  end
+
+  test "cancel only cancels the intended active travel" do
+    user = create_cancel_user
+    first_ship, first_travel = create_active_cancel_travel(
+      user: user,
+      ship_guid: "cancel-ship-guid-1",
+      travel_guid: "cancel-travel-guid-1"
+    )
+    _second_ship, second_travel = create_active_cancel_travel(
+      user: user,
+      ship_guid: "cancel-ship-guid-2",
+      travel_guid: "cancel-travel-guid-2"
+    )
+
+    delete "/api/cancel",
+      params: cancel_payload(player_guid: user.uid, ship_guid: first_ship.guid),
+      headers: { "X-Secret-Guid" => "test-secret" },
+      as: :json
+
+    assert_response :success
+    assert_equal first_travel.travel_guid, response_json["travel_guid"]
+    assert_nil ShipTravel.find_by(id: first_travel.id)
+    assert_equal second_travel, ShipTravel.find_by(id: second_travel.id)
+  end
+
+  test "cancel errors instead of cancelling arbitrarily when multiple active travels match" do
+    user = create_cancel_user
+    create_active_cancel_travel(user: user, ship_guid: "cancel-ship-guid-1", travel_guid: "cancel-travel-guid-1")
+    create_active_cancel_travel(user: user, ship_guid: "cancel-ship-guid-2", travel_guid: "cancel-travel-guid-2")
+
+    delete "/api/cancel",
+      params: cancel_payload(player_guid: user.uid),
+      headers: { "X-Secret-Guid" => "test-secret" },
+      as: :json
+
+    assert_response :unprocessable_entity
+    assert_equal(
+      { "error" => "Multiple active travels match this request. Provide ship_guid or travel_guid." },
+      response_json
+    )
+    assert_equal 2, ShipTravel.count
+  end
+
   private
 
   def travel_payload(overrides = {})
@@ -292,6 +439,56 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
       star_system_name: "Stanton",
       planet_name: "MicroTech"
     )
+  end
+
+  def create_cancel_user(uid: "cancel-player-guid", username: "CancelPilot")
+    User.create!(
+      username: username,
+      twitch_id: "#{uid}-twitch",
+      uid: uid,
+      user_type: "player"
+    )
+  end
+
+  def create_active_cancel_travel(user:, shard: @shard, ship_guid: "cancel-ship-guid", travel_guid: "cancel-travel-guid")
+    shard_user = ShardUser.find_or_create_by!(user_id: user.id, shard_id: shard.id) do |su|
+      su.shard_name = shard.name
+      su.wallet_balance = 10_000
+    end
+
+    user_ship = UserShip.create!(
+      user: user,
+      ship: @ship,
+      shard: shard,
+      shard_user: shard_user,
+      shard_name: shard.name,
+      guid: ship_guid,
+      ship_slug: @ship.slug,
+      location: @from_location,
+      total_scu: @ship.scu,
+      used_scu: 0,
+      status: "in_transit"
+    )
+
+    travel = ShipTravel.create!(
+      user_ship: user_ship,
+      from_location: @from_location,
+      to_location: @to_location,
+      travel_guid: travel_guid,
+      departure_tick: 10,
+      arrival_tick: 20,
+      total_duration_ticks: 10,
+      interdict_window_percent: 50
+    )
+
+    [user_ship, travel]
+  end
+
+  def cancel_payload(overrides = {})
+    {
+      player_guid: "cancel-player-guid",
+      shard_uuid: @shard.channel_uuid
+    }.merge(overrides)
   end
 
   def response_json

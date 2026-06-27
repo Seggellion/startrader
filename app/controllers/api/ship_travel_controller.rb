@@ -1,8 +1,11 @@
 # app/controllers/api/ship_travel_controller.rb
 module Api
   class ShipTravelController < ApplicationController
+    include SecretGuidAuth
+
     # API endpoint: skip CSRF
     skip_before_action :verify_authenticity_token
+    skip_before_action :authenticate_secret_guid!, except: :destroy
 
     # POST /api/travel
     def create
@@ -269,36 +272,65 @@ module Api
 
 
     # DELETE /api/cancel
-    # Accepts either legacy params (username, shard) or new ones (player_guid/player_name, shard_uuid)
     def destroy
-      
-      user  = if params[:player_guid].present?
-                User.find_by(uid: params[:player_guid]) || User.where("LOWER(username) = ?", params[:player_name].to_s.downcase.strip).first
-              else
-                User.where("LOWER(username) = ?", params[:username].to_s.downcase.strip).first
-              end
-      return render json: { error: "User not found." }, status: :not_found if user.nil?
+      permitted_params = cancel_params
 
-      shard = if params[:shard_uuid].present?
-                Shard.find_by(channel_uuid: params[:shard_uuid])
-              else
-                # Allow legacy destroy with a shard name
-                Shard.where("LOWER(name) = ?", params[:shard].to_s.downcase).first
-              end
-      return render json: { error: "Shard not found." }, status: :not_found if shard.nil?
-
-      shard_user = user.shard_users.find_by("shard_id = ? OR shard_name ILIKE ?", shard.id, shard.name)
-      return render json: { error: "User not associated with shard." }, status: :not_found if shard_user.nil?
-
-      user_ship = shard_user.user_ships.order(updated_at: :desc).first
-      return render json: { error: "User ship not found or does not belong to the specified user." }, status: :not_found if user_ship.nil?
-
-      if (active_travel = user_ship.active_travel).present?
-        active_travel.destroy
-        user_ship.update(status: "Floating aimlessly in space")
+      if permitted_params[:shard_uuid].blank?
+        return render json: { error: "shard_uuid is required." }, status: :unprocessable_entity
       end
 
-      render json: { status: "travel_cancelled", user_ship_id: user_ship.id }
+      if permitted_params[:player_guid].blank? && permitted_params[:player_name].blank?
+        return render json: { error: "player_guid or player_name is required." }, status: :unprocessable_entity
+      end
+
+      user = resolve_cancel_user(permitted_params)
+      return if performed?
+
+      shard = Shard.find_by(channel_uuid: permitted_params[:shard_uuid])
+      return render json: { error: "Shard not found." }, status: :not_found if shard.nil?
+
+      shard_user = ShardUser.find_by(user_id: user.id, shard_id: shard.id)
+      return render json: { error: "User not associated with shard." }, status: :not_found if shard_user.nil?
+
+      user_ships = UserShip.where(user_id: user.id, shard_id: shard.id)
+      if permitted_params[:ship_guid].present?
+        user_ship = user_ships.find_by(guid: permitted_params[:ship_guid])
+        return render json: { error: "User ship not found." }, status: :not_found if user_ship.nil?
+        user_ships = user_ships.where(id: user_ship.id)
+      end
+
+      active_travels = ShipTravel.active
+                                 .where(user_ship_id: user_ships.select(:id))
+                                 .order(updated_at: :desc)
+
+      if permitted_params[:travel_guid].present?
+        active_travels = active_travels.where(travel_guid: permitted_params[:travel_guid])
+      end
+
+      matching_travels = active_travels.to_a
+      return render json: { error: "Active travel not found." }, status: :not_found if matching_travels.empty?
+
+      if matching_travels.many?
+        return render json: {
+          error: "Multiple active travels match this request. Provide ship_guid or travel_guid."
+        }, status: :unprocessable_entity
+      end
+
+      active_travel = matching_travels.first
+      user_ship = active_travel.user_ship
+
+      ActiveRecord::Base.transaction do
+        active_travel.destroy!
+        user_ship.update!(status: "Floating aimlessly in space")
+      end
+
+      render json: {
+        status: "travel_cancelled",
+        user_ship_id: user_ship.id,
+        ship_guid: user_ship.guid,
+        travel_guid: active_travel.travel_guid,
+        channel_uuid: shard.channel_uuid
+      }
     rescue StandardError => e
       render json: { error: e.message }, status: :unprocessable_entity
     end
@@ -340,6 +372,41 @@ module Api
         :from_location,
         :shard_uuid
       )
+    end
+
+    def cancel_params
+      params.permit(
+        :player_guid,
+        :player_name,
+        :shard_uuid,
+        :ship_guid,
+        :travel_guid,
+        :secret_guid
+      )
+    end
+
+    def resolve_cancel_user(permitted_params)
+      if permitted_params[:player_guid].present?
+        user = User.find_by(uid: permitted_params[:player_guid])
+        return user if user
+
+        render json: { error: "User not found." }, status: :not_found
+        return
+      end
+
+      normalized_name = permitted_params[:player_name].to_s.downcase.strip
+      users = User.where("LOWER(username) = ?", normalized_name).to_a
+
+      case users.size
+      when 0
+        render json: { error: "User not found." }, status: :not_found
+        nil
+      when 1
+        users.first
+      else
+        render json: { error: "Multiple users match player_name. Provide player_guid." }, status: :unprocessable_entity
+        nil
+      end
     end
 
     def process_due_arrival_for(user_ship)
