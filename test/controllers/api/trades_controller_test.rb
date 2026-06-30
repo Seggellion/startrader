@@ -342,6 +342,13 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     assert_equal @location.name, response_json["ship"]["location"]
   end
 
+  test "status updates username from player name for existing twitch id" do
+    post "/api/status", params: base_status_payload.merge(player_name: "RenamedPilot"), as: :json
+
+    assert_response :success
+    assert_equal "RenamedPilot", @user.reload.username
+  end
+
   test "status accepts new authenticated payload nested under trade" do
     post "/api/status", params: { trade: base_status_payload }, as: :json
 
@@ -350,6 +357,29 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     assert_equal 40_000, response_json["wallet_balance"]
     assert_equal @ship.model, response_json["ship"]["model"]
     assert_equal @location.name, response_json["ship"]["location"]
+  end
+
+  test "status uses username only as player name fallback for new payload" do
+    post "/api/status",
+      params: base_status_payload.except(:player_name).merge(username: @user.username),
+      as: :json
+
+    assert_response :success
+    assert_equal "success", response_json["status"]
+  end
+
+  test "status still accepts legacy username and shard payload" do
+    post "/api/status",
+      params: {
+        username: @user.username,
+        shard: @shard.channel_uuid,
+        secret_guid: "test-secret"
+      },
+      as: :json
+
+    assert_response :success
+    assert_equal "success", response_json["status"]
+    assert_equal @ship.model, response_json["ship"]["model"]
   end
 
   test "status rejects missing secret_guid" do
@@ -373,11 +403,32 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     assert_equal({ "status" => "error", "message" => "ship_guid is required" }, response_json)
   end
 
+  test "status requires ship_model" do
+    post "/api/status", params: base_status_payload.except(:ship_model), as: :json
+
+    assert_response :bad_request
+    assert_equal({ "status" => "error", "message" => "ship_model is required" }, response_json)
+  end
+
   test "status requires shard_uuid" do
     post "/api/status", params: base_status_payload.except(:shard_uuid), as: :json
 
     assert_response :bad_request
     assert_equal({ "status" => "error", "message" => "shard_uuid is required" }, response_json)
+  end
+
+  test "status requires player_guid" do
+    post "/api/status", params: base_status_payload.except(:player_guid), as: :json
+
+    assert_response :bad_request
+    assert_equal({ "status" => "error", "message" => "player_guid is required" }, response_json)
+  end
+
+  test "status requires player_name" do
+    post "/api/status", params: base_status_payload.except(:player_name), as: :json
+
+    assert_response :bad_request
+    assert_equal({ "status" => "error", "message" => "player_name is required" }, response_json)
   end
 
   test "status rejects unknown shard_uuid" do
@@ -387,11 +438,118 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     assert_equal({ "status" => "error", "message" => "Shard not found" }, response_json)
   end
 
-  test "status rejects unknown ship" do
-    post "/api/status", params: base_status_payload.merge(ship_guid: "unknown"), as: :json
+  test "status creates unknown ship with valid ship model" do
+    new_guid = "new-status-ship-guid"
+
+    assert_difference("UserShip.count", 1) do
+      post "/api/status", params: base_status_payload.merge(ship_guid: new_guid), as: :json
+    end
+
+    assert_response :success
+    created_ship = UserShip.find_by!(guid: new_guid)
+    assert_equal @ship, created_ship.ship
+    assert_equal @user, created_ship.user
+    assert_equal @shard, created_ship.shard
+    assert_equal @shard_user, created_ship.shard_user
+    assert_equal "success", response_json["status"]
+    assert_equal @ship.model, response_json["ship"]["model"]
+  end
+
+  test "status creates unknown user and shard user from player guid" do
+    new_guid = "new-player-status-ship-guid"
+
+    assert_difference("User.count", 1) do
+      assert_difference("ShardUser.count", 1) do
+        post "/api/status",
+          params: base_status_payload.merge(
+            ship_guid: new_guid,
+            player_guid: "new-player-guid",
+            player_name: "NewPilot"
+          ),
+          as: :json
+      end
+    end
+
+    assert_response :success
+    created_user = User.find_by!(twitch_id: "new-player-guid")
+    created_shard_user = ShardUser.find_by!(user: created_user, shard_id: @shard.id)
+    created_ship = UserShip.find_by!(guid: new_guid)
+    assert_equal "NewPilot", created_user.username
+    assert_equal "new-player-guid", created_user.uid
+    assert_equal @shard.name, created_shard_user.shard_name
+    assert_equal created_user, created_ship.user
+    assert_equal created_shard_user, created_ship.shard_user
+  end
+
+  test "status creates unknown ship with case insensitive trimmed ship model" do
+    new_guid = "case-insensitive-status-ship-guid"
+
+    assert_difference("UserShip.count", 1) do
+      post "/api/status", params: base_status_payload.merge(ship_guid: new_guid, ship_model: " #{@ship.model.downcase} "), as: :json
+    end
+
+    assert_response :success
+    assert_equal @ship, UserShip.find_by!(guid: new_guid).ship
+    assert_equal @ship.model, response_json["ship"]["model"]
+  end
+
+  test "status rejects unknown ship model when creating ship" do
+    post "/api/status", params: base_status_payload.merge(ship_guid: "new-status-ship-guid", ship_model: "Unknown Model"), as: :json
 
     assert_response :not_found
-    assert_equal({ "status" => "error", "message" => "Ship not found" }, response_json)
+    assert_equal({ "status" => "error", "message" => "Ship model not found" }, response_json)
+  end
+
+  test "status requires player name before creating unknown ship" do
+    post "/api/status", params: base_status_payload.except(:player_name).merge(ship_guid: "new-status-ship-guid"), as: :json
+
+    assert_response :bad_request
+    assert_equal({ "status" => "error", "message" => "player_name is required" }, response_json)
+  end
+
+  test "status rejects existing ship for different player" do
+    other_user = User.create!(
+      username: "OtherPilot",
+      twitch_id: "other-player-guid",
+      uid: "other-player-guid",
+      user_type: "player"
+    )
+    ShardUser.create!(
+      user: other_user,
+      shard_id: @shard.id,
+      shard_name: @shard.name,
+      wallet_balance: 0
+    )
+
+    post "/api/status",
+      params: base_status_payload.merge(player_guid: other_user.twitch_id, player_name: other_user.username),
+      as: :json
+
+    assert_response :bad_request
+    assert_equal({ "status" => "error", "message" => "Ship does not belong to this player" }, response_json)
+  end
+
+  test "status rejects existing ship for different shard" do
+    other_shard = Shard.create!(name: "OtherShard", region: "us", channel_uuid: "other-shard-guid")
+
+    post "/api/status",
+      params: base_status_payload.merge(shard_uuid: other_shard.channel_uuid),
+      as: :json
+
+    assert_response :bad_request
+    assert_equal({ "status" => "error", "message" => "Ship does not belong to this shard" }, response_json)
+  end
+
+  test "repeated status calls with same ship guid do not create duplicate ships" do
+    new_guid = "repeat-controller-status-ship-guid"
+
+    assert_difference("UserShip.count", 1) do
+      post "/api/status", params: base_status_payload.merge(ship_guid: new_guid), as: :json
+      assert_response :success
+
+      post "/api/status", params: base_status_payload.merge(ship_guid: new_guid), as: :json
+      assert_response :success
+    end
   end
 
   test "status updates wallet balance" do
@@ -430,8 +588,11 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
   def base_status_payload
     {
       ship_guid: @user_ship.guid,
+      ship_model: @ship.model,
       wallet_balance: 40_000,
       shard_uuid: @shard.channel_uuid,
+      player_guid: @user.twitch_id,
+      player_name: @user.username,
       secret_guid: "test-secret"
     }
   end

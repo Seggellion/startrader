@@ -14,22 +14,40 @@ class TradeService
     class ShipNotFoundError < StandardError; end
     class ValidationError < StandardError; end
   
-    def self.status(ship_guid: nil, shard_uuid: nil, wallet_balance: nil, username: nil, shard: nil)
-      has_new_payload = ship_guid.present? || shard_uuid.present?
+    def self.status(
+      ship_guid: nil,
+      ship_model: nil,
+      shard_uuid: nil,
+      player_guid: nil,
+      player_name: nil,
+      wallet_balance: nil,
+      username: nil,
+      shard: nil
+    )
+      has_new_payload = ship_guid.present? || ship_model.present? || shard_uuid.present? ||
+        player_guid.present? || player_name.present?
 
       Rails.logger.info(
         "[TradeService.status] path=#{has_new_payload ? 'ship_guid' : 'legacy'} " \
-        "ship_guid_present=#{ship_guid.present?} shard_uuid_present=#{shard_uuid.present?} " \
+        "ship_guid_present=#{ship_guid.present?} ship_model_present=#{ship_model.present?} " \
+        "shard_uuid_present=#{shard_uuid.present?} " \
+        "player_guid_present=#{player_guid.present?} player_name_present=#{player_name.present?} " \
         "username_present=#{username.present?} shard_present=#{shard.present?}"
       )
 
       if has_new_payload
         raise ValidationError, 'ship_guid is required' if ship_guid.blank?
+        raise ValidationError, 'ship_model is required' if ship_model.blank?
         raise ValidationError, 'shard_uuid is required' if shard_uuid.blank?
+        raise ValidationError, 'player_guid is required' if player_guid.blank?
+        raise ValidationError, 'player_name is required' if player_name.blank?
 
         return status_by_ship_guid(
           ship_guid: ship_guid,
+          ship_model: ship_model,
           shard_uuid: shard_uuid,
+          player_guid: player_guid,
+          player_name: player_name,
           wallet_balance: wallet_balance
         )
       end
@@ -40,18 +58,32 @@ class TradeService
       legacy_status(username: username, wallet_balance: wallet_balance, shard: shard)
     end
 
-    def self.status_by_ship_guid(ship_guid:, shard_uuid:, wallet_balance: nil)
+    def self.status_by_ship_guid(ship_guid:, ship_model:, shard_uuid:, player_guid:, player_name:, wallet_balance: nil)
       validate_wallet_balance!(wallet_balance)
 
       shard = Shard.find_by(channel_uuid: shard_uuid)
       raise ActiveRecord::RecordNotFound, 'Shard not found' unless shard
 
-      user_ship = UserShip.find_by(guid: ship_guid)
-      raise ActiveRecord::RecordNotFound, 'Ship not found' unless user_ship
+      user, shard_user = find_or_create_user_by_player_guid!(
+        player_guid: player_guid,
+        player_name: player_name,
+        shard: shard
+      )
 
-      shard_user = user_ship.shard_user
-      raise ActiveRecord::RecordNotFound, 'Shard user not found' unless shard_user
-      raise ValidationError, 'Ship does not belong to this shard' unless shard_user.shard_id == shard.id
+      user_ship = UserShip.find_by(guid: ship_guid)
+      if user_ship.nil?
+        ship = find_ship_by_model!(ship_model)
+
+        user_ship = create_user_ship_for_status!(
+          ship_guid: ship_guid,
+          ship: ship,
+          shard: shard,
+          shard_user: shard_user,
+          user: user
+        )
+      end
+
+      validate_status_ship_ownership!(user_ship: user_ship, user: user, shard: shard)
 
       status_response_for(shard_user: shard_user, user_ship: user_ship, wallet_balance: wallet_balance)
     end
@@ -87,6 +119,86 @@ class TradeService
       
     
       # Gather Cargo Information
+    end
+
+    def self.find_ship_by_model!(ship_model)
+      raise ValidationError, 'ship_model is required' if ship_model.blank?
+
+      normalized_model = ship_model.to_s.strip.downcase
+      ship = Ship.where('LOWER(model) = ?', normalized_model).first
+      raise ActiveRecord::RecordNotFound, 'Ship model not found' unless ship
+
+      ship
+    end
+
+    def self.find_or_create_user_by_player_guid!(player_guid:, player_name:, shard:)
+      raise ValidationError, 'player_guid is required' if player_guid.blank?
+      raise ValidationError, 'player_name is required' if player_name.blank?
+      raise ActiveRecord::RecordNotFound, 'Shard not found' unless shard
+
+      normalized_player_guid = player_guid.to_s.strip
+      normalized_player_name = player_name.to_s.strip
+
+      user = User.find_by(twitch_id: normalized_player_guid)
+
+      if user
+        user.update!(username: normalized_player_name) if user.username.to_s != normalized_player_name
+      else
+        user = User.create!(
+          username: normalized_player_name,
+          twitch_id: normalized_player_guid,
+          uid: normalized_player_guid,
+          user_type: 'player',
+          provider: 'twitch'
+        )
+      end
+
+      shard_user = user.shard_users.find_or_create_by!(shard_id: shard.id) do |record|
+        record.shard_name = shard.name
+      end
+
+      [user, shard_user]
+    end
+
+    def self.validate_status_ship_ownership!(user_ship:, user:, shard:)
+      raise ValidationError, 'Ship does not belong to this player' unless user_ship.user_id == user.id
+
+      ship_shard_user = user_ship.shard_user
+      raise ActiveRecord::RecordNotFound, 'Shard user not found' unless ship_shard_user
+      raise ValidationError, 'Ship does not belong to this shard' unless ship_shard_user.shard_id == shard.id
+    end
+
+    def self.create_user_ship_for_status!(ship_guid:, ship:, shard:, shard_user:, user:)
+      user_ship = UserShip.find_or_initialize_by(guid: ship_guid)
+      return user_ship unless user_ship.new_record?
+
+      user_ship.assign_attributes(
+        user: user,
+        ship: ship,
+        shard: shard,
+        shard_user: shard_user,
+        ship_slug: ship.slug,
+        location_name: default_location_name_for_status,
+        total_scu: total_scu_for_ship(ship),
+        used_scu: 0,
+        status: 'docked'
+      )
+      user_ship.save!
+      user_ship
+    rescue ActiveRecord::RecordNotUnique
+      UserShip.find_by!(guid: ship_guid)
+    end
+
+    def self.default_location_name_for_status
+      Location.find_by(name: 'Orison')&.name
+    end
+
+    def self.total_scu_for_ship(ship)
+      return ship.total_scu if ship.respond_to?(:total_scu) && ship.total_scu.present?
+      return ship.scu if ship.respond_to?(:scu) && ship.scu.present?
+      return ship.cargo_capacity if ship.respond_to?(:cargo_capacity) && ship.cargo_capacity.present?
+
+      0
     end
 
     def self.status_response_for(shard_user:, user_ship:, wallet_balance:)

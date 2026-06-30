@@ -86,13 +86,19 @@ module Api
 
       Rails.logger.info(
         "[status] payload keys: ship_guid_present=#{payload[:ship_guid].present?} " \
+        "ship_model_present=#{payload[:ship_model].present?} " \
         "shard_uuid_present=#{payload[:shard_uuid].present?} " \
+        "player_guid_present=#{payload[:player_guid].present?} " \
+        "player_name_present=#{payload[:player_name].present?} " \
         "wallet_balance_present=#{payload[:wallet_balance].present?}"
       )
 
       result = TradeService.status(
         ship_guid: payload[:ship_guid],
+        ship_model: payload[:ship_model],
         shard_uuid: payload[:shard_uuid],
+        player_guid: payload[:player_guid],
+        player_name: payload[:player_name],
         wallet_balance: payload[:wallet_balance],
         username: payload[:username],
         shard: payload[:shard]
@@ -117,13 +123,25 @@ module Api
 
     def normalized_status_payload
       sources = status_payload_sources
+      ship_guid = first_present_param(sources, :ship_guid)
+      ship_model = first_present_param(sources, :ship_model)
+      shard_uuid = first_present_param(sources, :shard_uuid)
+      player_guid = first_present_param(sources, :player_guid)
+      explicit_player_name = first_present_param(sources, :player_name)
+      wallet_balance = first_present_param(sources, :wallet_balance)
+      username = first_present_param(sources, :username)
+      new_status_payload = ship_guid.present? || ship_model.present? || shard_uuid.present? ||
+        player_guid.present? || explicit_player_name.present?
 
       {
-        ship_guid: first_present_param(sources, :ship_guid),
-        shard_uuid: first_present_param(sources, :shard_uuid),
-        wallet_balance: first_present_param(sources, :wallet_balance),
-        username: first_present_param(sources, :username),
-        shard: first_present_param(sources, :shard_uuid) || first_present_param(sources, :shard)
+        ship_guid: ship_guid,
+        ship_model: ship_model,
+        shard_uuid: shard_uuid,
+        player_guid: player_guid,
+        player_name: explicit_player_name || (username if new_status_payload),
+        wallet_balance: wallet_balance,
+        username: username,
+        shard: shard_uuid || first_present_param(sources, :shard)
       }
     end
 
