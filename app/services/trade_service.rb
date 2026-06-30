@@ -14,22 +14,22 @@ class TradeService
     class ShipNotFoundError < StandardError; end
     class ValidationError < StandardError; end
   
-    def self.status(ship_guid: nil, shard_id: nil, wallet_balance: nil, username: nil, shard: nil)
-      has_new_payload = ship_guid.present? || shard_id.present?
+    def self.status(ship_guid: nil, shard_uuid: nil, wallet_balance: nil, username: nil, shard: nil)
+      has_new_payload = ship_guid.present? || shard_uuid.present?
 
       Rails.logger.info(
         "[TradeService.status] path=#{has_new_payload ? 'ship_guid' : 'legacy'} " \
-        "ship_guid_present=#{ship_guid.present?} shard_id_present=#{shard_id.present?} " \
+        "ship_guid_present=#{ship_guid.present?} shard_uuid_present=#{shard_uuid.present?} " \
         "username_present=#{username.present?} shard_present=#{shard.present?}"
       )
 
       if has_new_payload
         raise ValidationError, 'ship_guid is required' if ship_guid.blank?
-        raise ValidationError, 'shard_id is required' if shard_id.blank?
+        raise ValidationError, 'shard_uuid is required' if shard_uuid.blank?
 
         return status_by_ship_guid(
           ship_guid: ship_guid,
-          shard_id: shard_id,
+          shard_uuid: shard_uuid,
           wallet_balance: wallet_balance
         )
       end
@@ -40,10 +40,10 @@ class TradeService
       legacy_status(username: username, wallet_balance: wallet_balance, shard: shard)
     end
 
-    def self.status_by_ship_guid(ship_guid:, shard_id:, wallet_balance: nil)
+    def self.status_by_ship_guid(ship_guid:, shard_uuid:, wallet_balance: nil)
       validate_wallet_balance!(wallet_balance)
 
-      shard = Shard.find_by(channel_uuid: shard_id)
+      shard = Shard.find_by(channel_uuid: shard_uuid)
       raise ActiveRecord::RecordNotFound, 'Shard not found' unless shard
 
       user_ship = UserShip.find_by(guid: ship_guid)
@@ -51,7 +51,7 @@ class TradeService
 
       shard_user = user_ship.shard_user
       raise ActiveRecord::RecordNotFound, 'Shard user not found' unless shard_user
-      raise ValidationError, 'Ship does not belong to this broadcaster' unless shard_user.shard_id == shard.id
+      raise ValidationError, 'Ship does not belong to this broadcaster' unless shard_user.shard_uuid == shard.id
 
       status_response_for(shard_user: shard_user, user_ship: user_ship, wallet_balance: wallet_balance)
     end
@@ -66,7 +66,7 @@ class TradeService
       raise ActiveRecord::RecordNotFound, 'Shard not found' unless shard_record
 
       user = find_or_create_user(username, shard_record)
-      shard_user = user.shard_users.find_by(shard_id: shard_record.id)
+      shard_user = user.shard_users.find_by(shard_uuid: shard_record.id)
       raise ActiveRecord::RecordNotFound, 'Shard user not found' unless shard_user
 
       return status_response_for(
@@ -80,7 +80,7 @@ class TradeService
       shard = Shard.find_by(channel_uuid: shard)
       user = find_or_create_user(username, shard)
       
-      shard_user =user.shard_users.find_by(shard_id:shard.id)
+      shard_user =user.shard_users.find_by(shard_uuid:shard.id)
 
 
 
@@ -454,9 +454,9 @@ star_bitizen_run = StarBitizenRun.find_by(
         end
         
 
-        unless user.shard_users.find_by(shard_id:shard.id)
+        unless user.shard_users.find_by(shard_uuid:shard.id)
 
-          ShardUser.create!(user_id: user.id, shard_id: shard.id, shard_name: shard.name)
+          ShardUser.create!(user_id: user.id, shard_uuid: shard.id, shard_name: shard.name)
           
         end
 
