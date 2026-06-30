@@ -11,6 +11,7 @@ module Api
 
       request.body.rewind
       @json_payload = JSON.parse(request.body.read)
+      request.body.rewind
     rescue JSON::ParserError
       render json: { error: 'Invalid JSON payload' }, status: :bad_request and return
     end

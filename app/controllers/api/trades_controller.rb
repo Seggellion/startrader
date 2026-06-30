@@ -82,24 +82,21 @@ module Api
     end
 
     def status
-      payload = status_payload
+      payload = normalized_status_payload
 
-      ship_guid = payload_value(payload, :ship_guid)
-      broadcaster_id = payload_value(payload, :broadcaster_id)
-      wallet_balance = payload_value(payload, :wallet_balance)
-      username = payload.dig(:trade, :username) || payload.dig('trade', 'username') || payload_value(payload, :username)
-      shard = payload_value(payload, :shard_uuid)
+      Rails.logger.info(
+        "[status] payload keys: ship_guid_present=#{payload[:ship_guid].present?} " \
+        "broadcaster_id_present=#{payload[:broadcaster_id].present?} " \
+        "wallet_balance_present=#{payload[:wallet_balance].present?}"
+      )
 
-      result =
-        if ship_guid.present? || broadcaster_id.present? || username.blank? || shard.blank?
-          TradeService.status(
-            ship_guid: ship_guid,
-            broadcaster_id: broadcaster_id,
-            wallet_balance: wallet_balance
-          )
-        else
-          TradeService.status(username: username, wallet_balance: wallet_balance, shard: shard)
-        end
+      result = TradeService.status(
+        ship_guid: payload[:ship_guid],
+        broadcaster_id: payload[:broadcaster_id],
+        wallet_balance: payload[:wallet_balance],
+        username: payload[:username],
+        shard: payload[:shard]
+      )
 
       render json: result, status: :ok
     rescue TradeService::ValidationError => e
@@ -107,6 +104,8 @@ module Api
     rescue ActiveRecord::RecordNotFound => e
       render json: { status: 'error', message: e.message }, status: :not_found
     rescue StandardError => e
+      Rails.logger.error("[Api::TradesController#status] #{e.class}: #{e.message}")
+      Rails.logger.error(e.backtrace.join("\n")) if e.backtrace
       render json: { status: 'error', message: e.message }, status: :unprocessable_entity
     end
 
@@ -116,12 +115,46 @@ module Api
       (trade_params.key?(:scu) || trade_params.key?('scu')) && trade_params[:scu].blank?
     end
 
-    def status_payload
-      @json_payload.presence || params
+    def normalized_status_payload
+      sources = status_payload_sources
+
+      {
+        ship_guid: first_present_param(sources, :ship_guid),
+        broadcaster_id: first_present_param(sources, :broadcaster_id),
+        wallet_balance: first_present_param(sources, :wallet_balance),
+        username: first_present_param(sources, :username),
+        shard: first_present_param(sources, :shard_uuid) || first_present_param(sources, :shard)
+      }
     end
 
-    def payload_value(payload, key)
-      payload[key] || payload[key.to_s]
+    def status_payload_sources
+      sources = []
+
+      if defined?(@json_payload) && @json_payload.present?
+        sources << @json_payload
+        sources << nested_param_source(@json_payload, :trade)
+      end
+
+      sources << nested_param_source(params, :trade)
+      sources << params
+      sources.compact
+    end
+
+    def nested_param_source(source, key)
+      return unless source.respond_to?(:[])
+
+      source[key] || source[key.to_s]
+    end
+
+    def first_present_param(sources, key)
+      sources.each do |source|
+        next if source.blank? || !source.respond_to?(:[])
+
+        value = source[key] || source[key.to_s]
+        return value if value.present?
+      end
+
+      nil
     end
 
     def trade_params

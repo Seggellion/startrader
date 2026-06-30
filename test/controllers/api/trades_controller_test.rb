@@ -342,6 +342,16 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     assert_equal @location.name, response_json["ship"]["location"]
   end
 
+  test "status accepts new authenticated payload nested under trade" do
+    post "/api/status", params: { trade: base_status_payload }, as: :json
+
+    assert_response :success
+    assert_equal "success", response_json["status"]
+    assert_equal 40_000, response_json["wallet_balance"]
+    assert_equal @ship.model, response_json["ship"]["model"]
+    assert_equal @location.name, response_json["ship"]["location"]
+  end
+
   test "status rejects missing secret_guid" do
     post "/api/status", params: base_status_payload.except(:secret_guid), as: :json
 

@@ -160,6 +160,14 @@ class TradeServiceTest < ActiveSupport::TestCase
     assert_equal "ship_guid is required", error.message
   end
 
+  test "status legacy path validates username instead of raising no method error" do
+    error = assert_raises(TradeService::ValidationError) do
+      TradeService.status(username: nil, shard: nil, wallet_balance: 40_000)
+    end
+
+    assert_equal "username is required for legacy status", error.message
+  end
+
   test "status requires broadcaster id" do
     error = assert_raises(TradeService::ValidationError) do
       TradeService.status(ship_guid: @user_ship.guid)

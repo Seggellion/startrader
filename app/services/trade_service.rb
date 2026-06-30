@@ -15,10 +15,32 @@ class TradeService
     class ValidationError < StandardError; end
   
     def self.status(ship_guid: nil, broadcaster_id: nil, wallet_balance: nil, username: nil, shard: nil)
-      return legacy_status(username: username, wallet_balance: wallet_balance, shard: shard) if ship_guid.blank? && broadcaster_id.blank?
+      has_new_payload = ship_guid.present? || broadcaster_id.present?
 
-      raise ValidationError, 'ship_guid is required' if ship_guid.blank?
-      raise ValidationError, 'broadcaster_id is required' if broadcaster_id.blank?
+      Rails.logger.info(
+        "[TradeService.status] path=#{has_new_payload ? 'ship_guid' : 'legacy'} " \
+        "ship_guid_present=#{ship_guid.present?} broadcaster_id_present=#{broadcaster_id.present?} " \
+        "username_present=#{username.present?} shard_present=#{shard.present?}"
+      )
+
+      if has_new_payload
+        raise ValidationError, 'ship_guid is required' if ship_guid.blank?
+        raise ValidationError, 'broadcaster_id is required' if broadcaster_id.blank?
+
+        return status_by_ship_guid(
+          ship_guid: ship_guid,
+          broadcaster_id: broadcaster_id,
+          wallet_balance: wallet_balance
+        )
+      end
+
+      raise ValidationError, 'username is required for legacy status' if username.blank?
+      raise ValidationError, 'shard is required for legacy status' if shard.blank?
+
+      legacy_status(username: username, wallet_balance: wallet_balance, shard: shard)
+    end
+
+    def self.status_by_ship_guid(ship_guid:, broadcaster_id:, wallet_balance: nil)
       validate_wallet_balance!(wallet_balance)
 
       shard = Shard.find_by(channel_uuid: broadcaster_id)
@@ -35,6 +57,24 @@ class TradeService
     end
 
     def self.legacy_status(username:, wallet_balance: nil, shard:)
+      raise ValidationError, 'username is required for legacy status' if username.blank?
+      raise ValidationError, 'shard is required for legacy status' if shard.blank?
+
+      validate_wallet_balance!(wallet_balance)
+
+      shard_record = Shard.find_by(channel_uuid: shard)
+      raise ActiveRecord::RecordNotFound, 'Shard not found' unless shard_record
+
+      user = find_or_create_user(username, shard_record)
+      shard_user = user.shard_users.find_by(shard_id: shard_record.id)
+      raise ActiveRecord::RecordNotFound, 'Shard user not found' unless shard_user
+
+      return status_response_for(
+        shard_user: shard_user,
+        user_ship: shard_user.user_ships.order(updated_at: :desc).first,
+        wallet_balance: wallet_balance
+      )
+
       validate_wallet_balance!(wallet_balance)
       
       shard = Shard.find_by(channel_uuid: shard)
@@ -394,7 +434,10 @@ star_bitizen_run = StarBitizenRun.find_by(
     end
 
     def self.find_or_create_user(username, shard)
-        normalized_username = username.downcase.strip
+        raise ValidationError, 'username is required' if username.blank?
+        raise ActiveRecord::RecordNotFound, 'Shard not found' unless shard
+
+        normalized_username = username.to_s.downcase.strip
         
         # ✅ Find user case-insensitively
         user = User.where("LOWER(username) = ?", normalized_username).first
