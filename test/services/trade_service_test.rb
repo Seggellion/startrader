@@ -103,10 +103,10 @@ class TradeServiceTest < ActiveSupport::TestCase
     refute @terminal_sell_commodity.is_sellable
   end
 
-  test "status finds ship by guid and broadcaster channel uuid" do
+  test "status finds ship by guid and shard uuid" do
     response = TradeService.status(
       ship_guid: @user_ship.guid,
-      broadcaster_id: @shard.channel_uuid,
+      shard_uuid: @shard.channel_uuid,
       wallet_balance: 40_000
     )
 
@@ -121,7 +121,7 @@ class TradeServiceTest < ActiveSupport::TestCase
   test "status preserves success response shape" do
     response = TradeService.status(
       ship_guid: @user_ship.guid,
-      broadcaster_id: @shard.channel_uuid
+      shard_uuid: @shard.channel_uuid
     )
 
     assert_equal [:cargo, :ship, :status, :wallet_balance], response.keys.sort
@@ -146,7 +146,7 @@ class TradeServiceTest < ActiveSupport::TestCase
   test "status defaults zero wallet balance to 15000" do
     @shard_user.update!(wallet_balance: 0)
 
-    response = TradeService.status(ship_guid: @user_ship.guid, broadcaster_id: @shard.channel_uuid)
+    response = TradeService.status(ship_guid: @user_ship.guid, shard_uuid: @shard.channel_uuid)
 
     assert_equal 15_000, response[:wallet_balance]
     assert_equal 15_000, @shard_user.reload.wallet_balance
@@ -154,7 +154,7 @@ class TradeServiceTest < ActiveSupport::TestCase
 
   test "status requires ship guid" do
     error = assert_raises(TradeService::ValidationError) do
-      TradeService.status(broadcaster_id: @shard.channel_uuid)
+      TradeService.status(shard_uuid: @shard.channel_uuid)
     end
 
     assert_equal "ship_guid is required", error.message
@@ -168,17 +168,17 @@ class TradeServiceTest < ActiveSupport::TestCase
     assert_equal "username is required for legacy status", error.message
   end
 
-  test "status requires broadcaster id" do
+  test "status requires shard uuid" do
     error = assert_raises(TradeService::ValidationError) do
       TradeService.status(ship_guid: @user_ship.guid)
     end
 
-    assert_equal "broadcaster_id is required", error.message
+    assert_equal "shard_uuid is required", error.message
   end
 
-  test "status rejects unknown broadcaster" do
+  test "status rejects unknown shard uuid" do
     error = assert_raises(ActiveRecord::RecordNotFound) do
-      TradeService.status(ship_guid: @user_ship.guid, broadcaster_id: "unknown")
+      TradeService.status(ship_guid: @user_ship.guid, shard_uuid: "unknown")
     end
 
     assert_equal "Shard not found", error.message
@@ -186,27 +186,37 @@ class TradeServiceTest < ActiveSupport::TestCase
 
   test "status rejects unknown ship" do
     error = assert_raises(ActiveRecord::RecordNotFound) do
-      TradeService.status(ship_guid: "unknown", broadcaster_id: @shard.channel_uuid)
+      TradeService.status(ship_guid: "unknown", shard_uuid: @shard.channel_uuid)
     end
 
     assert_equal "Ship not found", error.message
   end
 
-  test "status rejects ship from a different broadcaster" do
+  test "status rejects ship from a different shard" do
     other_shard = Shard.create!(name: "OtherShard", region: "us", channel_uuid: "other-shard-guid")
 
     error = assert_raises(TradeService::ValidationError) do
-      TradeService.status(ship_guid: @user_ship.guid, broadcaster_id: other_shard.channel_uuid)
+      TradeService.status(ship_guid: @user_ship.guid, shard_uuid: other_shard.channel_uuid)
     end
 
-    assert_equal "Ship does not belong to this broadcaster", error.message
+    assert_equal "Ship does not belong to this shard", error.message
+  end
+
+  test "status by shard uuid does not call shard_uuid on shard user" do
+    assert_nothing_raised do
+      TradeService.status(
+        ship_guid: @user_ship.guid,
+        shard_uuid: @shard.channel_uuid,
+        wallet_balance: 40_000
+      )
+    end
   end
 
   test "status rejects non numeric wallet balance" do
     error = assert_raises(TradeService::ValidationError) do
       TradeService.status(
         ship_guid: @user_ship.guid,
-        broadcaster_id: @shard.channel_uuid,
+        shard_uuid: @shard.channel_uuid,
         wallet_balance: "not-money"
       )
     end

@@ -51,7 +51,7 @@ class TradeService
 
       shard_user = user_ship.shard_user
       raise ActiveRecord::RecordNotFound, 'Shard user not found' unless shard_user
-      raise ValidationError, 'Ship does not belong to this broadcaster' unless shard_user.shard_uuid == shard.id
+      raise ValidationError, 'Ship does not belong to this shard' unless shard_user.shard_id == shard.id
 
       status_response_for(shard_user: shard_user, user_ship: user_ship, wallet_balance: wallet_balance)
     end
@@ -66,71 +66,27 @@ class TradeService
       raise ActiveRecord::RecordNotFound, 'Shard not found' unless shard_record
 
       user = find_or_create_user(username, shard_record)
-      shard_user = user.shard_users.find_by(shard_uuid: shard_record.id)
+      shard_user = user.shard_users.find_by(shard_id: shard_record.id)
       raise ActiveRecord::RecordNotFound, 'Shard user not found' unless shard_user
 
-      return status_response_for(
+      status_response_for(
         shard_user: shard_user,
         user_ship: shard_user.user_ships.order(updated_at: :desc).first,
         wallet_balance: wallet_balance
       )
 
-      validate_wallet_balance!(wallet_balance)
+
+
+
       
-      shard = Shard.find_by(channel_uuid: shard)
-      user = find_or_create_user(username, shard)
+
       
-      shard_user =user.shard_users.find_by(shard_uuid:shard.id)
-
-
-
-      if wallet_balance.present?
-        shard_user.update!(wallet_balance: wallet_balance)
-      end  
-
-      if shard_user.wallet_balance == 0
-        shard_user.update!(wallet_balance: 15000)
-      end
 
       
       # ✅ Check if user already has a ship
-      user_ship = shard_user.user_ships.order(updated_at: :desc).first
       
-      if user_ship.nil?
-        return {
-          status: 'success',
-          wallet_balance: shard_user.wallet_balance,
-          ship: "No Ship",
-          cargo: []
-        }
-      end
     
       # Gather Cargo Information
-      cargo = user_ship_cargo_json(user_ship)
-    
-      # Retrieve Ship Travel Information
-      ship_travel = ShipTravel.where(user_ship_id: user_ship.id).order(created_at: :desc).first
-      current_tick = Tick.order(created_at: :desc).pluck(:current_tick).first
-    
-      {
-        status: 'success',
-        wallet_balance: shard_user.wallet_balance,
-        ship: {
-          model: user_ship.ship.model,
-          location: user_ship.location_name,
-          total_scu: user_ship.total_scu,
-          used_scu: user_ship.used_scu,
-          available_cargo_space: user_ship.available_cargo_space,
-          travel_status: user_ship.status,
-          from_location: ship_travel&.from_location&.name,
-          to_location: ship_travel&.to_location&.name,
-          arrival_tick: ship_travel&.arrival_tick,
-          current_tick: current_tick,
-          time_remaining: ship_travel&.seconds_remaining(current_tick)
-        },
-        cargo: cargo,
-      }
-
     end
 
     def self.status_response_for(shard_user:, user_ship:, wallet_balance:)
@@ -454,9 +410,9 @@ star_bitizen_run = StarBitizenRun.find_by(
         end
         
 
-        unless user.shard_users.find_by(shard_uuid:shard.id)
+        unless user.shard_users.find_by(shard_id: shard.id)
 
-          ShardUser.create!(user_id: user.id, shard_uuid: shard.id, shard_name: shard.name)
+          ShardUser.create!(user_id: user.id, shard_id: shard.id, shard_name: shard.name)
           
         end
 

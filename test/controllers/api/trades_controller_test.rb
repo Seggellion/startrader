@@ -373,15 +373,15 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     assert_equal({ "status" => "error", "message" => "ship_guid is required" }, response_json)
   end
 
-  test "status requires broadcaster_id" do
-    post "/api/status", params: base_status_payload.except(:broadcaster_id), as: :json
+  test "status requires shard_uuid" do
+    post "/api/status", params: base_status_payload.except(:shard_uuid), as: :json
 
     assert_response :bad_request
-    assert_equal({ "status" => "error", "message" => "broadcaster_id is required" }, response_json)
+    assert_equal({ "status" => "error", "message" => "shard_uuid is required" }, response_json)
   end
 
-  test "status rejects unknown broadcaster" do
-    post "/api/status", params: base_status_payload.merge(broadcaster_id: "unknown"), as: :json
+  test "status rejects unknown shard_uuid" do
+    post "/api/status", params: base_status_payload.merge(shard_uuid: "unknown"), as: :json
 
     assert_response :not_found
     assert_equal({ "status" => "error", "message" => "Shard not found" }, response_json)
@@ -431,7 +431,7 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     {
       ship_guid: @user_ship.guid,
       wallet_balance: 40_000,
-      broadcaster_id: @shard.channel_uuid,
+      shard_uuid: @shard.channel_uuid,
       secret_guid: "test-secret"
     }
   end
