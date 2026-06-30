@@ -5,7 +5,7 @@ module Api
 
     # API endpoint: skip CSRF
     skip_before_action :verify_authenticity_token
-    skip_before_action :authenticate_secret_guid!, except: :destroy
+    skip_before_action :authenticate_secret_guid!, except: [:destroy, :user_ship_destroy]
 
     # POST /api/travel
     def create
@@ -269,6 +269,42 @@ module Api
       remaining_duration: travel.total_duration_ticks
     }
   end
+
+
+    # POST /api/user_ships/:guid/destroy
+    def user_ship_destroy
+      user_ship = UserShip
+        .includes(:ship, :shard, :ship_travels, user_ship_cargos: :commodity)
+        .find_by(guid: params[:guid])
+
+      return render json: { error: "User ship not found." }, status: :not_found if user_ship.nil?
+
+      ship = user_ship.ship
+      shard = user_ship.shard
+      destroyed_cargo = TradeService.user_ship_cargo_json(user_ship)
+      destroyed_travel_guids = user_ship.ship_travels.pluck(:travel_guid).compact
+
+      response = {
+        status: "user_ship_destroyed",
+        user_ship_id: user_ship.id,
+        ship_guid: user_ship.guid,
+        ship_model: ship&.model,
+        ship_name: ship&.name_full,
+        ship_slug: user_ship.ship_slug.presence || ship&.slug,
+        shard_name: shard&.name || user_ship.shard_name,
+        shard_uuid: shard&.channel_uuid,
+        destroyed_travel_guids: destroyed_travel_guids,
+        destroyed_cargo: destroyed_cargo
+      }
+
+      ActiveRecord::Base.transaction do
+        user_ship.destroy!
+      end
+
+      render json: response
+    rescue StandardError => e
+      render json: { error: e.message }, status: :unprocessable_entity
+    end
 
 
     # DELETE /api/cancel

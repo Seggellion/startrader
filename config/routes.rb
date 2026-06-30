@@ -84,6 +84,7 @@ Rails.application.routes.draw do
 
     post 'user_ships/:guid/interdict', to: 'ship_travel#interdict_by_guid', as: :interdict_by_guid
     post 'user_ships/:guid/resume',    to: 'ship_travel#resume_by_guid',    as: :resume_by_guid
+    post 'user_ships/:guid/destroy',   to: 'ship_travel#user_ship_destroy', as: :user_ship_destroy
 
     resources :ships, only: [:index]
     resources :commodities, only: [:index]
