@@ -1,11 +1,10 @@
 # app/controllers/api/trades_controller.rb
 
 module Api
-  class TradesController < ApplicationController
-    skip_before_action :verify_authenticity_token
+  class TradesController < BaseController
+    skip_before_action :authenticate_secret_guid!, only: [:buy, :sell]
 
     def sell
-
       trade_params = params[:trade] || {}
 
       username = trade_params[:player_name]
@@ -40,7 +39,7 @@ module Api
     end
 
     def buy
-      trade_params = params[:trade] || {}      
+      trade_params = params[:trade] || {}
 
       username = trade_params[:player_name]
       wallet_balance = trade_params[:wallet_balance]
@@ -76,22 +75,37 @@ module Api
           ship_slug: ship_slug
         )
       end
-    
+
       render json: result, status: :ok
     rescue StandardError => e
       render json: { status: 'error', message: e.message }, status: :unprocessable_entity
-    end    
-    
+    end
 
     def status
+      payload = status_payload
 
-      username = params.dig(:trade, :username) || params[:username]       
-      shard = params[:shard_uuid] 
-      wallet_balance = params[:wallet_balance]  # ✅ Get AEC balance from Twitch bot
+      ship_guid = payload_value(payload, :ship_guid)
+      broadcaster_id = payload_value(payload, :broadcaster_id)
+      wallet_balance = payload_value(payload, :wallet_balance)
+      username = payload.dig(:trade, :username) || payload.dig('trade', 'username') || payload_value(payload, :username)
+      shard = payload_value(payload, :shard_uuid)
 
-      result = TradeService.status(username: username, wallet_balance: wallet_balance, shard: shard)
+      result =
+        if ship_guid.present? || broadcaster_id.present? || username.blank? || shard.blank?
+          TradeService.status(
+            ship_guid: ship_guid,
+            broadcaster_id: broadcaster_id,
+            wallet_balance: wallet_balance
+          )
+        else
+          TradeService.status(username: username, wallet_balance: wallet_balance, shard: shard)
+        end
 
       render json: result, status: :ok
+    rescue TradeService::ValidationError => e
+      render json: { status: 'error', message: e.message }, status: :bad_request
+    rescue ActiveRecord::RecordNotFound => e
+      render json: { status: 'error', message: e.message }, status: :not_found
     rescue StandardError => e
       render json: { status: 'error', message: e.message }, status: :unprocessable_entity
     end
@@ -100,6 +114,14 @@ module Api
 
     def blank_scu_listing_request?(trade_params)
       (trade_params.key?(:scu) || trade_params.key?('scu')) && trade_params[:scu].blank?
+    end
+
+    def status_payload
+      @json_payload.presence || params
+    end
+
+    def payload_value(payload, key)
+      payload[key] || payload[key.to_s]
     end
 
     def trade_params

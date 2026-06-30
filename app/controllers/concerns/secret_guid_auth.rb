@@ -9,7 +9,11 @@ module SecretGuidAuth
   private
 
   def authenticate_secret_guid!
-    provided = request.headers['X-Secret-Guid'].presence || params[:secret_guid].presence
+    return if performed?
+
+    provided = request.headers['X-Secret-Guid'].presence ||
+      params[:secret_guid].presence ||
+      parsed_json_value(:secret_guid).presence
     expected = Setting.get('secret_guid').to_s.presence || Setting.get('secret-guid').to_s.presence
 
     unless provided && expected && secure_equal?(provided, expected)
@@ -19,6 +23,12 @@ module SecretGuidAuth
 
   def secret_guid_auth_error_response
     { error: 'Unauthorized' }
+  end
+
+  def parsed_json_value(key)
+    return unless defined?(@json_payload) && @json_payload.respond_to?(:[])
+
+    @json_payload[key.to_s] || @json_payload[key.to_sym]
   end
 
   # Use a timing-safe compare by hashing to equalize length first

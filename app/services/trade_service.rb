@@ -12,8 +12,30 @@ class TradeService
     class InsufficientInventoryError < StandardError; end
     class UserNotFoundError < StandardError; end
     class ShipNotFoundError < StandardError; end
+    class ValidationError < StandardError; end
   
-    def self.status(username:, wallet_balance: nil, shard:)
+    def self.status(ship_guid: nil, broadcaster_id: nil, wallet_balance: nil, username: nil, shard: nil)
+      return legacy_status(username: username, wallet_balance: wallet_balance, shard: shard) if ship_guid.blank? && broadcaster_id.blank?
+
+      raise ValidationError, 'ship_guid is required' if ship_guid.blank?
+      raise ValidationError, 'broadcaster_id is required' if broadcaster_id.blank?
+      validate_wallet_balance!(wallet_balance)
+
+      shard = Shard.find_by(channel_uuid: broadcaster_id)
+      raise ActiveRecord::RecordNotFound, 'Shard not found' unless shard
+
+      user_ship = UserShip.find_by(guid: ship_guid)
+      raise ActiveRecord::RecordNotFound, 'Ship not found' unless user_ship
+
+      shard_user = user_ship.shard_user
+      raise ActiveRecord::RecordNotFound, 'Shard user not found' unless shard_user
+      raise ValidationError, 'Ship does not belong to this broadcaster' unless shard_user.shard_id == shard.id
+
+      status_response_for(shard_user: shard_user, user_ship: user_ship, wallet_balance: wallet_balance)
+    end
+
+    def self.legacy_status(username:, wallet_balance: nil, shard:)
+      validate_wallet_balance!(wallet_balance)
       
       shard = Shard.find_by(channel_uuid: shard)
       user = find_or_create_user(username, shard)
@@ -69,6 +91,58 @@ class TradeService
         cargo: cargo,
       }
 
+    end
+
+    def self.status_response_for(shard_user:, user_ship:, wallet_balance:)
+      update_status_wallet_balance!(shard_user, wallet_balance)
+
+      return no_ship_status_response(shard_user) if user_ship.nil?
+
+      cargo = user_ship_cargo_json(user_ship)
+      ship_travel = ShipTravel.where(user_ship_id: user_ship.id).order(created_at: :desc).first
+      current_tick = Tick.order(created_at: :desc).pluck(:current_tick).first
+
+      {
+        status: 'success',
+        wallet_balance: shard_user.wallet_balance,
+        ship: {
+          model: user_ship.ship.model,
+          location: user_ship.location_name,
+          total_scu: user_ship.total_scu,
+          used_scu: user_ship.used_scu,
+          available_cargo_space: user_ship.available_cargo_space,
+          travel_status: user_ship.status,
+          from_location: ship_travel&.from_location&.name,
+          to_location: ship_travel&.to_location&.name,
+          arrival_tick: ship_travel&.arrival_tick,
+          current_tick: current_tick,
+          time_remaining: ship_travel&.seconds_remaining(current_tick)
+        },
+        cargo: cargo,
+      }
+    end
+
+    def self.update_status_wallet_balance!(shard_user, wallet_balance)
+      validate_wallet_balance!(wallet_balance)
+      shard_user.update!(wallet_balance: wallet_balance) if wallet_balance.present?
+      shard_user.update!(wallet_balance: 15000) if shard_user.wallet_balance == 0
+    end
+
+    def self.no_ship_status_response(shard_user)
+      {
+        status: 'success',
+        wallet_balance: shard_user.wallet_balance,
+        ship: "No Ship",
+        cargo: []
+      }
+    end
+
+    def self.validate_wallet_balance!(wallet_balance)
+      return if wallet_balance.blank?
+      return if wallet_balance.is_a?(Numeric)
+      return if wallet_balance.to_s.match?(/\A-?\d+(\.\d+)?\z/)
+
+      raise ValidationError, 'wallet_balance must be numeric'
     end
 
     def self.user_ship_cargo_json(user_ship)

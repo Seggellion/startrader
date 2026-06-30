@@ -15,6 +15,7 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     Location.delete_all
     Setting.delete_all
     Setting.create!(key: "seconds_per_tick", value: "5", setting_type: "text")
+    Setting.create!(key: "secret_guid", value: "test-secret", setting_type: "text")
 
     @shard = Shard.create!(name: "TestShard", region: "us", channel_uuid: "shard-guid")
     @user = User.create!(
@@ -314,6 +315,90 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     )
   end
 
+  test "status accepts new authenticated payload and keeps response shape" do
+    post "/api/status", params: base_status_payload, as: :json
+
+    assert_response :success
+    assert_equal ["cargo", "ship", "status", "wallet_balance"], response_json.keys.sort
+    assert_equal "success", response_json["status"]
+    assert_equal 40_000, response_json["wallet_balance"]
+    assert_equal(
+      [
+        "arrival_tick",
+        "available_cargo_space",
+        "current_tick",
+        "from_location",
+        "location",
+        "model",
+        "time_remaining",
+        "to_location",
+        "total_scu",
+        "travel_status",
+        "used_scu"
+      ],
+      response_json["ship"].keys.sort
+    )
+    assert_equal @ship.model, response_json["ship"]["model"]
+    assert_equal @location.name, response_json["ship"]["location"]
+  end
+
+  test "status rejects missing secret_guid" do
+    post "/api/status", params: base_status_payload.except(:secret_guid), as: :json
+
+    assert_response :unauthorized
+    assert_equal({ "error" => "Unauthorized" }, response_json)
+  end
+
+  test "status rejects invalid secret_guid" do
+    post "/api/status", params: base_status_payload.merge(secret_guid: "wrong"), as: :json
+
+    assert_response :unauthorized
+    assert_equal({ "error" => "Unauthorized" }, response_json)
+  end
+
+  test "status requires ship_guid" do
+    post "/api/status", params: base_status_payload.except(:ship_guid), as: :json
+
+    assert_response :bad_request
+    assert_equal({ "status" => "error", "message" => "ship_guid is required" }, response_json)
+  end
+
+  test "status requires broadcaster_id" do
+    post "/api/status", params: base_status_payload.except(:broadcaster_id), as: :json
+
+    assert_response :bad_request
+    assert_equal({ "status" => "error", "message" => "broadcaster_id is required" }, response_json)
+  end
+
+  test "status rejects unknown broadcaster" do
+    post "/api/status", params: base_status_payload.merge(broadcaster_id: "unknown"), as: :json
+
+    assert_response :not_found
+    assert_equal({ "status" => "error", "message" => "Shard not found" }, response_json)
+  end
+
+  test "status rejects unknown ship" do
+    post "/api/status", params: base_status_payload.merge(ship_guid: "unknown"), as: :json
+
+    assert_response :not_found
+    assert_equal({ "status" => "error", "message" => "Ship not found" }, response_json)
+  end
+
+  test "status updates wallet balance" do
+    post "/api/status", params: base_status_payload.merge(wallet_balance: 60_000), as: :json
+
+    assert_response :success
+    assert_equal 60_000, @shard_user.reload.wallet_balance
+    assert_equal 60_000, response_json["wallet_balance"]
+  end
+
+  test "status rejects non numeric wallet balance" do
+    post "/api/status", params: base_status_payload.merge(wallet_balance: "not-money"), as: :json
+
+    assert_response :bad_request
+    assert_equal({ "status" => "error", "message" => "wallet_balance must be numeric" }, response_json)
+  end
+
   private
 
   def base_trade_payload
@@ -330,6 +415,15 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
 
   def sell_trade_payload
     base_trade_payload.merge(commodity_name: @sell_commodity.name)
+  end
+
+  def base_status_payload
+    {
+      ship_guid: @user_ship.guid,
+      wallet_balance: 40_000,
+      broadcaster_id: @shard.channel_uuid,
+      secret_guid: "test-secret"
+    }
   end
 
   def response_json
