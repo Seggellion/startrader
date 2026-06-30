@@ -78,6 +78,7 @@ class TradeService
           ship_guid: ship_guid,
           ship: ship,
           shard: shard,
+          shard_name: shard.name
           shard_user: shard_user,
           user: user
         )

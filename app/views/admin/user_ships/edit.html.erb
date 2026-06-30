@@ -1,124 +1,375 @@
-  <h1 class="text-3xl font-bold mb-4">Edit UserShip</h1>
+<%
+  ship = @user_ship.ship
+  user = @user_ship.user
+  shard = @user_ship.shard
+  shard_user = @user_ship.shard_user
+  location = @user_ship.location
 
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-    <!-- Main Content Area -->
-    <div class="lg:col-span-2 bg-white p-6 rounded shadow">
-    <div class="bg-white p-6 rounded shadow">
-     
-    <%= form_with model: @user_ship, url: admin_user_ship_path(@user_ship), method: :patch, local: true, data: { turbo: true } do |form| %>
-      <div class="mb-4">
-        <%= form.label :name, 'Shard', class: 'block text-gray-700' %>
-        <%= form.text_field :shard_name, class: 'form-input mt-1 block w-full' %>
-      </div>
-    
-      <div class="mb-4">
-        <%= form.label :location_name, 'Location Name', class: 'block text-gray-700' %>
-        <%= form.text_field :location_name, class: 'form-input mt-1 block w-full' %>
-      </div>
+  ship_title = ship&.model.presence || ship&.name.presence || @user_ship.ship_slug.presence || "UserShip ##{@user_ship.id}"
+  ship_company = ship&.has_attribute?(:company_name) ? ship.company_name : nil
+  ship_full_name = ship&.has_attribute?(:name_full) ? ship.name_full : nil
+  location_options = (@location_names + [@user_ship.location_name]).compact.uniq.sort
 
-      <div class="mb-4">
-      <%= form.label :shard_name, 'Shard Name', class: 'block text-gray-700' %>
-      <%= form.text_field :shard_name, class: 'form-input mt-1 block w-full' %>
+  total_scu = @user_ship.total_scu.to_i
+  used_scu = @user_ship.used_scu.to_i
+  available_scu = [total_scu - used_scu, 0].max
+  capacity_percent = total_scu.positive? ? [(used_scu.to_f / total_scu * 100).round, 100].min : 0
+
+  panel_class = "rounded-lg border border-slate-200 bg-white shadow-sm"
+  label_class = "text-xs font-semibold text-slate-500"
+  value_class = "mt-1 text-sm font-medium text-slate-900"
+  muted_value_class = "mt-1 text-sm text-slate-400"
+  input_class = "mt-1 block w-full rounded-md border-slate-300 bg-white text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+  button_class = "inline-flex items-center rounded-md border border-cyan-500 px-3 py-2 text-sm font-semibold text-cyan-700 transition hover:bg-cyan-50"
+  primary_button_class = "inline-flex items-center rounded-md bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700"
+  table_head_class = "px-4 py-3 text-left text-xs font-semibold text-slate-500"
+  table_cell_class = "px-4 py-3 align-top text-sm text-slate-700"
+
+  display = lambda do |value|
+    value.present? ? value : "Not set"
+  end
+
+  timestamp = lambda do |value|
+    value.present? ? value.strftime("%b %d, %Y %H:%M") : "Not set"
+  end
+
+  status_badge_class = lambda do |status|
+    case status.to_s
+    when "in_transit"
+      "border-sky-200 bg-sky-50 text-sky-700"
+    when "docked", "landed", "available"
+      "border-emerald-200 bg-emerald-50 text-emerald-700"
+    when "interdicted"
+      "border-amber-200 bg-amber-50 text-amber-700"
+    when "destroyed", "disabled"
+      "border-rose-200 bg-rose-50 text-rose-700"
+    else
+      "border-slate-200 bg-slate-50 text-slate-700"
+    end
+  end
+
+  render_field = lambda do |label, value|
+    content_tag(:div) do
+      safe_join([
+        content_tag(:p, label, class: label_class),
+        content_tag(:p, display.call(value), class: value.present? ? value_class : muted_value_class)
+      ])
+    end
+  end
+
+  travel_rows = lambda do |travel|
+    {
+      "ID" => travel.id,
+      "Travel GUID" => travel.travel_guid,
+      "Type" => travel.ship_travel_type,
+      "From" => travel.from_location&.name,
+      "To" => travel.to_location&.name,
+      "Departure Tick" => travel.departure_tick,
+      "Arrival Tick" => travel.arrival_tick,
+      "Total Duration" => travel.total_duration_ticks,
+      "Paused" => (travel.is_paused? ? "Yes" : "No"),
+      "Paused At Tick" => travel.paused_at_tick,
+      "Remaining Ticks" => travel.remaining_ticks_from_arrival,
+      "Interdictions" => travel.interdiction_count,
+      "Completed At Tick" => travel.completed_at_tick,
+      "Created At" => timestamp.call(travel.created_at),
+      "Updated At" => timestamp.call(travel.updated_at)
+    }
+  end
+%>
+
+<div class="mx-auto max-w-7xl space-y-6">
+  <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <div>
+      <%= link_to "Back to UserShips", admin_user_ships_path, class: "text-sm font-semibold text-cyan-700 hover:text-cyan-900" %>
+      <h1 class="mt-3 text-3xl font-bold text-slate-950"><%= ship_title %></h1>
+      <p class="mt-2 text-sm text-slate-500">
+        UserShip #<%= @user_ship.id %>
+        <% if @user_ship.guid.present? %>
+          <span class="mx-2 text-slate-300">/</span>
+          <span class="font-mono"><%= @user_ship.guid %></span>
+        <% end %>
+      </p>
     </div>
 
-      <div class="mb-4">
-      <%= form.label :status, 'Status', class: 'block text-gray-700' %>
-      <%= form.text_field :status, class: 'form-input mt-1 block w-full' %>
+    <div class="flex flex-wrap gap-2">
+      <% if ship.present? %>
+        <%= link_to "Edit Ship", edit_admin_ship_path(ship), class: button_class %>
+      <% end %>
+      <% if shard.present? %>
+        <%= link_to "Edit Shard", edit_admin_shard_path(shard), class: button_class %>
+      <% end %>
     </div>
-    
-    
-      <div class="mb-4 flex justify-end">
-        <%= form.submit "Save", class: "bg-blue-500 text-white px-4 py-2 rounded cursor-pointer" %>
-      </div>
-    <% end %>
-    
+  </div>
 
-      </div>
-      
+  <div class="grid gap-6 lg:grid-cols-3">
+    <div class="space-y-6 lg:col-span-2">
+      <section class="<%= panel_class %>">
+        <div class="border-b border-slate-200 p-5">
+          <h2 class="text-lg font-semibold text-slate-950">Editable Fields</h2>
+          <p class="mt-1 text-sm text-slate-500">Operational fields for this user-owned ship. User, ship, and GUID are shown as read-only identity data.</p>
+        </div>
 
-      <!-- 🚀 Cargo List -->
-      <div class="bg-white p-6 rounded shadow mt-6">
-        <h2 class="text-xl font-semibold mb-4">Cargo on This Ship</h2>
-  
-        <% if @user_ship.user_ship_cargos.any? %>
-          <table class="w-full border-collapse border border-gray-300">
-            <thead>
-              <tr class="bg-gray-200">
-                <th class="border p-2 text-left">Commodity</th>
-                <th class="border p-2 text-left">SCU</th>
-                <th class="border p-2 text-left">Price</th>
-                <th class="border p-2 text-left">Actions</th>
+        <div class="p-5">
+          <% if @user_ship.errors.any? %>
+            <div class="mb-5 rounded-md border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
+              <p class="font-semibold"><%= pluralize(@user_ship.errors.count, "error") %> prevented this ship from being saved:</p>
+              <ul class="mt-2 list-disc space-y-1 pl-5">
+                <% @user_ship.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <%= form_with model: @user_ship, url: admin_user_ship_path(@user_ship), method: :patch, local: true, data: { turbo: true } do |form| %>
+            <div class="grid gap-4 md:grid-cols-2">
+              <div>
+                <%= form.label :status, class: label_class %>
+                <%= form.text_field :status, list: "user-ship-status-options", class: input_class %>
+                <datalist id="user-ship-status-options">
+                  <% @status_options.each do |status| %>
+                    <option value="<%= status %>"></option>
+                  <% end %>
+                </datalist>
+              </div>
+
+              <div>
+                <%= form.label :ship_slug, "Ship Slug", class: label_class %>
+                <%= form.text_field :ship_slug, class: input_class %>
+              </div>
+
+              <div>
+                <%= form.label :location_name, "Location", class: label_class %>
+                <%= form.select :location_name, options_for_select(location_options, @user_ship.location_name), { include_blank: "Not set" }, class: input_class %>
+              </div>
+
+              <div>
+                <%= form.label :shard_name, "Shard Name", class: label_class %>
+                <%= form.text_field :shard_name, class: input_class %>
+              </div>
+
+              <div>
+                <%= form.label :shard_id, "Shard", class: label_class %>
+                <%= form.select :shard_id, options_for_select(@shards.map { |item| ["#{item.name} (##{item.id})", item.id] }, @user_ship.shard_id), { include_blank: "Not set" }, class: input_class %>
+              </div>
+
+              <div>
+                <%= form.label :shard_user_id, "Shard User", class: label_class %>
+                <%= form.select :shard_user_id, options_for_select(@shard_users.map { |item| ["##{item.id} - #{item.user&.username || "Unknown user"} / #{item.shard_name.presence || "No shard"}", item.id] }, @user_ship.shard_user_id), { include_blank: "Not set" }, class: input_class %>
+              </div>
+
+              <div>
+                <%= form.label :total_scu, "Total SCU", class: label_class %>
+                <%= form.number_field :total_scu, min: 0, class: input_class %>
+              </div>
+
+              <div>
+                <%= form.label :used_scu, "Used SCU", class: label_class %>
+                <%= form.number_field :used_scu, min: 0, class: input_class %>
+              </div>
+            </div>
+
+            <div class="mt-5 flex justify-end">
+              <%= form.submit "Save UserShip", class: primary_button_class %>
+            </div>
+          <% end %>
+        </div>
+      </section>
+
+      <section class="<%= panel_class %>">
+        <div class="border-b border-slate-200 p-5">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 class="text-lg font-semibold text-slate-950">Cargo</h2>
+              <p class="mt-1 text-sm text-slate-500"><%= @user_ship_cargos.size %> cargo record(s) currently associated with this ship.</p>
+            </div>
+            <div class="text-sm font-semibold text-slate-700"><%= used_scu %> / <%= total_scu %> SCU used</div>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-slate-200">
+            <thead class="bg-slate-50">
+              <tr>
+                <th class="<%= table_head_class %>">Commodity</th>
+                <th class="<%= table_head_class %>">Commodity ID</th>
+                <th class="<%= table_head_class %>">SCU</th>
+                <th class="<%= table_head_class %>">Buy Price</th>
+                <th class="<%= table_head_class %>">Total Value</th>
+                <th class="<%= table_head_class %>">Updated</th>
+                <th class="<%= table_head_class %>">Actions</th>
               </tr>
             </thead>
-            <tbody>
-              <% @user_ship.user_ship_cargos.each do |cargo| %>
+            <tbody class="divide-y divide-slate-200 bg-white">
+              <% if @user_ship_cargos.any? %>
+                <% @user_ship_cargos.each do |cargo| %>
+                  <% cargo_value = cargo.buy_price.present? ? cargo.buy_price * cargo.scu.to_i : nil %>
+                  <tr>
+                    <td class="<%= table_cell_class %>">
+                      <div class="font-medium text-slate-950"><%= cargo.commodity&.name.presence || cargo.commodity_name.presence || "Unknown commodity" %></div>
+                      <div class="mt-1 text-xs text-slate-400">Cargo #<%= cargo.id %></div>
+                    </td>
+                    <td class="<%= table_cell_class %>"><%= display.call(cargo.commodity_id) %></td>
+                    <td class="<%= table_cell_class %>"><%= cargo.scu || 0 %></td>
+                    <td class="<%= table_cell_class %>"><%= cargo.buy_price.present? ? number_to_currency(cargo.buy_price) : "Not set" %></td>
+                    <td class="<%= table_cell_class %>"><%= cargo_value.present? ? number_to_currency(cargo_value) : "Not set" %></td>
+                    <td class="<%= table_cell_class %>"><%= timestamp.call(cargo.updated_at) %></td>
+                    <td class="<%= table_cell_class %>">
+                      <%= link_to "Remove", admin_user_ship_cargo_path(cargo), data: { turbo_method: :delete, turbo_confirm: "Remove this cargo from the ship?" }, class: "font-semibold text-rose-600 hover:text-rose-800" %>
+                    </td>
+                  </tr>
+                <% end %>
+              <% else %>
                 <tr>
-                  <td class="border p-2"><%= cargo.commodity.name %></td>
-                  <td class="border p-2"><%= cargo.scu %> SCU</td>
-                    <td class="border p-2"><%= cargo.buy_price %></td>
-                  <td class="border p-2">
-                    <%= link_to "Remove", admin_user_ship_cargo_path(cargo), method: :delete, data: { confirm: "Are you sure?" }, class: "text-red-600 hover:underline" %>
-                  </td>
+                  <td colspan="7" class="px-4 py-6 text-sm text-slate-500">No cargo is currently stored on this ship.</td>
                 </tr>
               <% end %>
             </tbody>
           </table>
-        <% else %>
-          <p class="text-gray-500">No cargo is currently stored on this ship.</p>
-        <% end %>
-      </div>
-
-      
-    </div>
-
-
-
-    <!-- Sidebar -->
-    <div class="space-y-4">
-      <!-- Publish Box -->
-      <div class="bg-white p-6 rounded shadow">
-        <h2 class="text-xl font-semibold mb-4">Publish</h2>
-        <div class="mb-4">
-          <button class="bg-blue-500 text-white px-4 py-2 rounded w-full">Save Draft</button>
         </div>
-        <div class="mb-4">
-          <span class="block text-sm text-gray-700">Status: <strong>Draft</strong></span>
-          <span class="block text-sm text-gray-700">Visibility: <strong>Public</strong></span>
-          <span class="block text-sm text-gray-700">Publish: <strong>Immediately</strong></span>
+      </section>
+
+      <section class="<%= panel_class %>">
+        <div class="border-b border-slate-200 p-5">
+          <h2 class="text-lg font-semibold text-slate-950">Travel</h2>
+          <p class="mt-1 text-sm text-slate-500">Active travel and the latest incomplete travel record, when present.</p>
         </div>
-        <div class="mb-4 flex justify-end">
-          <%= form_with model: [:admin, @user_ship], local: true do |form| %>
-            <%= form.submit "Publish", class: "bg-blue-500 text-white px-4 py-2 rounded" %>
+
+        <div class="grid gap-5 p-5 xl:grid-cols-2">
+          <% [["Active Travel", @active_travel], ["Latest Pending Travel", @ship_travel]].each do |title, travel| %>
+            <div class="rounded-lg border border-slate-200 p-4">
+              <div class="flex items-start justify-between gap-3">
+                <h3 class="font-semibold text-slate-950"><%= title %></h3>
+                <% if travel.present? %>
+                  <%= link_to "Edit", edit_admin_ship_travel_path(travel), class: "text-sm font-semibold text-cyan-700 hover:text-cyan-900" %>
+                <% end %>
+              </div>
+
+              <% if travel.present? %>
+                <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                  <% travel_rows.call(travel).each do |label, value| %>
+                    <%= render_field.call(label, value) %>
+                  <% end %>
+                </div>
+              <% else %>
+                <p class="mt-4 text-sm text-slate-500">No <%= title.downcase %> record.</p>
+              <% end %>
+            </div>
           <% end %>
         </div>
-      </div>
-
-      <!-- Categories Box -->
-      <div class="bg-white p-6 rounded shadow" data-model-id="<%= @user_ship.id %>" data-model-name="user_ship" data-controller="category-selector">
-        <h2 class="text-xl font-semibold mb-4">Categories</h2>
-        <div>
-          <label class="block text-sm font-medium text-gray-700" for="category-select">Select Category</label>
-          <select id="category-select" name="category_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" data-category-selector-target="select">
-            <option value="">Select a category</option>
-            <% Category.all.each do |category| %>
-              <option value="<%= category.id %>" <%= 'selected' if @user_ship.category_id == category.id %>><%= category.name %></option>
-            <% end %>
-          </select>
-        </div>
-      </div>
-
-      <!-- Templates Box -->
-      <div class="bg-white p-6 rounded shadow" data-model-id="<%= @user_ship.id %>" data-model-name="user_ship" data-controller="template-selector">
-        <h2 class="text-xl font-semibold mb-4">Templates</h2>
-        <div>
-
-        </div>
-      </div>
-
-      <!-- Featured Image Box -->
-      <div class="bg-white p-6 rounded shadow">
-        <h2 class="text-xl font-semibold mb-4">Featured Image</h2>
-
-      </div>
+      </section>
     </div>
+
+    <aside class="space-y-6">
+      <section class="<%= panel_class %> p-5">
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="text-lg font-semibold text-slate-950">Summary</h2>
+          <span class="rounded-full border px-2.5 py-1 text-xs font-semibold <%= status_badge_class.call(@user_ship.status) %>"><%= display.call(@user_ship.status).to_s.titleize %></span>
+        </div>
+
+        <div class="mt-5 space-y-4">
+          <% {
+            "ID" => @user_ship.id,
+            "GUID" => @user_ship.guid,
+            "Ship Slug" => @user_ship.ship_slug,
+            "Created At" => timestamp.call(@user_ship.created_at),
+            "Updated At" => timestamp.call(@user_ship.updated_at)
+          }.each do |label, value| %>
+            <%= render_field.call(label, value) %>
+          <% end %>
+        </div>
+      </section>
+
+      <section class="<%= panel_class %> p-5">
+        <h2 class="text-lg font-semibold text-slate-950">Cargo Capacity</h2>
+        <div class="mt-5">
+          <div class="h-3 overflow-hidden rounded-full bg-slate-100">
+            <div class="h-full rounded-full bg-cyan-600" style="width: <%= capacity_percent %>%"></div>
+          </div>
+          <div class="mt-3 grid grid-cols-3 gap-3 text-sm">
+            <div>
+              <p class="<%= label_class %>">Total</p>
+              <p class="<%= value_class %>"><%= total_scu %></p>
+            </div>
+            <div>
+              <p class="<%= label_class %>">Used</p>
+              <p class="<%= value_class %>"><%= used_scu %></p>
+            </div>
+            <div>
+              <p class="<%= label_class %>">Available</p>
+              <p class="<%= value_class %>"><%= available_scu %></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="<%= panel_class %> p-5">
+        <h2 class="text-lg font-semibold text-slate-950">Owner</h2>
+        <div class="mt-5 space-y-4">
+          <% {
+            "User" => (user&.username.presence || "User ##{user&.id}"),
+            "User ID" => @user_ship.user_id,
+            "Twitch ID" => user&.twitch_id,
+            "Wallet" => (user&.wallet_balance.present? ? number_to_currency(user.wallet_balance) : nil)
+          }.each do |label, value| %>
+            <%= render_field.call(label, value) %>
+          <% end %>
+        </div>
+      </section>
+
+      <section class="<%= panel_class %> p-5">
+        <h2 class="text-lg font-semibold text-slate-950">Ship</h2>
+        <div class="mt-5 space-y-4">
+          <% {
+            "Ship" => ship_title,
+            "Ship ID" => @user_ship.ship_id,
+            "Full Name" => ship_full_name,
+            "Manufacturer" => ship_company,
+            "Model" => ship&.model,
+            "SCU" => ship&.scu,
+            "Role" => ship&.role
+          }.each do |label, value| %>
+            <%= render_field.call(label, value) %>
+          <% end %>
+        </div>
+      </section>
+
+      <section class="<%= panel_class %> p-5">
+        <h2 class="text-lg font-semibold text-slate-950">Shard</h2>
+        <div class="mt-5 space-y-4">
+          <% {
+            "Shard Name" => @user_ship.shard_name,
+            "Shard ID" => @user_ship.shard_id,
+            "Shard" => shard&.name,
+            "Region" => shard&.region,
+            "Channel UUID" => shard&.channel_uuid,
+            "Shard User ID" => @user_ship.shard_user_id,
+            "Shard User" => (shard_user&.user&.username.presence || (shard_user ? "ShardUser ##{shard_user.id}" : nil)),
+            "Shard User Wallet" => (shard_user&.wallet_balance.present? ? number_to_currency(shard_user.wallet_balance) : nil)
+          }.each do |label, value| %>
+            <%= render_field.call(label, value) %>
+          <% end %>
+        </div>
+      </section>
+
+      <section class="<%= panel_class %> p-5">
+        <h2 class="text-lg font-semibold text-slate-950">Location</h2>
+        <div class="mt-5 space-y-4">
+          <% {
+            "Location Name" => @user_ship.location_name,
+            "Location" => location&.name,
+            "Classification" => location&.classification,
+            "Code" => location&.code,
+            "Parent" => location&.parent_name,
+            "Star System" => location&.star_system_name,
+            "Planet" => location&.planet_name,
+            "Has Trade Terminal" => (location.nil? ? nil : (location.has_trade_terminal? ? "Yes" : "No"))
+          }.each do |label, value| %>
+            <%= render_field.call(label, value) %>
+          <% end %>
+        </div>
+      </section>
+    </aside>
   </div>
+</div>
