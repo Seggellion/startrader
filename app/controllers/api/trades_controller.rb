@@ -86,13 +86,13 @@ module Api
 
       Rails.logger.info(
         "[status] payload keys: ship_guid_present=#{payload[:ship_guid].present?} " \
-        "broadcaster_id_present=#{payload[:broadcaster_id].present?} " \
+        "shard_id_present=#{payload[:shard_id].present?} " \
         "wallet_balance_present=#{payload[:wallet_balance].present?}"
       )
 
       result = TradeService.status(
         ship_guid: payload[:ship_guid],
-        broadcaster_id: payload[:broadcaster_id],
+        shard_id: payload[:shard_id],
         wallet_balance: payload[:wallet_balance],
         username: payload[:username],
         shard: payload[:shard]
@@ -120,7 +120,7 @@ module Api
 
       {
         ship_guid: first_present_param(sources, :ship_guid),
-        broadcaster_id: first_present_param(sources, :broadcaster_id),
+        shard_id: first_present_param(sources, :shard_id),
         wallet_balance: first_present_param(sources, :wallet_balance),
         username: first_present_param(sources, :username),
         shard: first_present_param(sources, :shard_uuid) || first_present_param(sources, :shard)
