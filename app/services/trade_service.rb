@@ -14,22 +14,22 @@ class TradeService
     class ShipNotFoundError < StandardError; end
     class ValidationError < StandardError; end
   
-    def self.status(ship_guid: nil, broadcaster_id: nil, wallet_balance: nil, username: nil, shard: nil)
-      has_new_payload = ship_guid.present? || broadcaster_id.present?
+    def self.status(ship_guid: nil, shard_id: nil, wallet_balance: nil, username: nil, shard: nil)
+      has_new_payload = ship_guid.present? || shard_id.present?
 
       Rails.logger.info(
         "[TradeService.status] path=#{has_new_payload ? 'ship_guid' : 'legacy'} " \
-        "ship_guid_present=#{ship_guid.present?} broadcaster_id_present=#{broadcaster_id.present?} " \
+        "ship_guid_present=#{ship_guid.present?} shard_id_present=#{shard_id.present?} " \
         "username_present=#{username.present?} shard_present=#{shard.present?}"
       )
 
       if has_new_payload
         raise ValidationError, 'ship_guid is required' if ship_guid.blank?
-        raise ValidationError, 'broadcaster_id is required' if broadcaster_id.blank?
+        raise ValidationError, 'shard_id is required' if shard_id.blank?
 
         return status_by_ship_guid(
           ship_guid: ship_guid,
-          broadcaster_id: broadcaster_id,
+          shard_id: shard_id,
           wallet_balance: wallet_balance
         )
       end
@@ -40,10 +40,10 @@ class TradeService
       legacy_status(username: username, wallet_balance: wallet_balance, shard: shard)
     end
 
-    def self.status_by_ship_guid(ship_guid:, broadcaster_id:, wallet_balance: nil)
+    def self.status_by_ship_guid(ship_guid:, shard_id:, wallet_balance: nil)
       validate_wallet_balance!(wallet_balance)
 
-      shard = Shard.find_by(channel_uuid: broadcaster_id)
+      shard = Shard.find_by(channel_uuid: shard_id)
       raise ActiveRecord::RecordNotFound, 'Shard not found' unless shard
 
       user_ship = UserShip.find_by(guid: ship_guid)
