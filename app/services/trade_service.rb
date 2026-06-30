@@ -78,7 +78,6 @@ class TradeService
           ship_guid: ship_guid,
           ship: ship,
           shard: shard,
-          shard_name: shard.name,
           shard_user: shard_user,
           user: user
         )
@@ -179,6 +178,7 @@ class TradeService
         shard: shard,
         shard_user: shard_user,
         ship_slug: ship.slug,
+        shard_name: shard.name,
         location_name: default_location_name_for_status,
         total_scu: total_scu_for_ship(ship),
         used_scu: 0,
