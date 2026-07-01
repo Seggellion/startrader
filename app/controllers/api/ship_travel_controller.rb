@@ -555,21 +555,54 @@ end
 
 def resolve_current_location_for_travel(user_ship, from_location_name)
   server_location = user_ship.location
-  request_location = resolve_location_by_name(from_location_name) if from_location_name.present?
 
-  if server_location && request_location && server_location.id != request_location.id
+  if server_location
+    validate_request_from_location!(server_location, from_location_name) if from_location_name.present?
+    return server_location unless performed?
+
+    server_location
+  elsif from_location_name.present?
+    request_location = resolve_initial_from_location(from_location_name)
+    return if performed?
+    unless request_location
+      render json: {
+        error: "from_location could not be resolved."
+      }, status: :unprocessable_entity
+      return
+    end
+
+    user_ship.update!(location: request_location)
+    request_location
+  end
+end
+
+def validate_request_from_location!(server_location, from_location_name)
+  request_location = resolve_location_by_name(
+    from_location_name,
+    star_system_name: server_location.star_system_name
+  )
+
+  if request_location.nil?
     render json: {
-      error: "from_location does not match current ship location."
+      error: "from_location could not be resolved in current star system."
     }, status: :unprocessable_entity
     return
   end
 
-  if server_location
-    server_location
-  elsif request_location
-    user_ship.update!(location: request_location)
-    request_location
-  end
+  return if request_location.id == server_location.id
+
+  render json: {
+    error: "from_location does not match current ship location."
+  }, status: :unprocessable_entity
+end
+
+def resolve_initial_from_location(from_location_name)
+  LocationResolver.resolve_unscoped_unique(from_location_name)
+rescue ActiveRecord::RecordNotFound
+  render json: {
+    error: "from_location is ambiguous without a current ship location."
+  }, status: :unprocessable_entity
+  nil
 end
 
     # Ensure a UserShip exists on this shard for the chosen hull

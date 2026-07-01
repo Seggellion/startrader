@@ -286,6 +286,115 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     refute_equal nyx_gateway_stanton, travel.to_location
   end
 
+  test "create accepts unqualified from location matching existing current gateway" do
+    _stanton_gateway_pyro, nyx_gateway_pyro, = create_gateway_locations
+    terra_gateway_pyro = create_gateway("Terra Gateway (Pyro)", "Pyro")
+    create_gateway("Terra Gateway (Stanton)", "Stanton")
+    user_ship = create_existing_synced_ship_at(nyx_gateway_pyro, guid: "nyx-current-ship-guid")
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "client-travel-guid-unqualified-from",
+        ship_guid: user_ship.guid,
+        player_guid: user_ship.user.twitch_id,
+        player_name: user_ship.user.username,
+        from_location: "Nyx Gateway",
+        to_location: "terra gateway"
+      )
+    }, as: :json
+
+    assert_response :success
+    assert_equal "travel_started", response_json["status"]
+    assert_equal terra_gateway_pyro.name, response_json["destination"]
+
+    travel = ShipTravel.find_by!(travel_guid: "client-travel-guid-unqualified-from")
+    assert_equal nyx_gateway_pyro, travel.from_location
+    assert_equal terra_gateway_pyro, travel.to_location
+  end
+
+  test "create accepts lowercase from location matching existing current gateway" do
+    _stanton_gateway_pyro, nyx_gateway_pyro, = create_gateway_locations
+    terra_gateway_pyro = create_gateway("Terra Gateway (Pyro)", "Pyro")
+    user_ship = create_existing_synced_ship_at(nyx_gateway_pyro, guid: "lowercase-from-ship-guid")
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "client-travel-guid-lowercase-from",
+        ship_guid: user_ship.guid,
+        player_guid: user_ship.user.twitch_id,
+        player_name: user_ship.user.username,
+        from_location: "nyx gateway",
+        to_location: "terra gateway"
+      )
+    }, as: :json
+
+    assert_response :success
+    assert_equal terra_gateway_pyro.name, response_json["destination"]
+  end
+
+  test "create accepts full parenthetical from location matching existing current gateway" do
+    _stanton_gateway_pyro, nyx_gateway_pyro, = create_gateway_locations
+    terra_gateway_pyro = create_gateway("Terra Gateway (Pyro)", "Pyro")
+    user_ship = create_existing_synced_ship_at(nyx_gateway_pyro, guid: "full-from-ship-guid")
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "client-travel-guid-full-from",
+        ship_guid: user_ship.guid,
+        player_guid: user_ship.user.twitch_id,
+        player_name: user_ship.user.username,
+        from_location: "Nyx Gateway (Pyro)",
+        to_location: "Terra Gateway"
+      )
+    }, as: :json
+
+    assert_response :success
+    assert_equal terra_gateway_pyro.name, response_json["destination"]
+  end
+
+  test "create rejects truly different from location after scoped resolution" do
+    stanton_gateway_pyro, nyx_gateway_pyro, = create_gateway_locations
+    create_gateway("Terra Gateway (Pyro)", "Pyro")
+    user_ship = create_existing_synced_ship_at(nyx_gateway_pyro, guid: "different-from-ship-guid")
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "client-travel-guid-different-from",
+        ship_guid: user_ship.guid,
+        player_guid: user_ship.user.twitch_id,
+        player_name: user_ship.user.username,
+        from_location: "Stanton Gateway",
+        to_location: "Terra Gateway"
+      )
+    }, as: :json
+
+    assert_response :unprocessable_entity
+    assert_equal({ "error" => "from_location does not match current ship location." }, response_json)
+    assert_equal stanton_gateway_pyro, Location.find_by!(name: stanton_gateway_pyro.name)
+    assert_nil ShipTravel.find_by(travel_guid: "client-travel-guid-different-from")
+  end
+
+  test "create rejects ambiguous unqualified from location when ship has no current location" do
+    create_gateway_locations
+    Ship.create!(model: "Drake Caterpillar", slug: "caterpillar", scu: 576, speed: 80)
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "client-travel-guid-ambiguous-from",
+        ship_guid: "ambiguous-from-ship-guid",
+        ship_slug: "caterpillar",
+        player_guid: "ambiguous-from-player-guid",
+        player_name: "AmbiguousPilot",
+        from_location: "Nyx Gateway",
+        to_location: "Terra Gateway"
+      )
+    }, as: :json
+
+    assert_response :unprocessable_entity
+    assert_equal({ "error" => "from_location is ambiguous without a current ship location." }, response_json)
+    assert_nil ShipTravel.find_by(travel_guid: "client-travel-guid-ambiguous-from")
+  end
+
   test "create uses existing ship location star system for destination resolution" do
     stanton_gateway_pyro, nyx_gateway_pyro, = create_gateway_locations
     user = User.create!(
@@ -766,6 +875,42 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     )
 
     [stanton_gateway_pyro, nyx_gateway_pyro, nyx_gateway_stanton]
+  end
+
+  def create_gateway(name, star_system_name)
+    Location.create!(
+      name: name,
+      nickname: name,
+      space_station_name: name,
+      orbit_name: "#{name.sub(/\s*\([^)]*\)\s*\z/, "")} (#{star_system_name} system)",
+      classification: "space_station",
+      star_system_name: star_system_name,
+      is_available: true,
+      is_visible: true
+    )
+  end
+
+  def create_existing_synced_ship_at(location, guid:)
+    user = User.create!(
+      username: "#{guid}-pilot",
+      twitch_id: "#{guid}-player",
+      uid: "#{guid}-player",
+      user_type: "player"
+    )
+    shard_user = ShardUser.create!(user: user, shard: @shard, shard_name: @shard.name)
+
+    UserShip.create!(
+      user: user,
+      ship: @ship,
+      shard: @shard,
+      shard_user: shard_user,
+      shard_name: @shard.name,
+      guid: guid,
+      ship_slug: @ship.slug,
+      location: location,
+      total_scu: @ship.scu,
+      used_scu: 0
+    )
   end
 
   def create_cancel_user(uid: "cancel-player-guid", username: "CancelPilot")

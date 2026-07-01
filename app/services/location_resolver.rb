@@ -66,6 +66,10 @@ class LocationResolver
       raise(ActiveRecord::RecordNotFound, "Location not found in #{star_system_name}.")
   end
 
+  def self.resolve_unscoped_unique(name)
+    new(name).resolve_unscoped_unique
+  end
+
   def initialize(name)
     @raw_name = name.to_s
   end
@@ -83,6 +87,12 @@ class LocationResolver
     return nil if @raw_name.blank?
 
     exact_match
+  end
+
+  def resolve_unscoped_unique
+    return nil if @raw_name.blank?
+
+    resolve_exact || normalized_unique_match || ranked_match
   end
 
   def resolve_in_star_system(star_system_name)
@@ -140,6 +150,20 @@ class LocationResolver
     end
 
     nil
+  end
+
+  def normalized_unique_match
+    query = normalize_gateway_name(@raw_name)
+    matches = Location.all.select do |location|
+      %i[name nickname space_station_name orbit_name].any? do |field|
+        normalize_gateway_name(location.public_send(field)) == query
+      end
+    end
+
+    return nil if matches.empty?
+    raise ambiguous_location_error if matches.many?
+
+    matches.first
   end
 
   def ranked_match(locations = nil)
