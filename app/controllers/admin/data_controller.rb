@@ -49,12 +49,19 @@ def import_ships
 
       
       def import_star_systems
-        if Admin::Data::StarSystemsImporter.import_all!
-          flash[:notice] = "All Star Systems imported successfully!"
+        json_payload = params[:json_data].presence || params[:raw_json]
+
+        if json_payload.present?
+          imported_count = Admin::Data::StarSystemsImporter.import_raw_json!(json_payload)
+
+          if imported_count > 0
+            redirect_to admin_star_systems_path, notice: "Successfully imported #{imported_count} star systems."
+          else
+            redirect_to admin_star_systems_path, alert: "Import failed. Please verify the JSON format."
+          end
         else
-          flash[:alert] = "Failed to import locations."
+          redirect_to admin_star_systems_path, alert: "No JSON data was provided."
         end
-        redirect_to admin_star_systems_path
       end
 
       def import_cities
