@@ -4,9 +4,9 @@ class TravelService
 
   attr_reader :user_ship, :to_location, :travel_guid
 
-  def initialize(user_ship:, to_location:, travel_guid:, interdict_window_percent: nil, start_tick: nil)
+  def initialize(user_ship:, to_location:, travel_guid:, from_location: nil, interdict_window_percent: nil, start_tick: nil)
     @user_ship = user_ship
-    @from_location = user_ship.location
+    @from_location = from_location || user_ship.location
     @to_location = to_location
     @travel_guid = travel_guid
     @interdict_window_percent = interdict_window_percent || Setting.get("interdiction_window_percent") || DEFAULT_WINDOW_PERCENT

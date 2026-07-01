@@ -47,18 +47,30 @@ class LocationResolver
   MIN_CODE_QUERY_LENGTH = 5
   MIN_TOKEN_MATCH_COUNT = 2
   MIN_ALPHA_TOKEN_LENGTH = 3
+  PairResult = Struct.new(:from_location, :to_location, :star_system_name, keyword_init: true)
 
   def self.resolve(name, star_system_name: nil)
     resolver = new(name)
     if star_system_name.present?
-      return resolver.resolve_in_star_system(star_system_name) || resolver.resolve_exact
+      exact = resolver.resolve_exact
+      return exact if exact && resolver.parenthetical_qualified?
+
+      return resolver.resolve_in_star_system(star_system_name) || exact
     end
 
     resolver.resolve
   end
 
+  def self.resolve_exact(name)
+    new(name).resolve_exact
+  end
+
   def self.find_in_star_system(input_name:, star_system_name:)
     new(input_name).resolve_in_star_system(star_system_name)
+  end
+
+  def self.find_named_in_star_system(input_name:, star_system_name:)
+    new(input_name).resolve_named_in_star_system(star_system_name)
   end
 
   def self.find_in_star_system!(input_name:, star_system_name:)
@@ -68,6 +80,43 @@ class LocationResolver
 
   def self.resolve_unscoped_unique(name)
     new(name).resolve_unscoped_unique
+  end
+
+  def self.resolve_pair_in_star_system(from_name:, to_name:)
+    matches = []
+    ambiguous_systems = []
+
+    Location
+      .where.not(star_system_name: [nil, ""])
+      .distinct
+      .pluck(:star_system_name)
+      .each do |star_system_name|
+        begin
+          from_location = find_named_in_star_system(input_name: from_name, star_system_name: star_system_name)
+          to_location = find_named_in_star_system(input_name: to_name, star_system_name: star_system_name)
+        rescue ActiveRecord::RecordNotFound
+          ambiguous_systems << star_system_name
+          next
+        end
+
+        next unless from_location && to_location
+
+        matches << PairResult.new(
+          from_location: from_location,
+          to_location: to_location,
+          star_system_name: star_system_name
+        )
+      end
+
+    if matches.many?
+      raise ActiveRecord::RecordNotFound, "Multiple star systems match from_location and to_location."
+    end
+
+    if matches.empty? && ambiguous_systems.any?
+      raise ActiveRecord::RecordNotFound, "from_location is ambiguous in #{ambiguous_systems.join(', ')}."
+    end
+
+    matches.first
   end
 
   def initialize(name)
@@ -105,6 +154,20 @@ class LocationResolver
     exact_scoped_match(scoped_locations) ||
       normalized_scoped_match(scoped_locations) ||
       ranked_match(scoped_locations)
+  end
+
+  def resolve_named_in_star_system(star_system_name)
+    return nil if @raw_name.blank? || star_system_name.blank?
+
+    scoped_locations = Location
+      .where("LOWER(star_system_name) = ?", star_system_name.to_s.downcase)
+      .to_a
+
+    exact_scoped_match(scoped_locations) || normalized_scoped_match(scoped_locations)
+  end
+
+  def parenthetical_qualified?
+    @raw_name.match?(/\([^)]*\)\s*\z/)
   end
 
   private

@@ -130,4 +130,37 @@ class LocationResolverTest < ActiveSupport::TestCase
       star_system_name: "Pyro"
     )
   end
+
+  test "infers a unique star system where from and to names both exist" do
+    terra_gateway_stanton = Location.create!(
+      name: "Terra Gateway (Stanton)",
+      nickname: "Terra Gateway (Stanton)",
+      space_station_name: "Terra Gateway (Stanton)",
+      classification: "space_station",
+      star_system_name: "Stanton"
+    )
+    pyro_gateway_stanton = Location.create!(
+      name: "Pyro Gateway (Stanton)",
+      nickname: "Pyro Gateway (Stanton)",
+      space_station_name: "Pyro Gateway (Stanton)",
+      classification: "space_station",
+      star_system_name: "Stanton"
+    )
+    Location.create!(
+      name: "Terra Gateway (Pyro)",
+      nickname: "Terra Gateway (Pyro)",
+      space_station_name: "Terra Gateway (Pyro)",
+      classification: "space_station",
+      star_system_name: "Pyro"
+    )
+
+    match = LocationResolver.resolve_pair_in_star_system(
+      from_name: "terra gateway",
+      to_name: "pyro gateway"
+    )
+
+    assert_equal "Stanton", match.star_system_name
+    assert_equal terra_gateway_stanton, match.from_location
+    assert_equal pyro_gateway_stanton, match.to_location
+  end
 end

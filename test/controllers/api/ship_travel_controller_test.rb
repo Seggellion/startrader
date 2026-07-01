@@ -352,9 +352,9 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     assert_equal terra_gateway_pyro.name, response_json["destination"]
   end
 
-  test "create rejects truly different from location after scoped resolution" do
+  test "create reconciles stale stored location from valid request location" do
     stanton_gateway_pyro, nyx_gateway_pyro, = create_gateway_locations
-    create_gateway("Terra Gateway (Pyro)", "Pyro")
+    terra_gateway_pyro = create_gateway("Terra Gateway (Pyro)", "Pyro")
     user_ship = create_existing_synced_ship_at(nyx_gateway_pyro, guid: "different-from-ship-guid")
 
     post "/api/travel", params: {
@@ -368,10 +368,13 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
       )
     }, as: :json
 
-    assert_response :unprocessable_entity
-    assert_equal({ "error" => "from_location does not match current ship location." }, response_json)
-    assert_equal stanton_gateway_pyro, Location.find_by!(name: stanton_gateway_pyro.name)
-    assert_nil ShipTravel.find_by(travel_guid: "client-travel-guid-different-from")
+    assert_response :success
+    assert_equal terra_gateway_pyro.name, response_json["destination"]
+
+    travel = ShipTravel.find_by!(travel_guid: "client-travel-guid-different-from")
+    assert_equal stanton_gateway_pyro, travel.from_location
+    assert_equal terra_gateway_pyro, travel.to_location
+    assert_equal stanton_gateway_pyro.name, user_ship.reload.location_name
   end
 
   test "create rejects ambiguous unqualified from location when ship has no current location" do
@@ -432,8 +435,13 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     assert_equal nyx_gateway_pyro.name, response_json["destination"]
   end
 
-  test "create returns explicit error when request from location conflicts with server location" do
-    stanton_gateway_pyro, _nyx_gateway_pyro, = create_gateway_locations
+  test "create uses full parenthetical from location as sync point even when stored location is stale" do
+    pyro_gateway_stanton = create_gateway("Pyro Gateway (Stanton)", "Stanton")
+    everus = Location.create!(
+      name: "Everus Harbor",
+      classification: "space_station",
+      star_system_name: "Stanton"
+    )
     user = User.create!(
       username: "MismatchPilot",
       twitch_id: "mismatch-pilot-twitch",
@@ -449,7 +457,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
       shard_name: @shard.name,
       guid: "mismatch-location-ship-guid",
       ship_slug: @ship.slug,
-      location: @from_location,
+      location: @to_location,
       total_scu: @ship.scu,
       used_scu: 0
     )
@@ -460,14 +468,77 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
         ship_guid: user_ship.guid,
         player_guid: user.uid,
         player_name: user.username,
+        from_location: "Pyro Gateway (Stanton)",
+        to_location: "Everus Harbor"
+      )
+    }, as: :json
+
+    assert_response :success
+    assert_equal everus.name, response_json["destination"]
+
+    travel = ShipTravel.find_by!(travel_guid: "client-travel-guid-location-mismatch")
+    assert_equal pyro_gateway_stanton, travel.from_location
+    assert_equal everus, travel.to_location
+    assert_equal pyro_gateway_stanton.name, user_ship.reload.location_name
+  end
+
+  test "create infers from and to star system from paired unqualified gateway names" do
+    terra_gateway_stanton = create_gateway("Terra Gateway (Stanton)", "Stanton")
+    pyro_gateway_stanton = create_gateway("Pyro Gateway (Stanton)", "Stanton")
+    create_gateway("Terra Gateway (Pyro)", "Pyro")
+    Ship.create!(model: "Drake Caterpillar", slug: "caterpillar", scu: 576, speed: 80)
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "client-travel-guid-paired-gateways",
+        ship_guid: "333-333-333-335",
+        ship_slug: "caterpillar",
+        player_guid: "136591885",
+        player_name: "Seggellion",
+        from_location: "terra gateway",
+        to_location: "pyro gateway"
+      )
+    }, as: :json
+
+    assert_response :success
+
+    user_ship = UserShip.find_by!(guid: "333-333-333-335")
+    travel = ShipTravel.find_by!(travel_guid: "client-travel-guid-paired-gateways")
+    assert_equal terra_gateway_stanton, travel.from_location
+    assert_equal pyro_gateway_stanton, travel.to_location
+    assert_equal terra_gateway_stanton.name, user_ship.location_name
+  end
+
+  test "create rejects from location sync while ship has active travel" do
+    stanton_gateway_pyro, nyx_gateway_pyro, = create_gateway_locations
+    terra_gateway_pyro = create_gateway("Terra Gateway (Pyro)", "Pyro")
+    user_ship = create_existing_synced_ship_at(nyx_gateway_pyro, guid: "active-override-ship-guid")
+    ShipTravel.create!(
+      user_ship: user_ship,
+      from_location: nyx_gateway_pyro,
+      to_location: terra_gateway_pyro,
+      travel_guid: "already-active-travel-guid",
+      departure_tick: 10,
+      arrival_tick: 20,
+      total_duration_ticks: 10,
+      interdict_window_percent: 50
+    )
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "client-travel-guid-active-override",
+        ship_guid: user_ship.guid,
+        player_guid: user_ship.user.twitch_id,
+        player_name: user_ship.user.username,
         from_location: stanton_gateway_pyro.name,
-        to_location: "Nyx Gateway"
+        to_location: terra_gateway_pyro.name
       )
     }, as: :json
 
     assert_response :unprocessable_entity
-    assert_equal({ "error" => "from_location does not match current ship location." }, response_json)
-    assert_nil ShipTravel.find_by(travel_guid: "client-travel-guid-location-mismatch")
+    assert_equal({ "error" => "Ship is already in transit." }, response_json)
+    assert_equal nyx_gateway_pyro.name, user_ship.reload.location_name
+    assert_nil ShipTravel.find_by(travel_guid: "client-travel-guid-active-override")
   end
 
   test "create still rejects exact destinations outside the current star system" do

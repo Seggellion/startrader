@@ -27,7 +27,18 @@ module Api
       user_ship = sync.user_ship
       shard = sync.shard
 
-      current_location = resolve_current_location_for_travel(user_ship, permitted_params[:from_location])
+      process_due_arrival_for(user_ship)
+      user_ship.reload
+
+      if travel_in_progress?(user_ship)
+        return render json: { error: "Ship is already in transit." }, status: :unprocessable_entity
+      end
+
+      current_location = resolve_current_location_for_travel(
+        user_ship,
+        permitted_params[:from_location],
+        permitted_params[:to_location]
+      )
       return if performed?
 
       destination = resolve_location_by_name(
@@ -78,6 +89,7 @@ module Api
 
       travel = TravelService.new(
         user_ship: user_ship,
+        from_location: current_location,
         to_location: destination,
         travel_guid: permitted_params[:travel_guid]
       ).call
@@ -553,56 +565,84 @@ def resolve_location_by_name(name, star_system_name: nil)
   LocationResolver.resolve(name, star_system_name: star_system_name)
 end
 
-def resolve_current_location_for_travel(user_ship, from_location_name)
+def resolve_current_location_for_travel(user_ship, from_location_name, to_location_name)
   server_location = user_ship.location
+  return server_location if from_location_name.blank?
 
-  if server_location
-    validate_request_from_location!(server_location, from_location_name) if from_location_name.present?
-    return server_location unless performed?
-
-    server_location
-  elsif from_location_name.present?
-    request_location = resolve_initial_from_location(from_location_name)
-    return if performed?
-    unless request_location
-      render json: {
-        error: "from_location could not be resolved."
-      }, status: :unprocessable_entity
-      return
-    end
-
-    user_ship.update!(location: request_location)
-    request_location
-  end
-end
-
-def validate_request_from_location!(server_location, from_location_name)
-  request_location = resolve_location_by_name(
-    from_location_name,
-    star_system_name: server_location.star_system_name
+  request_location = resolve_from_location_for_travel(
+    from_location_name: from_location_name,
+    to_location_name: to_location_name,
+    server_location: server_location
   )
+  return if performed?
 
-  if request_location.nil?
+  unless request_location
     render json: {
-      error: "from_location could not be resolved in current star system."
+      error: "from_location could not be resolved."
     }, status: :unprocessable_entity
     return
   end
 
-  return if request_location.id == server_location.id
+  if server_location&.id != request_location.id
+    Rails.logger.info(
+      "ShipTravel location sync: ship_guid=#{user_ship.guid} " \
+      "from stored=#{server_location&.name.inspect} to client=#{request_location.name.inspect}"
+    )
+    user_ship.update!(location: request_location)
+  end
 
-  render json: {
-    error: "from_location does not match current ship location."
-  }, status: :unprocessable_entity
+  request_location
 end
 
-def resolve_initial_from_location(from_location_name)
+def resolve_from_location_for_travel(from_location_name:, to_location_name:, server_location:)
+  exact_location = LocationResolver.resolve_exact(from_location_name)
+  return exact_location if exact_location
+
+  if server_location
+    scoped_location = LocationResolver.find_in_star_system(
+      input_name: from_location_name,
+      star_system_name: server_location.star_system_name
+    )
+    if scoped_location
+      scoped_destination = to_location_name.blank? ||
+        LocationResolver.find_named_in_star_system(
+          input_name: to_location_name,
+          star_system_name: scoped_location.star_system_name
+        ) ||
+        LocationResolver.resolve_exact(to_location_name)
+      return scoped_location if scoped_destination
+    end
+  end
+
+  if to_location_name.present?
+    pair = LocationResolver.resolve_pair_in_star_system(
+      from_name: from_location_name,
+      to_name: to_location_name
+    )
+    return pair.from_location if pair
+  end
+
   LocationResolver.resolve_unscoped_unique(from_location_name)
 rescue ActiveRecord::RecordNotFound
   render json: {
-    error: "from_location is ambiguous without a current ship location."
+    error: ambiguous_from_location_message(server_location)
   }, status: :unprocessable_entity
   nil
+end
+
+def ambiguous_from_location_message(server_location)
+  if server_location
+    "from_location is ambiguous for current travel context."
+  else
+    "from_location is ambiguous without a current ship location."
+  end
+end
+
+def travel_in_progress?(user_ship)
+  user_ship.ship_travels
+           .where(completed_at_tick: nil)
+           .where("is_paused = ? OR arrival_tick >= ?", true, Tick.current)
+           .exists?
 end
 
     # Ensure a UserShip exists on this shard for the chosen hull
