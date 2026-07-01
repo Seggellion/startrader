@@ -66,4 +66,68 @@ class LocationResolverTest < ActiveSupport::TestCase
     assert_nil LocationResolver.resolve("admin")
     assert_nil LocationResolver.resolve("terminal")
   end
+
+  test "resolves unqualified gateway names within a star system" do
+    pyro_nyx_gateway = Location.create!(
+      name: "Nyx Gateway (Pyro)",
+      nickname: "Nyx Gateway (Pyro)",
+      space_station_name: "Nyx Gateway (Pyro)",
+      orbit_name: "Nyx Gateway (Pyro system)",
+      classification: "space_station",
+      star_system_name: "Pyro",
+      is_available: true,
+      is_visible: true
+    )
+    stanton_nyx_gateway = Location.create!(
+      name: "Nyx Gateway (Stanton)",
+      nickname: "Nyx Gateway (Stanton)",
+      space_station_name: "Nyx Gateway (Stanton)",
+      classification: "space_station",
+      star_system_name: "Stanton",
+      is_available: true,
+      is_visible: true
+    )
+
+    assert_equal pyro_nyx_gateway, LocationResolver.find_in_star_system!(
+      input_name: "Nyx Gateway",
+      star_system_name: "Pyro"
+    )
+    assert_equal stanton_nyx_gateway, LocationResolver.find_in_star_system!(
+      input_name: "Nyx Gateway",
+      star_system_name: "Stanton"
+    )
+  end
+
+  test "resolves full parenthetical gateway names within a star system" do
+    location = Location.create!(
+      name: "Pyro Gateway (Stanton)",
+      nickname: "Pyro Gateway (Stanton)",
+      space_station_name: "Pyro Gateway (Stanton)",
+      classification: "space_station",
+      star_system_name: "Stanton",
+      is_available: true,
+      is_visible: true
+    )
+
+    assert_equal location, LocationResolver.find_in_star_system!(
+      input_name: "Pyro Gateway (Stanton)",
+      star_system_name: "Stanton"
+    )
+  end
+
+  test "uses orbit name normalization for gateway aliases" do
+    location = Location.create!(
+      name: "Nyx Gateway (Pyro)",
+      orbit_name: "Nyx Gateway (Pyro system)",
+      classification: "space_station",
+      star_system_name: "Pyro",
+      is_available: true,
+      is_visible: true
+    )
+
+    assert_equal location, LocationResolver.find_in_star_system!(
+      input_name: "Nyx Gateway",
+      star_system_name: "Pyro"
+    )
+  end
 end

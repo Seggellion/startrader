@@ -16,33 +16,33 @@ module Api
         return render json: { error: "travel_guid is required." }, status: :unprocessable_entity
       end
 
-      user        = find_or_create_user_by_guid_or_name(permitted_params[:player_guid], permitted_params[:player_name])
-      shard       = resolve_shard(permitted_params[:shard_uuid])
-      #ship        = resolve_ship(travel_params[:ship_guid], travel_params[:ship_slug])
-      destination = resolve_location_by_name(permitted_params[:to_location])
+      sync = StarTraderShipSync.call(
+        ship_guid: permitted_params[:ship_guid],
+        ship_slug: permitted_params[:ship_slug],
+        shard_uuid: permitted_params[:shard_uuid],
+        player_guid: permitted_params[:player_guid],
+        player_name: permitted_params[:player_name]
+      )
 
-      return render json: { error: "Location not found." }, status: :not_found if destination.nil?
+      user_ship = sync.user_ship
+      shard = sync.shard
 
-    user_ship = resolve_user_ship_by_guid_or_slug(
-      user:        user,
-      shard:       shard,
-      ship_guid:   permitted_params[:ship_guid],
-      ship_slug:   permitted_params[:ship_slug]
-    )
+      current_location = resolve_current_location_for_travel(user_ship, permitted_params[:from_location])
+      return if performed?
 
-     # user_ship = find_or_create_user_ship(user, ship, shard)
-
-      # If caller provided a from_location, ensure the server knows it (helpful for first-time players)
-      if permitted_params[:from_location].present?
-        from_loc = resolve_location_by_name(permitted_params[:from_location])
-        user_ship.update(location: from_loc) if from_loc && user_ship.location.nil?
-      end
+      destination = resolve_location_by_name(
+        permitted_params[:to_location],
+        star_system_name: current_location&.star_system_name
+      )
 
       # Backfill a starting location if still nil (defaults to star system’s planet to keep things valid)
-      if user_ship.location.nil?
+      if user_ship.location.nil? && destination
         fallback = Location.planets.find_by(name: destination.star_system_name) # e.g., "Stanton"
         user_ship.update(location: fallback) if fallback
+        current_location = user_ship.location
       end
+
+      return render json: { error: "Location not found." }, status: :not_found if destination.nil?
 
       # --- NEW: Prevent traveling to the current location ---
       if user_ship.location_name == destination.name
@@ -51,7 +51,7 @@ module Api
       # -----------------------------------------------------
 
       # Star system travel restriction
-      if user_ship.location && destination.star_system_name != user_ship.location.star_system_name
+      if current_location && destination.star_system_name != current_location.star_system_name
         return render json: { error: "You cannot travel outside your current star system." }, status: :unprocessable_entity
       end
 
@@ -549,8 +549,27 @@ module Api
 end
 
 
-def resolve_location_by_name(name)
-  LocationResolver.resolve(name)
+def resolve_location_by_name(name, star_system_name: nil)
+  LocationResolver.resolve(name, star_system_name: star_system_name)
+end
+
+def resolve_current_location_for_travel(user_ship, from_location_name)
+  server_location = user_ship.location
+  request_location = resolve_location_by_name(from_location_name) if from_location_name.present?
+
+  if server_location && request_location && server_location.id != request_location.id
+    render json: {
+      error: "from_location does not match current ship location."
+    }, status: :unprocessable_entity
+    return
+  end
+
+  if server_location
+    server_location
+  elsif request_location
+    user_ship.update!(location: request_location)
+    request_location
+  end
 end
 
     # Ensure a UserShip exists on this shard for the chosen hull

@@ -84,6 +84,300 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     assert_equal destination, ShipTravel.find_by!(travel_guid: "client-travel-guid-shubin-22").to_location
   end
 
+  test "create resolves unqualified gateway destination within from location star system" do
+    stanton_gateway_pyro, nyx_gateway_pyro, _nyx_gateway_stanton = create_gateway_locations
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "client-travel-guid-nyx-gateway",
+        ship_guid: "333-333-333-335",
+        from_location: stanton_gateway_pyro.name,
+        to_location: "Nyx Gateway"
+      )
+    }, as: :json
+
+    assert_response :success
+    assert_equal "travel_started", response_json["status"]
+    assert_equal nyx_gateway_pyro.name, response_json["destination"]
+
+    travel = ShipTravel.find_by!(travel_guid: "client-travel-guid-nyx-gateway")
+    assert_equal stanton_gateway_pyro, travel.from_location
+    assert_equal nyx_gateway_pyro, travel.to_location
+    assert_equal nyx_gateway_pyro.name, travel.to_location.name
+  end
+
+  test "create syncs missing user shard user and user ship from travel payload" do
+    stanton_gateway_pyro, nyx_gateway_pyro, = create_gateway_locations
+    caterpillar = Ship.create!(model: "Drake Caterpillar", slug: "caterpillar", scu: 576, speed: 80)
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "client-travel-guid-cold-sync",
+        ship_guid: "333-333-333-335",
+        ship_slug: caterpillar.slug,
+        player_guid: "136591885",
+        player_name: "Seggellion",
+        shard_uuid: @shard.channel_uuid,
+        from_location: stanton_gateway_pyro.name,
+        to_location: "Nyx Gateway"
+      )
+    }, as: :json
+
+    assert_response :success
+    assert_equal "travel_started", response_json["status"]
+    assert_equal nyx_gateway_pyro.name, response_json["destination"]
+
+    user = User.find_by!(twitch_id: "136591885")
+    shard_user = ShardUser.find_by!(user: user, shard: @shard)
+    user_ship = UserShip.find_by!(guid: "333-333-333-335")
+    travel = ShipTravel.find_by!(travel_guid: "client-travel-guid-cold-sync")
+
+    assert_equal "Seggellion", user.username
+    assert_equal "136591885", user.uid
+    assert_equal @shard.name, shard_user.shard_name
+    assert_equal user, user_ship.user
+    assert_equal @shard, user_ship.shard
+    assert_equal shard_user, user_ship.shard_user
+    assert_equal caterpillar, user_ship.ship
+    assert_equal caterpillar.slug, user_ship.ship_slug
+    assert_equal 576, user_ship.total_scu
+    assert_equal 0, user_ship.used_scu
+    assert_equal stanton_gateway_pyro.name, user_ship.location_name
+    assert_equal "in_transit", user_ship.status
+    assert_equal user_ship, travel.user_ship
+    assert_equal stanton_gateway_pyro, travel.from_location
+    assert_equal nyx_gateway_pyro, travel.to_location
+  end
+
+  test "create updates existing player username and creates missing shard user" do
+    stanton_gateway_pyro, nyx_gateway_pyro, = create_gateway_locations
+    user = User.create!(
+      username: "OldPilotName",
+      twitch_id: "rename-player-guid",
+      uid: "rename-player-guid",
+      user_type: "player"
+    )
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "client-travel-guid-rename-sync",
+        ship_guid: "rename-sync-ship-guid",
+        player_guid: user.twitch_id,
+        player_name: "NewPilotName",
+        from_location: stanton_gateway_pyro.name,
+        to_location: nyx_gateway_pyro.name
+      )
+    }, as: :json
+
+    assert_response :success
+    assert_equal "NewPilotName", user.reload.username
+    assert ShardUser.exists?(user: user, shard: @shard)
+  end
+
+  test "create does not silently steal a user ship from another player" do
+    stanton_gateway_pyro, _nyx_gateway_pyro, = create_gateway_locations
+    owner = User.create!(
+      username: "OwnerPilot",
+      twitch_id: "owner-player-guid",
+      uid: "owner-player-guid",
+      user_type: "player"
+    )
+    owner_shard_user = ShardUser.create!(user: owner, shard: @shard, shard_name: @shard.name)
+    UserShip.create!(
+      user: owner,
+      ship: @ship,
+      shard: @shard,
+      shard_user: owner_shard_user,
+      shard_name: @shard.name,
+      guid: "owned-by-someone-else",
+      ship_slug: @ship.slug,
+      location: stanton_gateway_pyro,
+      total_scu: @ship.scu,
+      used_scu: 0
+    )
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "client-travel-guid-ship-theft",
+        ship_guid: "owned-by-someone-else",
+        player_guid: "requesting-player-guid",
+        player_name: "RequestingPilot",
+        from_location: stanton_gateway_pyro.name,
+        to_location: "Nyx Gateway"
+      )
+    }, as: :json
+
+    assert_response :unprocessable_entity
+    assert_equal({ "error" => "Ship does not belong to this player" }, response_json)
+    assert_nil ShipTravel.find_by(travel_guid: "client-travel-guid-ship-theft")
+  end
+
+  test "create does not silently use a user ship from another shard" do
+    stanton_gateway_pyro, _nyx_gateway_pyro, = create_gateway_locations
+    other_shard = Shard.create!(name: "OtherShard", region: "us", channel_uuid: "other-shard-guid")
+    user = User.create!(
+      username: "ShardMismatchPilot",
+      twitch_id: "shard-mismatch-player-guid",
+      uid: "shard-mismatch-player-guid",
+      user_type: "player"
+    )
+    other_shard_user = ShardUser.create!(user: user, shard: other_shard, shard_name: other_shard.name)
+    UserShip.create!(
+      user: user,
+      ship: @ship,
+      shard: other_shard,
+      shard_user: other_shard_user,
+      shard_name: other_shard.name,
+      guid: "wrong-shard-ship-guid",
+      ship_slug: @ship.slug,
+      location: stanton_gateway_pyro,
+      total_scu: @ship.scu,
+      used_scu: 0
+    )
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "client-travel-guid-wrong-shard",
+        ship_guid: "wrong-shard-ship-guid",
+        player_guid: user.twitch_id,
+        player_name: user.username,
+        from_location: stanton_gateway_pyro.name,
+        to_location: "Nyx Gateway"
+      )
+    }, as: :json
+
+    assert_response :unprocessable_entity
+    assert_equal({ "error" => "Ship does not belong to this shard" }, response_json)
+    assert_nil ShipTravel.find_by(travel_guid: "client-travel-guid-wrong-shard")
+  end
+
+  test "create accepts full parenthetical gateway destination" do
+    stanton_gateway_pyro, nyx_gateway_pyro, = create_gateway_locations
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "client-travel-guid-nyx-gateway-full",
+        ship_guid: "333-333-333-336",
+        from_location: stanton_gateway_pyro.name,
+        to_location: "Nyx Gateway (Pyro)"
+      )
+    }, as: :json
+
+    assert_response :success
+    assert_equal nyx_gateway_pyro.name, response_json["destination"]
+    assert_equal nyx_gateway_pyro, ShipTravel.find_by!(travel_guid: "client-travel-guid-nyx-gateway-full").to_location
+  end
+
+  test "create scopes unqualified gateway destination to current system" do
+    stanton_gateway_pyro, nyx_gateway_pyro, nyx_gateway_stanton = create_gateway_locations
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "client-travel-guid-scoped-nyx-gateway",
+        ship_guid: "333-333-333-337",
+        from_location: stanton_gateway_pyro.name,
+        to_location: "Nyx Gateway"
+      )
+    }, as: :json
+
+    assert_response :success
+    travel = ShipTravel.find_by!(travel_guid: "client-travel-guid-scoped-nyx-gateway")
+    assert_equal nyx_gateway_pyro, travel.to_location
+    refute_equal nyx_gateway_stanton, travel.to_location
+  end
+
+  test "create uses existing ship location star system for destination resolution" do
+    stanton_gateway_pyro, nyx_gateway_pyro, = create_gateway_locations
+    user = User.create!(
+      username: "ExistingPilot",
+      twitch_id: "existing-pilot-twitch",
+      uid: "existing-pilot-guid",
+      user_type: "player"
+    )
+    shard_user = ShardUser.create!(user: user, shard: @shard, shard_name: @shard.name)
+    user_ship = UserShip.create!(
+      user: user,
+      ship: @ship,
+      shard: @shard,
+      shard_user: shard_user,
+      shard_name: @shard.name,
+      guid: "existing-location-ship-guid",
+      ship_slug: @ship.slug,
+      location: stanton_gateway_pyro,
+      total_scu: @ship.scu,
+      used_scu: 0
+    )
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "client-travel-guid-existing-location",
+        ship_guid: user_ship.guid,
+        player_guid: user.uid,
+        player_name: user.username,
+        from_location: nil,
+        to_location: "Nyx Gateway"
+      )
+    }, as: :json
+
+    assert_response :success
+    assert_equal nyx_gateway_pyro.name, response_json["destination"]
+  end
+
+  test "create returns explicit error when request from location conflicts with server location" do
+    stanton_gateway_pyro, _nyx_gateway_pyro, = create_gateway_locations
+    user = User.create!(
+      username: "MismatchPilot",
+      twitch_id: "mismatch-pilot-twitch",
+      uid: "mismatch-pilot-guid",
+      user_type: "player"
+    )
+    shard_user = ShardUser.create!(user: user, shard: @shard, shard_name: @shard.name)
+    user_ship = UserShip.create!(
+      user: user,
+      ship: @ship,
+      shard: @shard,
+      shard_user: shard_user,
+      shard_name: @shard.name,
+      guid: "mismatch-location-ship-guid",
+      ship_slug: @ship.slug,
+      location: @from_location,
+      total_scu: @ship.scu,
+      used_scu: 0
+    )
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "client-travel-guid-location-mismatch",
+        ship_guid: user_ship.guid,
+        player_guid: user.uid,
+        player_name: user.username,
+        from_location: stanton_gateway_pyro.name,
+        to_location: "Nyx Gateway"
+      )
+    }, as: :json
+
+    assert_response :unprocessable_entity
+    assert_equal({ "error" => "from_location does not match current ship location." }, response_json)
+    assert_nil ShipTravel.find_by(travel_guid: "client-travel-guid-location-mismatch")
+  end
+
+  test "create still rejects exact destinations outside the current star system" do
+    stanton_gateway_pyro, _nyx_gateway_pyro, nyx_gateway_stanton = create_gateway_locations
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "client-travel-guid-cross-system-gateway",
+        ship_guid: "333-333-333-338",
+        from_location: stanton_gateway_pyro.name,
+        to_location: nyx_gateway_stanton.name
+      )
+    }, as: :json
+
+    assert_response :unprocessable_entity
+    assert_equal({ "error" => "You cannot travel outside your current star system." }, response_json)
+    assert_nil ShipTravel.find_by(travel_guid: "client-travel-guid-cross-system-gateway")
+  end
+
   test "location response includes travel_guid while in transit" do
     guid = "client-travel-guid-2"
     post "/api/travel", params: { ship_travel: travel_payload(travel_guid: guid) }, as: :json
@@ -439,6 +733,39 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
       star_system_name: "Stanton",
       planet_name: "MicroTech"
     )
+  end
+
+  def create_gateway_locations
+    stanton_gateway_pyro = Location.create!(
+      name: "Stanton Gateway (Pyro)",
+      nickname: "Stanton Gateway (Pyro)",
+      space_station_name: "Stanton Gateway (Pyro)",
+      classification: "space_station",
+      star_system_name: "Pyro",
+      is_available: true,
+      is_visible: true
+    )
+    nyx_gateway_pyro = Location.create!(
+      name: "Nyx Gateway (Pyro)",
+      nickname: "Nyx Gateway (Pyro)",
+      space_station_name: "Nyx Gateway (Pyro)",
+      orbit_name: "Nyx Gateway (Pyro system)",
+      classification: "space_station",
+      star_system_name: "Pyro",
+      is_available: true,
+      is_visible: true
+    )
+    nyx_gateway_stanton = Location.create!(
+      name: "Nyx Gateway (Stanton)",
+      nickname: "Nyx Gateway (Stanton)",
+      space_station_name: "Nyx Gateway (Stanton)",
+      classification: "space_station",
+      star_system_name: "Stanton",
+      is_available: true,
+      is_visible: true
+    )
+
+    [stanton_gateway_pyro, nyx_gateway_pyro, nyx_gateway_stanton]
   end
 
   def create_cancel_user(uid: "cancel-player-guid", username: "CancelPilot")

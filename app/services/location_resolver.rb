@@ -48,8 +48,22 @@ class LocationResolver
   MIN_TOKEN_MATCH_COUNT = 2
   MIN_ALPHA_TOKEN_LENGTH = 3
 
-  def self.resolve(name)
-    new(name).resolve
+  def self.resolve(name, star_system_name: nil)
+    resolver = new(name)
+    if star_system_name.present?
+      return resolver.resolve_in_star_system(star_system_name) || resolver.resolve_exact
+    end
+
+    resolver.resolve
+  end
+
+  def self.find_in_star_system(input_name:, star_system_name:)
+    new(input_name).resolve_in_star_system(star_system_name)
+  end
+
+  def self.find_in_star_system!(input_name:, star_system_name:)
+    find_in_star_system(input_name: input_name, star_system_name: star_system_name) ||
+      raise(ActiveRecord::RecordNotFound, "Location not found in #{star_system_name}.")
   end
 
   def initialize(name)
@@ -59,10 +73,28 @@ class LocationResolver
   def resolve
     return nil if @raw_name.blank?
 
-    exact = exact_match
+    exact = resolve_exact
     return exact if exact
 
     ranked_match
+  end
+
+  def resolve_exact
+    return nil if @raw_name.blank?
+
+    exact_match
+  end
+
+  def resolve_in_star_system(star_system_name)
+    return nil if @raw_name.blank? || star_system_name.blank?
+
+    scoped_locations = Location
+      .where("LOWER(star_system_name) = ?", star_system_name.to_s.downcase)
+      .to_a
+
+    exact_scoped_match(scoped_locations) ||
+      normalized_scoped_match(scoped_locations) ||
+      ranked_match(scoped_locations)
   end
 
   private
@@ -82,7 +114,35 @@ class LocationResolver
       .first
   end
 
-  def ranked_match
+  def exact_scoped_match(locations)
+    exact_query = @raw_name.to_s.strip.downcase
+
+    %i[name nickname space_station_name orbit_name].each do |field|
+      matches = locations.select do |location|
+        location.public_send(field).to_s.strip.downcase == exact_query
+      end
+      return matches.first if matches.one?
+      raise ambiguous_location_error if matches.many?
+    end
+
+    nil
+  end
+
+  def normalized_scoped_match(locations)
+    query = normalize_gateway_name(@raw_name)
+
+    %i[name nickname space_station_name orbit_name].each do |field|
+      matches = locations.select do |location|
+        normalize_gateway_name(location.public_send(field)) == query
+      end
+      return matches.first if matches.one?
+      raise ambiguous_location_error if matches.many?
+    end
+
+    nil
+  end
+
+  def ranked_match(locations = nil)
     query_variants = variants
     query_tokens = query_variants.flat_map { |variant| words(variant) }.uniq
     meaningful_query_tokens = query_tokens - NOISE_TOKENS
@@ -91,7 +151,7 @@ class LocationResolver
 
     best = nil
 
-    Location.find_each do |location|
+    each_location(locations) do |location|
       score = score_location(location, meaningful_query_tokens, query_variants)
 
       next if score < MIN_SCORE
@@ -105,6 +165,14 @@ class LocationResolver
     end
 
     best&.fetch(:location)
+  end
+
+  def each_location(locations)
+    if locations
+      locations.each { |location| yield location }
+    else
+      Location.find_each { |location| yield location }
+    end
   end
 
   def score_location(location, meaningful_query_tokens, query_variants)
@@ -264,5 +332,13 @@ class LocationResolver
       .gsub("&", " and ")
       .gsub(/[^a-z0-9]+/, " ")
       .squish
+  end
+
+  def normalize_gateway_name(value)
+    normalize(value.to_s.sub(/\s*\([^)]*\)\s*\z/, ""))
+  end
+
+  def ambiguous_location_error
+    ActiveRecord::RecordNotFound.new("Multiple locations match #{@raw_name}.")
   end
 end

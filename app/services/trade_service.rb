@@ -61,31 +61,16 @@ class TradeService
     def self.status_by_ship_guid(ship_guid:, ship_model:, shard_uuid:, player_guid:, player_name:, wallet_balance: nil)
       validate_wallet_balance!(wallet_balance)
 
-      shard = Shard.find_by(channel_uuid: shard_uuid)
-      raise ActiveRecord::RecordNotFound, 'Shard not found' unless shard
-
-      user, shard_user = find_or_create_user_by_player_guid!(
+      sync = StarTraderShipSync.call(
+        ship_guid: ship_guid,
+        ship_model: ship_model,
+        shard_uuid: shard_uuid,
         player_guid: player_guid,
         player_name: player_name,
-        shard: shard
+        default_location_name: default_location_name_for_status
       )
 
-      user_ship = UserShip.find_by(guid: ship_guid)
-      if user_ship.nil?
-        ship = find_ship_by_model!(ship_model)
-
-        user_ship = create_user_ship_for_status!(
-          ship_guid: ship_guid,
-          ship: ship,
-          shard: shard,
-          shard_user: shard_user,
-          user: user
-        )
-      end
-
-      validate_status_ship_ownership!(user_ship: user_ship, user: user, shard: shard)
-
-      status_response_for(shard_user: shard_user, user_ship: user_ship, wallet_balance: wallet_balance)
+      status_response_for(shard_user: sync.shard_user, user_ship: sync.user_ship, wallet_balance: wallet_balance)
     end
 
     def self.legacy_status(username:, wallet_balance: nil, shard:)
@@ -107,14 +92,6 @@ class TradeService
         wallet_balance: wallet_balance
       )
 
-
-
-
-      
-
-      
-
-      
       # ✅ Check if user already has a ship
       
     
