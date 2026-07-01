@@ -2,7 +2,7 @@ class StarBitizenRun < ApplicationRecord
   belongs_to :user
   belongs_to :user_ship_cargo, optional: true
   belongs_to :commodity
-  belongs_to :user_ship
+  belongs_to :user_ship, optional: true
 
   # Locations now referenced by name instead of ID
   belongs_to :buy_location, class_name: 'Location', foreign_key: 'buy_location_name', primary_key: 'name', optional: true

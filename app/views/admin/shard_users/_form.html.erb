@@ -1,0 +1,41 @@
+<%= form_with(model: [:admin, @shard_user], local: true) do |form| %>
+  <% if @shard_user.errors.any? %>
+    <div class="mb-4 text-red-600">
+      <%= @shard_user.errors.full_messages.to_sentence %>
+    </div>
+  <% end %>
+
+  <div class="mb-4">
+    <%= form.label :user_id, "User", class: "block font-bold mb-1" %>
+    <%= form.select :user_id, options_from_collection_for_select(@users, :id, :username, @shard_user.user_id), {}, class: "border rounded w-full p-2" %>
+  </div>
+
+  <div class="mb-4">
+    <%= form.label :shard_id, "Shard", class: "block font-bold mb-1" %>
+    <%= form.select :shard_id, options_from_collection_for_select(@shards, :id, :name, @shard_user.shard_id), { include_blank: "No shard" }, class: "border rounded w-full p-2" %>
+  </div>
+
+  <div class="mb-4">
+    <%= form.label :wallet_balance, class: "block font-bold mb-1" %>
+    <%= form.number_field :wallet_balance, class: "border rounded w-full p-2" %>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div>
+      <%= form.label :karma, class: "block font-bold mb-1" %>
+      <%= form.number_field :karma, class: "border rounded w-full p-2" %>
+    </div>
+    <div>
+      <%= form.label :fame, class: "block font-bold mb-1" %>
+      <%= form.number_field :fame, class: "border rounded w-full p-2" %>
+    </div>
+    <div>
+      <%= form.label :murder_count, class: "block font-bold mb-1" %>
+      <%= form.number_field :murder_count, class: "border rounded w-full p-2" %>
+    </div>
+  </div>
+
+  <div class="mt-6">
+    <%= form.submit class: "bg-blue-500 text-white px-4 py-2 rounded" %>
+  </div>
+<% end %>

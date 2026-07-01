@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_24_190000) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_30_120000) do
   create_schema "cable"
 
   # These are extensions that must be enabled in order to support this database
@@ -429,6 +429,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_24_190000) do
     t.string "shard_name"
     t.integer "wallet_balance", default: 0
     t.index ["shard_id"], name: "index_shard_users_on_shard_id"
+    t.index ["user_id", "shard_id"], name: "index_shard_users_on_user_id_and_shard_id_unique", unique: true
     t.index ["user_id"], name: "index_shard_users_on_user_id"
   end
 
@@ -715,6 +716,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_24_190000) do
   add_foreign_key "npcs", "shards"
   add_foreign_key "pages", "categories"
   add_foreign_key "pages", "users"
+  add_foreign_key "shard_users", "shards", validate: false
+  add_foreign_key "shard_users", "users", validate: false
   add_foreign_key "ship_travels", "locations", column: "from_location_id"
   add_foreign_key "ship_travels", "locations", column: "to_location_id"
   add_foreign_key "ship_travels", "user_ships"

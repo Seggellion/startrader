@@ -7,6 +7,7 @@ class UserShip < ApplicationRecord
   belongs_to :shard_user, optional: true
 
   has_many :user_ship_cargos, dependent: :destroy
+  has_many :star_bitizen_runs, dependent: :nullify
   belongs_to :location, primary_key: :name, foreign_key: :location_name, optional: true
 
   validates :total_scu, :used_scu, presence: true

@@ -1,6 +1,6 @@
 class ShardUser < ApplicationRecord
   belongs_to :user
-  belongs_to :shard, primary_key: :name, foreign_key: :shard_name, optional: true
+  belongs_to :shard, optional: true
 
   # Store inventory and currency as JSON
   store :inventory, coder: JSON
@@ -8,10 +8,14 @@ class ShardUser < ApplicationRecord
   store :stats, coder: JSON
   store :last_location, coder: JSON
 
-  has_many :user_ships
+  has_many :shard_user_skills, dependent: :delete_all
+  has_many :user_ships, dependent: :destroy
   has_many :ships, through: :user_ships
 
+  before_validation :sync_shard_name_from_shard
   before_save :initialize_serialized_fields # ✅ Runs before every save
+
+  validates :user_id, uniqueness: { scope: :shard_id }
 
   validate :currency_not_nil
   validate :inventory_not_nil
@@ -43,11 +47,15 @@ class ShardUser < ApplicationRecord
 
   def update_credits(amount)
     new_balance = wallet_balance.to_f + amount.to_f
-    
+
     update(wallet_balance: new_balance)
   end
 
   private
+
+  def sync_shard_name_from_shard
+    self.shard_name = shard.name if shard.present?
+  end
 
   def initialize_serialized_fields
     self.inventory = {} if inventory.nil? # ✅ Fix: Use `=` instead of `||=`

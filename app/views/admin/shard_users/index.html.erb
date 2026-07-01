@@ -1,0 +1,34 @@
+<div class="bg-white p-6 rounded shadow">
+  <div class="flex justify-between items-center mb-4">
+    <h1 class="text-2xl font-bold">ShardUsers</h1>
+    <%= link_to 'Add New', new_admin_shard_user_path, class: 'bg-blue-500 text-white px-4 py-2 rounded' %>
+  </div>
+
+  <table class="min-w-full bg-white mt-4 border">
+    <thead>
+      <tr>
+        <th class="py-2 px-4 border">User</th>
+        <th class="py-2 px-4 border">Shard</th>
+        <th class="py-2 px-4 border">Ships</th>
+        <th class="py-2 px-4 border">Wallet</th>
+        <th class="py-2 px-4 border">Date</th>
+        <th class="py-2 px-4 border">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @shard_users.each do |shard_user| %>
+        <tr>
+          <td class="py-2 px-4 border"><%= shard_user.user&.username || "Unknown" %></td>
+          <td class="py-2 px-4 border"><%= shard_user.shard&.name || shard_user.shard_name || "No shard" %></td>
+          <td class="py-2 px-4 border"><%= shard_user.user_ships.size %></td>
+          <td class="py-2 px-4 border"><%= number_to_currency(shard_user.wallet_balance || 0) %></td>
+          <td class="py-2 px-4 border"><%= shard_user.created_at.strftime('%Y-%m-%d') %></td>
+          <td class="py-2 px-4 border">
+            <%= link_to 'Edit', edit_admin_shard_user_path(shard_user), class: 'text-blue-500 hover:underline' %> |
+            <%= link_to 'Delete', admin_shard_user_path(shard_user), method: :delete, data: { confirm: 'Are you sure?' }, class: 'text-red-500 hover:underline' %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
