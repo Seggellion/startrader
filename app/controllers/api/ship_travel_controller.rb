@@ -112,7 +112,7 @@ module Api
       user_ship = UserShip.find_by(id: params[:user_ship_id])
       return render json: { error: "User ship not found." }, status: :not_found if user_ship.nil?
 
-      process_due_arrival_for(user_ship)
+      processed_arrival = process_due_arrival_for(user_ship)
       user_ship.reload
 
       active_travel = user_ship.active_travel
@@ -149,14 +149,12 @@ module Api
             to_location: paused.to_location.name
           }
         else
-          completed = latest_completed_travel_for(user_ship)
-
-          if completed
+          if processed_arrival
             render json: {
               in_transit: false,
               arrived: true,
-              location: user_ship.location&.name || completed.to_location.name,
-              travel_guid: completed.travel_guid
+              location: user_ship.location&.name || processed_arrival[:to_location_name],
+              travel_guid: processed_arrival[:travel_guid]
             }
           else
             render json: { in_transit: false, location: user_ship.location&.name || "Unknown" }
@@ -368,8 +366,7 @@ module Api
       user_ship = active_travel.user_ship
 
       ActiveRecord::Base.transaction do
-        active_travel.destroy!
-        user_ship.update!(status: "Floating aimlessly in space")
+        active_travel.cleanup_after_cancellation!(Tick.current)
       end
 
       render json: {
@@ -465,15 +462,15 @@ module Api
                         .order(arrival_tick: :desc, updated_at: :desc)
                         .first
 
-      ShipTravelArrivalProcessor.new(travel: travel, current_tick: Tick.current).call if travel
-    end
+      return unless travel
 
-    def latest_completed_travel_for(user_ship)
-      user_ship.ship_travels
-               .completed
-               .where(to_location: user_ship.location)
-               .order(completed_at_tick: :desc, updated_at: :desc)
-               .first
+      arrival = {
+        travel_guid: travel.travel_guid,
+        to_location_name: travel.to_location.name
+      }
+
+      ShipTravelArrivalProcessor.new(travel: travel, current_tick: Tick.current).call
+      arrival
     end
 
     def find_or_create_user_by_guid_or_name(player_guid, player_name)

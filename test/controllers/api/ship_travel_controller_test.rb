@@ -587,11 +587,13 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
 
       get "/api/location/#{travel.user_ship_id}"
       assert_response :success
-      assert_equal guid, response_json["travel_guid"]
+      assert_equal false, response_json["in_transit"]
+      assert_equal @to_location.name, response_json["location"]
+      assert_nil response_json["travel_guid"]
     end
 
     assert_equal 1, sent_reports
-    assert_equal travel.arrival_tick, travel.reload.completed_at_tick
+    refute ShipTravel.exists?(travel.id)
   end
 
   test "interdicted paused and resumed travel preserves travel_guid" do
@@ -787,7 +789,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     assert_equal user_ship.guid, response_json["ship_guid"]
     assert_equal travel.travel_guid, response_json["travel_guid"]
     assert_equal @shard.channel_uuid, response_json["channel_uuid"]
-    assert_equal "Floating aimlessly in space", user_ship.reload.status
+    assert_equal "aimlessly floating in space", user_ship.reload.status
   end
 
   test "cancel succeeds with valid secret guid param" do
@@ -802,6 +804,26 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal "travel_cancelled", response_json["status"]
+  end
+
+  test "cancel rerun after successful cancellation returns active travel not found" do
+    user = create_cancel_user
+    user_ship, _travel = create_active_cancel_travel(user: user)
+
+    delete "/api/cancel",
+      params: cancel_payload(player_guid: user.uid, ship_guid: user_ship.guid),
+      headers: { "X-Secret-Guid" => "test-secret" },
+      as: :json
+    assert_response :success
+
+    delete "/api/cancel",
+      params: cancel_payload(player_guid: user.uid, ship_guid: user_ship.guid),
+      headers: { "X-Secret-Guid" => "test-secret" },
+      as: :json
+
+    assert_response :not_found
+    assert_equal({ "error" => "Active travel not found." }, response_json)
+    assert_equal "aimlessly floating in space", user_ship.reload.status
   end
 
   test "cancel requires shard uuid" do

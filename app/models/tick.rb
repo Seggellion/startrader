@@ -91,7 +91,18 @@ class Tick < ApplicationRecord
       UPDATE user_ships
       SET status = 'aimlessly floating in space'
       WHERE status = 'in_transit'
-      AND id NOT IN (SELECT user_ship_id FROM ship_travels WHERE arrival_tick > #{current_tick})
+      AND NOT EXISTS (
+        SELECT 1
+        FROM ship_travels
+        WHERE ship_travels.user_ship_id = user_ships.id
+        AND (
+          ship_travels.is_paused = TRUE
+          OR (
+            ship_travels.completed_at_tick IS NULL
+            AND ship_travels.arrival_tick > #{current_tick}
+          )
+        )
+      )
     SQL
   end
 

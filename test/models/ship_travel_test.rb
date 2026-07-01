@@ -30,11 +30,11 @@ class ShipTravelTest < ActiveSupport::TestCase
     assert_equal "aimlessly floating in space", user_ship.reload.status
   end
 
-  test "cleanup does not remove current tick arrival" do
+  test "cleanup removes current tick arrival" do
     travel = create_travel(arrival_tick: 105)
 
-    assert_equal 0, ShipTravel.cleanup_stale_after_arrival!(105)
-    assert ShipTravel.exists?(travel.id)
+    assert_equal 1, ShipTravel.cleanup_stale_after_arrival!(105)
+    refute ShipTravel.exists?(travel.id)
   end
 
   test "cleanup does not remove future travel" do
@@ -44,18 +44,25 @@ class ShipTravelTest < ActiveSupport::TestCase
     assert ShipTravel.exists?(travel.id)
   end
 
-  test "cleanup does not remove paused interdicted travel" do
+  test "cleanup does not remove paused interdicted travel with zero arrival tick" do
     travel = create_travel(arrival_tick: 0, is_paused: true)
 
     assert_equal 0, ShipTravel.cleanup_stale_after_arrival!(105)
     assert ShipTravel.exists?(travel.id)
   end
 
-  test "cleanup does not remove completed travel" do
-    travel = create_travel(arrival_tick: 100, completed_at_tick: 100)
+  test "cleanup does not remove paused interdicted travel with past arrival tick" do
+    travel = create_travel(arrival_tick: 100, is_paused: true)
 
     assert_equal 0, ShipTravel.cleanup_stale_after_arrival!(105)
     assert ShipTravel.exists?(travel.id)
+  end
+
+  test "cleanup removes completed travel rows left by the old lifecycle" do
+    travel = create_travel(arrival_tick: 100, completed_at_tick: 100)
+
+    assert_equal 1, ShipTravel.cleanup_stale_after_arrival!(105)
+    refute ShipTravel.exists?(travel.id)
   end
 
   test "cleanup is idempotent" do

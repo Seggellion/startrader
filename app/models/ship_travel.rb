@@ -19,9 +19,9 @@ class ShipTravel < ApplicationRecord
   scope :completed, -> { where.not(completed_at_tick: nil) }
 
   scope :stale_after_arrival, ->(tick = Tick.current) {
-    where(is_paused: false, completed_at_tick: nil)
+    where(is_paused: false)
       .where("arrival_tick > 0")
-      .where("arrival_tick < ?", tick)
+      .where("arrival_tick <= ?", tick)
   }
 
   # Optional: narrow by shard or star system
@@ -109,7 +109,7 @@ scope :interdictable_now_sql, ->(tick = Tick.current) {
     cleaned_count = 0
 
     stale_after_arrival(tick).find_each do |travel|
-      travel.cleanup_stale_after_arrival!
+      travel.cleanup_stale_after_arrival!(tick)
       cleaned_count += 1
     end
 
@@ -152,8 +152,40 @@ scope :interdictable_now_sql, ->(tick = Tick.current) {
     )
   end
 
-  def cleanup_stale_after_arrival!
-    user_ship.update!(status: "aimlessly floating in space") if user_ship.status.to_s.downcase == "in_transit"
+  def cleanup_after_arrival!(current_tick = Tick.current)
+    destroy_for_lifecycle!(reason: "arrival", current_tick: current_tick)
+  end
+
+  def cleanup_after_cancellation!(current_tick = Tick.current)
+    destroy_for_lifecycle!(
+      reason: "cancelled",
+      current_tick: current_tick,
+      ship_status: "aimlessly floating in space"
+    )
+  end
+
+  def cleanup_stale_after_arrival!(current_tick = Tick.current)
+    destroy_for_lifecycle!(
+      reason: "stale_after_arrival",
+      current_tick: current_tick,
+      ship_status: "aimlessly floating in space"
+    )
+  end
+
+  def destroy_for_lifecycle!(reason:, current_tick: Tick.current, ship_status: nil)
+    return if destroyed?
+
+    if ship_status.present? && user_ship.status.to_s.downcase == "in_transit"
+      user_ship.update!(status: ship_status)
+    end
+
+    Rails.logger.info(
+      "event=ship_travel_destroyed reason=#{reason} ship_travel_id=#{id} " \
+        "user_ship_id=#{user_ship_id} travel_guid=#{travel_guid} " \
+        "arrival_tick=#{arrival_tick} completed_at_tick=#{completed_at_tick.inspect} " \
+        "current_tick=#{current_tick}"
+    )
+
     destroy!
   end
 end

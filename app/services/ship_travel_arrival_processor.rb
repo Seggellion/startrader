@@ -6,6 +6,8 @@ class ShipTravelArrivalProcessor
   end
 
   def call
+    return travel if travel.destroyed?
+
     travel.with_lock do
       travel.reload
       return travel unless travel.due_for_arrival?(current_tick)
@@ -16,9 +18,11 @@ class ShipTravelArrivalProcessor
       )
 
       RabbitmqSender.send_ship_report(travel) if notify
-      travel.update!(completed_at_tick: current_tick)
+      travel.cleanup_after_arrival!(current_tick)
     end
 
+    travel
+  rescue ActiveRecord::RecordNotFound
     travel
   end
 

@@ -339,7 +339,7 @@ class Api::GateTravelControllerTest < ActionDispatch::IntegrationTest
       ShipArrivalJob.perform_now
     end
 
-    assert_equal travel.arrival_tick, travel.reload.completed_at_tick
+    refute ShipTravel.exists?(travel.id)
     assert_equal @arrival_gateway.name, @user_ship.reload.location_name
     assert_equal "docked", @user_ship.status
     assert_equal 1, sent_reports

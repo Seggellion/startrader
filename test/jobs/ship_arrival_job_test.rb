@@ -42,7 +42,22 @@ class ShipArrivalJobTest < ActiveJob::TestCase
       ShipArrivalJob.perform_now
     end
 
-    assert_equal 105, travel.reload.completed_at_tick
+    refute ShipTravel.exists?(travel.id)
+    assert_equal @to_location.name, @user_ship.reload.location_name
+    assert_equal "landed", @user_ship.status
+    assert_equal 1, sent_reports
+  end
+
+  test "arrival processing is idempotent after destroying travel" do
+    travel = create_travel(arrival_tick: 100)
+    sent_reports = 0
+
+    RabbitmqSender.stub(:send_ship_report, ->(_travel) { sent_reports += 1 }) do
+      ShipArrivalJob.perform_now
+      ShipArrivalJob.perform_now
+    end
+
+    refute ShipTravel.exists?(travel.id)
     assert_equal @to_location.name, @user_ship.reload.location_name
     assert_equal "landed", @user_ship.status
     assert_equal 1, sent_reports
