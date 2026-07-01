@@ -5,6 +5,7 @@ class Shard < ApplicationRecord
     has_many :npcs, dependent: :destroy
     has_many :transactions, dependent: :destroy
     has_many :shard_users, dependent: :destroy
+    has_many :user_ships
     has_many :users, through: :shard_users
   
     # Validations
