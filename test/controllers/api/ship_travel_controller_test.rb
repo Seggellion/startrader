@@ -286,6 +286,57 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     refute_equal nyx_gateway_stanton, travel.to_location
   end
 
+  test "create ignores stale parenthetical gateway destination system and scopes to current system" do
+    terra_gateway_stanton = create_gateway("Terra Gateway (Stanton)", "Stanton")
+    pyro_gateway_stanton = create_gateway("Pyro Gateway (Stanton)", "Stanton")
+    pyro_gateway_nyx = create_gateway("Pyro Gateway (Nyx)", "Nyx")
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "client-travel-guid-stale-destination-suffix",
+        ship_guid: "333-333-333-stale-suffix",
+        from_location: "Terra Gateway (Stanton)",
+        to_location: "Pyro Gateway (Nyx)"
+      )
+    }, as: :json
+
+    assert_response :success
+    assert_equal "travel_started", response_json["status"]
+    assert_equal pyro_gateway_stanton.name, response_json["destination"]
+    refute_equal "You cannot travel outside your current star system.", response_json["error"]
+
+    travel = ShipTravel.find_by!(travel_guid: "client-travel-guid-stale-destination-suffix")
+    assert_equal terra_gateway_stanton, travel.from_location
+    assert_equal pyro_gateway_stanton, travel.to_location
+    refute_equal pyro_gateway_nyx, travel.to_location
+  end
+
+  test "create still resolves gateway destination variants in current system" do
+    terra_gateway_stanton = create_gateway("Terra Gateway (Stanton)", "Stanton")
+    pyro_gateway_stanton = create_gateway("Pyro Gateway (Stanton)", "Stanton")
+    create_gateway("Pyro Gateway (Nyx)", "Nyx")
+
+    [
+      ["Pyro Gateway", "client-travel-guid-pyro-unqualified"],
+      ["Pyro Gateway (Stanton)", "client-travel-guid-pyro-local-suffix"]
+    ].each do |destination_name, travel_guid|
+      post "/api/travel", params: {
+        ship_travel: travel_payload(
+          travel_guid: travel_guid,
+          ship_guid: "333-333-333-#{travel_guid}",
+          from_location: terra_gateway_stanton.name,
+          to_location: destination_name
+        )
+      }, as: :json
+
+      assert_response :success
+      assert_equal pyro_gateway_stanton.name, response_json["destination"]
+      travel = ShipTravel.find_by!(travel_guid: travel_guid)
+      assert_equal terra_gateway_stanton, travel.from_location
+      assert_equal pyro_gateway_stanton, travel.to_location
+    end
+  end
+
   test "create accepts unqualified from location matching existing current gateway" do
     _stanton_gateway_pyro, nyx_gateway_pyro, = create_gateway_locations
     terra_gateway_pyro = create_gateway("Terra Gateway (Pyro)", "Pyro")
@@ -541,7 +592,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     assert_nil ShipTravel.find_by(travel_guid: "client-travel-guid-active-override")
   end
 
-  test "create still rejects exact destinations outside the current star system" do
+  test "create normalizes exact parenthetical destination names into the current star system" do
     stanton_gateway_pyro, _nyx_gateway_pyro, nyx_gateway_stanton = create_gateway_locations
 
     post "/api/travel", params: {
@@ -553,9 +604,30 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
       )
     }, as: :json
 
-    assert_response :unprocessable_entity
-    assert_equal({ "error" => "You cannot travel outside your current star system." }, response_json)
-    assert_nil ShipTravel.find_by(travel_guid: "client-travel-guid-cross-system-gateway")
+    assert_response :success
+    assert_equal "Nyx Gateway (Pyro)", response_json["destination"]
+    travel = ShipTravel.find_by!(travel_guid: "client-travel-guid-cross-system-gateway")
+    assert_equal stanton_gateway_pyro, travel.from_location
+    refute_equal nyx_gateway_stanton, travel.to_location
+    assert_equal "Pyro", travel.to_location.star_system_name
+  end
+
+  test "create rejects outside-system destination when no normalized match exists in current system" do
+    stanton_gateway_pyro, = create_gateway_locations
+    terra_gateway_stanton = create_gateway("Terra Gateway (Stanton)", "Stanton")
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "client-travel-guid-no-local-destination",
+        ship_guid: "333-333-333-no-local-destination",
+        from_location: stanton_gateway_pyro.name,
+        to_location: terra_gateway_stanton.name
+      )
+    }, as: :json
+
+    assert_response :not_found
+    assert_equal({ "error" => "Location not found." }, response_json)
+    assert_nil ShipTravel.find_by(travel_guid: "client-travel-guid-no-local-destination")
   end
 
   test "location response includes travel_guid while in transit" do

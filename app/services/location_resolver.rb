@@ -51,12 +51,7 @@ class LocationResolver
 
   def self.resolve(name, star_system_name: nil)
     resolver = new(name)
-    if star_system_name.present?
-      exact = resolver.resolve_exact
-      return exact if exact && resolver.parenthetical_qualified?
-
-      return resolver.resolve_in_star_system(star_system_name) || exact
-    end
+    return resolver.resolve_in_star_system(star_system_name) if star_system_name.present?
 
     resolver.resolve
   end
@@ -164,10 +159,6 @@ class LocationResolver
       .to_a
 
     exact_scoped_match(scoped_locations) || normalized_scoped_match(scoped_locations)
-  end
-
-  def parenthetical_qualified?
-    @raw_name.match?(/\([^)]*\)\s*\z/)
   end
 
   private

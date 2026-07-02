@@ -163,4 +163,55 @@ class LocationResolverTest < ActiveSupport::TestCase
     assert_equal terra_gateway_stanton, match.from_location
     assert_equal pyro_gateway_stanton, match.to_location
   end
+
+  test "scoped resolver treats parenthetical gateway suffix as a label hint" do
+    terra_gateway_stanton = create_gateway("Terra Gateway (Stanton)", "Stanton")
+    pyro_gateway_stanton = create_gateway("Pyro Gateway (Stanton)", "Stanton")
+    pyro_gateway_nyx = create_gateway("Pyro Gateway (Nyx)", "Nyx")
+    everus = create_gateway("Everus Harbor", "Stanton")
+
+    assert_equal pyro_gateway_stanton, LocationResolver.resolve("Pyro Gateway (Nyx)", star_system_name: "Stanton")
+    assert_equal pyro_gateway_stanton, LocationResolver.resolve("Pyro Gateway", star_system_name: "Stanton")
+    assert_equal pyro_gateway_stanton, LocationResolver.resolve("Pyro Gateway (Stanton)", star_system_name: "Stanton")
+    assert_equal terra_gateway_stanton, LocationResolver.resolve("Terra Gateway (Stanton)", star_system_name: "Stanton")
+    assert_equal everus, LocationResolver.resolve("Everus Harbor", star_system_name: "Stanton")
+    assert_equal pyro_gateway_nyx, LocationResolver.resolve("Pyro Gateway (Nyx)", star_system_name: "Nyx")
+  end
+
+  test "scoped resolver does not return a global exact parenthetical match from another system" do
+    stanton_gateway = create_gateway("Pyro Gateway (Stanton)", "Stanton")
+    nyx_gateway = create_gateway("Pyro Gateway (Nyx)", "Nyx")
+
+    resolved = LocationResolver.resolve("Pyro Gateway (Nyx)", star_system_name: "Stanton")
+
+    assert_equal stanton_gateway, resolved
+    refute_equal nyx_gateway, resolved
+  end
+
+  test "scoped resolver returns nil when only another system has the normalized location" do
+    create_gateway("Pyro Gateway (Nyx)", "Nyx")
+
+    assert_nil LocationResolver.resolve("Pyro Gateway (Nyx)", star_system_name: "Stanton")
+  end
+
+  test "unscoped resolver still preserves exact parenthetical resolution" do
+    create_gateway("Pyro Gateway (Stanton)", "Stanton")
+    nyx_gateway = create_gateway("Pyro Gateway (Nyx)", "Nyx")
+
+    assert_equal nyx_gateway, LocationResolver.resolve("Pyro Gateway (Nyx)")
+  end
+
+  private
+
+  def create_gateway(name, star_system_name)
+    Location.create!(
+      name: name,
+      nickname: name,
+      space_station_name: name,
+      classification: "space_station",
+      star_system_name: star_system_name,
+      is_available: true,
+      is_visible: true
+    )
+  end
 end
