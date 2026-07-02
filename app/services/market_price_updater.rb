@@ -1,7 +1,7 @@
 
 class MarketPriceUpdater
   # Called on each tick to update market prices dynamically
-  def self.update_prices!
+  def self.update_prices!(broadcast: false)
     Rails.logger.info "MarketPriceUpdater: Starting batch price update for ProductionFacilities."
 
     # Batch process facilities to optimize performance
@@ -11,7 +11,7 @@ class MarketPriceUpdater
       end.compact
 
       # Bulk update facilities with new pricing only if prices have changed
-      update_facilities_in_bulk(facilities_data) if facilities_data.any?
+      update_facilities_in_bulk(facilities_data, broadcast: broadcast) if facilities_data.any?
     end
 
     Rails.logger.info "MarketPriceUpdater: Completed batch price update."
@@ -83,7 +83,7 @@ end
     
 
   # Bulk update production facilities using ActiveRecord's update_all
-  def self.update_facilities_in_bulk(facilities_data)
+  def self.update_facilities_in_bulk(facilities_data, broadcast: false)
     
     return if facilities_data.empty?
 
@@ -111,7 +111,10 @@ end
       SQL
 
       ActiveRecord::Base.connection.execute(sql)
-      ProductionFacility.where(id: ids).find_each(&:broadcast_market_row)
+      if broadcast && !ProductionFacility.suppress_market_broadcasts
+        ProductionFacility.where(id: ids).find_each(&:broadcast_market_row)
+      end
+
       Rails.logger.info "MarketPriceUpdater: Bulk updated #{ids.size} facilities with price changes."
     end
   end

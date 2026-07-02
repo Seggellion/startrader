@@ -21,20 +21,26 @@ def import_ships
     end
   
       def import_commodities
-        if Admin::Data::CommoditiesImporter.import_all!
-          flash[:notice] = "One commodity imported successfully!"
+        imported_count = Admin::Data::CommoditiesImporter.import_all!
+
+        if imported_count > 0
+          flash[:notice] = "Successfully imported #{imported_count} commodities."
         else
-          flash[:alert] = "Failed to import ships."
+          flash[:alert] = "Failed to import commodities."
         end
+
         redirect_to admin_commodities_path
       end
   
       def populate_facilities
-        if Admin::Data::FacilitiesPopulator.import_all!
-          flash[:notice] = "One Facility populated successfully!"
+        imported_count = Admin::Data::FacilitiesPopulator.import_all!
+
+        if imported_count > 0
+          flash[:notice] = "Successfully imported #{imported_count} facilities."
         else
-          flash[:alert] = "Failed to import ships."
+          flash[:alert] = "Failed to import facilities."
         end
+
         redirect_to admin_production_facilities_path
       end
   
@@ -117,12 +123,15 @@ def import_ships
       end
 
       def import_terminals
-        if Admin::Data::TerminalsImporter.import_all!
-       # if Admin::Data::TerminalsImporter.import_single!
-          flash[:notice] = "One terminal imported successfully!"
+        import_result = Admin::Data::TerminalsImporter.import_all!
+        imported_count = import_result.to_i
+
+        if imported_count > 0
+          flash[:notice] = import_result.respond_to?(:summary) ? import_result.summary : "Successfully imported #{imported_count} terminals."
         else
-          flash[:alert] = "Failed to import locations."
+          flash[:alert] = "Failed to import terminals."
         end
+
         redirect_to admin_terminals_path
       end
   

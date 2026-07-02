@@ -13,7 +13,9 @@ class ProductionFacility < ApplicationRecord
 
   validates :facility_name, :production_rate, :consumption_rate, presence: true
 
-  after_update_commit :broadcast_market_row, if: :market_values_changed?
+  thread_mattr_accessor :suppress_market_broadcasts, default: false
+
+  after_update_commit :broadcast_market_row, if: :should_broadcast_market_row?
 
   scope :with_commodity_name, -> { where("NULLIF(TRIM(COALESCE(commodity_name, '')), '') IS NOT NULL") }
   scope :with_terminal_context, -> {
@@ -125,6 +127,14 @@ class ProductionFacility < ApplicationRecord
     )
   end
 
+  def self.without_market_broadcasts
+    previous = suppress_market_broadcasts
+    self.suppress_market_broadcasts = true
+    yield
+  ensure
+    self.suppress_market_broadcasts = previous
+  end
+
   private
 
   def active_price(local_price, imported_price)
@@ -132,6 +142,10 @@ class ProductionFacility < ApplicationRecord
     fallback_price = imported_price.present? ? imported_price.to_d : 0.to_d
 
     (preferred_price.positive? ? preferred_price : fallback_price).to_i
+  end
+
+  def should_broadcast_market_row?
+    !self.class.suppress_market_broadcasts && market_values_changed?
   end
 
   def market_values_changed?
@@ -147,7 +161,11 @@ class ProductionFacility < ApplicationRecord
       scu_sell_stock
       status_buy
       status_sell
-      updated_at
+      production_rate
+      consumption_rate
+      commodity_name
+      terminal_name
+      location_name
     ]).any?
   end
 end

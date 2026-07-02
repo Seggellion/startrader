@@ -53,14 +53,28 @@ module Admin
           render json: { success: false }
         end
       end
-
-  
       def destroy
         @commodity = Commodity.find(params[:id])
         @commodity.destroy
         redirect_to admin_commodities_path, notice: 'Commodity was successfully deleted.'
       end
-  
+
+      def import_raw_json
+        json_payload = params[:raw_json].presence || params[:json_data]
+
+        if json_payload.present?
+          imported_count = Admin::Data::CommoditiesImporter.import_raw_json!(json_payload)
+
+          if imported_count > 0
+            redirect_to admin_commodities_path, notice: "Successfully imported #{imported_count} commodities."
+          else
+            redirect_to admin_commodities_path, alert: "Import failed. Please verify the JSON format."
+          end
+        else
+          redirect_to admin_commodities_path, alert: "No JSON data was provided."
+        end
+      end
+
       private
   
       def set_commodity
@@ -79,4 +93,3 @@ module Admin
       end
     end
   end
-  

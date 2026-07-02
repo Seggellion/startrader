@@ -1,6 +1,8 @@
 require "test_helper"
 
 class TickTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
   setup do
     ActiveRecord::Base.connection.execute("DELETE FROM ticks")
     Setting.delete_all
@@ -10,6 +12,7 @@ class TickTest < ActiveSupport::TestCase
     User.delete_all
     Ship.delete_all
     Location.delete_all
+    ProductionFacility.delete_all
   end
 
   test "seconds_per_tick reads settings dynamically" do
@@ -175,7 +178,68 @@ class TickTest < ActiveSupport::TestCase
     assert_equal 11, Tick.current
   end
 
+  test "increment suppresses per row market broadcasts during tick facility updates" do
+    old_queue_adapter = ActiveJob::Base.queue_adapter
+    ActiveJob::Base.queue_adapter = :test
+    clear_enqueued_jobs
+    clear_performed_jobs
+
+    facilities = 3.times.map do |index|
+      create_market_facility(facility_name: "Tick Facility #{index}", inventory: index)
+    end
+
+    MarketPriceUpdater.stub(:update_prices!, nil) do
+      Tick.create!(current_tick: 10, sequence: 1)
+    end
+
+    updater = ->(broadcast: false) do
+      assert_equal false, broadcast
+      facilities.each { |facility| facility.update!(inventory: facility.inventory + 1) }
+    end
+    server = Object.new
+    server.define_singleton_method(:broadcast) { |_channel, _payload| }
+
+    assert_no_enqueued_jobs only: Turbo::Streams::ActionBroadcastJob do
+      MarketPriceUpdater.stub(:update_prices!, updater) do
+        ActionCable.stub(:server, server) do
+          ShipArrivalJob.stub(:perform_now, nil) do
+            ShipTravel.stub(:cleanup_stale_after_arrival!, nil) do
+              Tick.increment!
+            end
+          end
+        end
+      end
+    end
+  ensure
+    clear_enqueued_jobs
+    clear_performed_jobs
+    ProductionFacility.suppress_market_broadcasts = false
+    ActiveJob::Base.queue_adapter = old_queue_adapter if old_queue_adapter
+  end
+
   private
+
+  def create_market_facility(overrides = {})
+    ProductionFacility.create!({
+      facility_name: "Tick Facility",
+      production_rate: 0,
+      consumption_rate: 0,
+      inventory: 0,
+      max_inventory: 100,
+      local_buy_price: 80,
+      local_sell_price: 100,
+      price_buy: 80,
+      price_sell: 100,
+      scu_buy: 10,
+      scu_sell: 10,
+      scu_sell_stock: 50,
+      status_buy: 1,
+      status_sell: 1,
+      commodity_name: "Agricium",
+      terminal_name: "Lorville CBD",
+      location_name: "Lorville"
+    }.merge(overrides))
+  end
 
   def create_user_ship(status: "docked")
     user = User.create!(

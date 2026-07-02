@@ -52,7 +52,23 @@ module Admin
         ProductionFacility.destroy_all
         redirect_to admin_production_facilities_path, notice: 'All facilities have been deleted successfully.'
       end
-  
+
+      def import_raw_json
+        json_payload = params[:raw_json].presence || params[:json_data]
+
+        if json_payload.present?
+          imported_count = Admin::Data::FacilitiesPopulator.import_raw_json!(json_payload)
+
+          if imported_count > 0
+            redirect_to admin_production_facilities_path, notice: "Successfully imported #{imported_count} facilities."
+          else
+            redirect_to admin_production_facilities_path, alert: "Import failed. Please verify the JSON format."
+          end
+        else
+          redirect_to admin_production_facilities_path, alert: "No JSON data was provided."
+        end
+      end
+
       def destroy
         @production_facility = ProductionFacility.find(params[:id])
         @production_facility.destroy
@@ -80,4 +96,3 @@ module Admin
       end
     end
   end
-  

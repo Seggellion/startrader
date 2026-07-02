@@ -246,9 +246,11 @@ class TradeService
       
       user = User.where("LOWER(username) = ?", username.downcase).first!
       commodity = Commodity.where("name ILIKE ?", commodity_name).first!
-      shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard.downcase).first
+      shard = Shard.find_by(channel_uuid: shard)
+      shard_name = shard.name  
+      shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard_name.downcase).first
       shard_user.update(wallet_balance:wallet_balance)
-      shard = Shard.find_by_name(shard)
+     
       user_ship = resolve_trade_ship(
         user: user,
         shard_user: shard_user,
@@ -365,7 +367,11 @@ star_bitizen_run = StarBitizenRun.find_by(
 
     def self.sell(username:, wallet_balance:, commodity_name: nil, scu: nil, shard:)
       user = User.where("LOWER(username) = ?", username.downcase).first!
-      shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard.downcase).first
+      
+      shard = Shard.find_by(channel_uuid: shard)
+      
+      shard_name = shard.name  
+      shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard_name.downcase).first
     
       user_ship = shard_user.user_ships.order(updated_at: :desc).first
       raise ShipNotFoundError, "No ship found for user '#{username}'." unless user_ship
@@ -510,15 +516,17 @@ star_bitizen_run = StarBitizenRun.find_by(
       end
       
 
-      def self.list_available_commodities(username:, shard:, ship_guid: nil, ship_slug: nil)
+      def self.list_available_commodities(username:, shard_uuid:, ship_guid: nil, ship_slug: nil)
+        shard = Shard.find_by(channel_uuid: shard_uuid)        
+        shard_name = shard.name
         user = User.where("LOWER(username) = ?", username.downcase).first!
-        shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard.downcase).first
+        shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard_name.downcase).first
         raise ShipNotFoundError, "No ship found for user '#{username}'." if shard_user.nil?
 
         user_ship = resolve_trade_ship(
           user: user,
           shard_user: shard_user,
-          shard: Shard.find_by_name(shard),
+          shard: shard,
           ship_guid: ship_guid,
           ship_slug: ship_slug,
           create_missing: false
@@ -607,7 +615,7 @@ star_bitizen_run = StarBitizenRun.find_by(
         )
       end
 
-      def self.buyable_facilities_for_trade_location(location_name)
+      def self.buyable_facilities_for_trade_location(location_name)        
         facilities_selling_to_player
           .where("LOWER(location_name) IN (?)", trade_location_names(location_name).map(&:downcase))
           .includes(:commodity)

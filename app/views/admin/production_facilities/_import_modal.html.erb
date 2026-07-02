@@ -1,0 +1,19 @@
+<div data-modal-target="dialog" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+  <div class="relative p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white">
+    <h3 class="text-lg font-bold mb-4">Import Facilities From Raw UEX Commodity Price JSON</h3>
+    <small><a target="_blank" href="https://api.uexcorp.space/2.0/commodities_prices_all">https://api.uexcorp.space/2.0/commodities_prices_all</a></small>
+
+    <%= form_with url: import_raw_json_admin_production_facilities_path, method: :post, local: true do |f| %>
+      <div class="mb-4">
+        <p class="text-sm text-gray-600 mb-2">Paste a full API response with a top-level data key or a direct JSON array.</p>
+        <p class="text-sm text-red-600 mb-2">This replaces all existing ProductionFacility records because the pasted JSON is treated as the source of truth.</p>
+        <%= f.text_area :raw_json, rows: 15, class: "w-full border rounded p-2 font-mono text-sm", placeholder: '{"data": [...]}' %>
+      </div>
+
+      <div class="flex justify-end gap-2">
+        <button type="button" data-action="click->modal#close" class="bg-gray-300 text-black px-4 py-2 rounded">Cancel</button>
+        <%= f.submit 'Import JSON', class: "bg-blue-500 text-white px-4 py-2 rounded cursor-pointer" %>
+      </div>
+    <% end %>
+  </div>
+</div>

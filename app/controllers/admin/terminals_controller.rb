@@ -55,7 +55,25 @@ module Admin
         Terminal.destroy_all
         redirect_to admin_terminals_path, notice: 'All terminals have been deleted successfully.'
       end
-  
+
+      def import_raw_json
+        json_payload = params[:raw_json].presence || params[:json_data]
+
+        if json_payload.present?
+          import_result = Admin::Data::TerminalsImporter.import_raw_json!(json_payload)
+          imported_count = import_result.to_i
+
+          if imported_count > 0
+            summary = import_result.respond_to?(:summary) ? import_result.summary : "Successfully imported #{imported_count} terminals."
+            redirect_to admin_terminals_path, notice: summary
+          else
+            redirect_to admin_terminals_path, alert: "Import failed. Please verify the JSON format."
+          end
+        else
+          redirect_to admin_terminals_path, alert: "No JSON data was provided."
+        end
+      end
+
       def destroy
         @terminal = Terminal.find(params[:id])
         @terminal.destroy
@@ -80,4 +98,3 @@ module Admin
       end
     end
   end
-  

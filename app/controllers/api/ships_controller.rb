@@ -16,7 +16,7 @@ module Api
             "manufacturer" => ship.company_name&.split(' ')&.first || "Unknown",
             "cargocapacity" => ship.scu.to_s,
             "requiresdocking" => ship.is_docking ? "true" : "false",
-            "filename" => "#{ship.name&.gsub(' ', '_')}_Profile_#{ship.length.to_i}m.png",
+            "filename" => ship.ship_image_primary,
             "keel" => ship.length.to_s,
             "msrp" => ship.msrp.to_s,
             "qfuel" => ship.fuel_quantum.to_s,

@@ -1,15 +1,23 @@
 <div class="bg-white p-6 rounded shadow">
-  <div class="flex justify-between items-center mb-4">
-    <h1 class="text-2xl font-bold">Terminals</h1><small><%= Terminal.count %>/ 675</small>
+  <div data-controller="modal">
+    <div class="flex justify-between items-center mb-4">
+      <h1 class="text-2xl font-bold">Terminals</h1><small><%= Terminal.count %>/ 675</small>
 
-    <%= button_to 'Delete All Terminals', delete_all_admin_terminals_path, 
-    class: 'bg-red-500 text-white px-4 py-2 rounded', 
-    method: :delete, 
-    data: { confirm: 'Are you sure you want to delete all terminals? This action cannot be undone.' } %>
+      <div class="flex gap-2">
+        <%= button_to 'Delete All Terminals', delete_all_admin_terminals_path,
+          class: 'bg-red-500 text-white px-4 py-2 rounded',
+          method: :delete,
+          data: { confirm: 'Are you sure you want to delete all terminals? This action cannot be undone.' } %>
 
+        <button data-action="click->modal#open" class="bg-blue-500 text-white px-4 py-2 rounded">
+          Import Terminals JSON
+        </button>
 
-        <%= button_to 'Import Terminals', import_terminals_admin_data_path, class: 'bg-blue-500 text-white px-4 py-2 rounded', method: :post %>
-    <%= link_to 'Add New', new_admin_terminal_path, class: 'bg-blue-500 text-white px-4 py-2 rounded' %>
+        <%= link_to 'Add New', new_admin_terminal_path, class: 'bg-blue-500 text-white px-4 py-2 rounded' %>
+      </div>
+    </div>
+
+    <%= render 'import_modal' %>
   </div>
 
   <table class="min-w-full bg-white mt-4 border">

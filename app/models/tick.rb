@@ -34,14 +34,16 @@ class Tick < ApplicationRecord
   def self.increment!
     tick = nil
 
-    transaction do
-      tick = instance
-      tick.with_lock do
-        tick.update!(
-          current_tick: tick.current_tick.to_i + 1,
-          sequence: tick.sequence.to_i + 1
-        )
-        tick.process_tick
+    ProductionFacility.without_market_broadcasts do
+      transaction do
+        tick = instance
+        tick.with_lock do
+          tick.update!(
+            current_tick: tick.current_tick.to_i + 1,
+            sequence: tick.sequence.to_i + 1
+          )
+          tick.process_tick
+        end
       end
     end
 
@@ -109,7 +111,7 @@ class Tick < ApplicationRecord
 
   def update_market_prices
     self.class.run_tick_side_effect("MarketPriceUpdater") do
-      MarketPriceUpdater.update_prices! if current_tick % 1 == 0
+      MarketPriceUpdater.update_prices!(broadcast: false) if current_tick % 1 == 0
     end
   end
 
