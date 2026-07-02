@@ -1,7 +1,8 @@
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
     origins "https://starbitizen.com",
-            "https://www.starbitizen.com"
+            "https://www.starbitizen.com",
+            "https://maidenbot.com"
 
     resource "/api/ships",
       headers: :any,

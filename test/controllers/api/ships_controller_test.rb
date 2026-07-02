@@ -43,6 +43,50 @@ class Api::ShipsControllerTest < ActionDispatch::IntegrationTest
     @gold = Commodity.create!(name: "Gold", is_sellable: true)
   end
 
+  test "ships index allows cors requests from maidenbot overlay origin" do
+    @ship.update!(
+      is_spaceship: true,
+      is_ground_vehicle: false,
+      name: "Drake Caterpillar",
+      company_name: "Drake Interplanetary",
+      length: 111
+    )
+
+    get "/api/ships", headers: { "Origin" => "https://maidenbot.com" }
+
+    assert_response :success
+    assert_equal "https://maidenbot.com", response.headers["Access-Control-Allow-Origin"]
+    assert_includes response.headers["Vary"], "Origin"
+    assert_equal "Drake Caterpillar", response_json.first["shipname"]
+  end
+
+  test "ships index still allows existing starbitizen origin" do
+    get "/api/ships", headers: { "Origin" => "https://starbitizen.com" }
+
+    assert_response :success
+    assert_equal "https://starbitizen.com", response.headers["Access-Control-Allow-Origin"]
+  end
+
+  test "ships index does not allow unlisted cors origins" do
+    get "/api/ships", headers: { "Origin" => "https://example.com" }
+
+    assert_response :success
+    assert_nil response.headers["Access-Control-Allow-Origin"]
+  end
+
+  test "ships index handles maidenbot cors preflight" do
+    options "/api/ships", headers: {
+      "Origin" => "https://maidenbot.com",
+      "Access-Control-Request-Method" => "GET",
+      "Access-Control-Request-Headers" => "Content-Type"
+    }
+
+    assert_response :success
+    assert_equal "https://maidenbot.com", response.headers["Access-Control-Allow-Origin"]
+    assert_includes response.headers["Access-Control-Allow-Methods"], "GET"
+    assert_includes response.headers["Access-Control-Allow-Headers"], "Content-Type"
+  end
+
   test "dump cargo with one cargo type returns jettison message" do
     cargo = UserShipCargo.create!(user_ship: @user_ship, commodity: @commodity, scu: 24)
     run = StarBitizenRun.create!(
