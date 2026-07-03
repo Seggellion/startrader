@@ -70,26 +70,153 @@ class TradeService
         ship_guid: ship_guid
       )
 
-      sync = StarTraderShipSync.call(
+      sync = authoritative_status_sync!(
         ship_guid: ship_guid,
         ship_model: ship_model,
         shard_uuid: shard_uuid,
         player_guid: player_guid,
         player_name: player_name,
-        default_location_name: default_location_name_for_status
-      )
-
-      update_status_location!(
-        shard_user: sync.shard_user,
-        user_ship: sync.user_ship,
+        wallet_balance: wallet_balance,
         location_name: location,
-        resolved_location: resolved_location,
-        player_name: player_name,
-        shard_uuid: shard_uuid,
-        ship_guid: ship_guid
+        resolved_location: resolved_location
       )
 
       status_response_for(shard_user: sync.shard_user, user_ship: sync.user_ship, wallet_balance: wallet_balance)
+    end
+
+    def self.authoritative_status_sync!(ship_guid:, ship_model:, shard_uuid:, player_guid:, player_name:, wallet_balance:, location_name:, resolved_location:)
+      shard = find_or_create_status_shard!(shard_uuid)
+      user = find_or_create_status_user!(player_guid: player_guid, player_name: player_name)
+      shard_user = user.shard_users.find_or_create_by!(shard_id: shard.id) do |record|
+        record.shard_name = shard.name
+      end
+      ship = find_or_create_status_ship!(ship_model)
+      user_ship = UserShip.find_or_initialize_by(guid: ship_guid)
+
+      was_new = user_ship.new_record?
+      previous_shard_user_location = shard_user.current_location_name
+      previous_user_ship_location = user_ship.location_name
+      previous_user_ship_user_id = user_ship.user_id
+      previous_user_ship_shard_id = user_ship.shard_id
+      previous_user_ship_shard_user_id = user_ship.shard_user_id
+
+      ActiveRecord::Base.transaction do
+        shard_user.shard_name = shard.name
+        shard_user.wallet_balance = wallet_balance if wallet_balance.present?
+        shard_user.save! if shard_user.changed?
+        shard_user.update_current_location!(resolved_location) if resolved_location
+
+        assign_authoritative_status_user_ship!(
+          user_ship: user_ship,
+          user: user,
+          shard: shard,
+          shard_user: shard_user,
+          ship: ship,
+          location: resolved_location
+        )
+      end
+
+      log_authoritative_status_sync(
+        player_name: player_name,
+        player_guid: player_guid,
+        shard_uuid: shard_uuid,
+        ship_guid: ship_guid,
+        incoming_location: location_name,
+        resolved_location: resolved_location,
+        previous_shard_user_location: previous_shard_user_location,
+        previous_user_ship_location: previous_user_ship_location,
+        user_ship_was_new: was_new,
+        user_ship: user_ship,
+        user_ship_overwrote_associations: previous_user_ship_user_id != user.id ||
+          previous_user_ship_shard_id != shard.id ||
+          previous_user_ship_shard_user_id != shard_user.id
+      )
+
+      StarTraderShipSync::Result.new(
+        user: user,
+        shard: shard,
+        shard_user: shard_user,
+        user_ship: user_ship,
+        ship: ship
+      )
+    rescue ActiveRecord::RecordNotUnique
+      retry
+    end
+
+    def self.find_or_create_status_shard!(shard_uuid)
+      normalized_shard_uuid = shard_uuid.to_s.strip
+      shard = Shard.find_by(channel_uuid: normalized_shard_uuid)
+      return shard if shard
+
+      Shard.create!(
+        name: "Shard #{normalized_shard_uuid}",
+        region: "unknown",
+        channel_uuid: normalized_shard_uuid
+      )
+    end
+
+    def self.find_or_create_status_user!(player_guid:, player_name:)
+      normalized_player_guid = player_guid.to_s.strip
+      normalized_player_name = player_name.to_s.strip
+
+      user = User.find_by(twitch_id: normalized_player_guid) || User.find_by(uid: normalized_player_guid)
+      if user
+        attrs = { username: normalized_player_name, twitch_id: normalized_player_guid }
+        if user.uid.blank? ||
+            user.uid == normalized_player_guid ||
+            !User.where(uid: normalized_player_guid).where.not(id: user.id).exists?
+          attrs[:uid] = normalized_player_guid
+        end
+        user.update!(attrs)
+        return user
+      end
+
+      User.create!(
+        username: normalized_player_name,
+        twitch_id: normalized_player_guid,
+        uid: normalized_player_guid,
+        user_type: "player",
+        provider: "twitch"
+      )
+    end
+
+    def self.find_or_create_status_ship!(ship_model)
+      normalized_model = ship_model.to_s.strip
+      ship = Ship.where("LOWER(model) = ?", normalized_model.downcase).first
+      return ship if ship
+
+      Ship.create!(model: normalized_model)
+    end
+
+    def self.assign_authoritative_status_user_ship!(user_ship:, user:, shard:, shard_user:, ship:, location:)
+      user_ship.assign_attributes(
+        user: user,
+        shard: shard,
+        shard_user: shard_user,
+        shard_name: shard.name,
+        ship: ship,
+        ship_slug: ship.slug,
+        total_scu: user_ship.total_scu.presence || total_scu_for_ship(ship),
+        used_scu: user_ship.used_scu.presence || 0,
+        status: user_ship.status.presence || "docked"
+      )
+      user_ship.location_name = location.name if location
+      user_ship.save!
+    end
+
+    def self.log_authoritative_status_sync(player_name:, player_guid:, shard_uuid:, ship_guid:, incoming_location:, resolved_location:, previous_shard_user_location:, previous_user_ship_location:, user_ship_was_new:, user_ship:, user_ship_overwrote_associations:)
+      Rails.logger.info(
+        "[TradeService.status] authoritative_sync " \
+        "player=#{player_name.inspect} player_guid=#{player_guid.inspect} " \
+        "shard_uuid=#{shard_uuid.inspect} ship_guid=#{ship_guid.inspect} " \
+        "previous_shard_user_location=#{previous_shard_user_location.inspect} " \
+        "previous_user_ship_location=#{previous_user_ship_location.inspect} " \
+        "incoming_location=#{incoming_location.inspect} " \
+        "resolved_location_id=#{resolved_location&.id.inspect} " \
+        "resolved_location_name=#{resolved_location&.name.inspect} " \
+        "user_ship_id=#{user_ship.id.inspect} user_ship_action=#{user_ship_was_new ? 'created' : 'updated'} " \
+        "user_ship_associations_overwritten=#{user_ship_overwrote_associations}"
+      )
     end
 
     def self.resolve_status_location!(location_name:, player_name:, shard_uuid:, ship_guid:)

@@ -535,11 +535,34 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     assert_equal({ "status" => "error", "message" => "player_name is required" }, response_json)
   end
 
-  test "status rejects unknown shard_uuid" do
+  test "status creates unknown shard_uuid" do
+    assert_difference("Shard.count", 1) do
+      post "/api/status", params: base_status_payload.merge(shard_uuid: "unknown"), as: :json
+    end
+
+    assert_response :success
+    assert_equal "success", response_json["status"]
+    assert_equal "Shard unknown", Shard.find_by!(channel_uuid: "unknown").name
+  end
+
+  test "status creates unknown ship model when creating ship" do
+    assert_difference("Ship.count", 1) do
+      post "/api/status", params: base_status_payload.merge(ship_guid: "new-status-ship-guid", ship_model: "Unknown Model"), as: :json
+    end
+
+    assert_response :success
+    assert_equal "success", response_json["status"]
+    assert_equal "Unknown Model", UserShip.find_by!(guid: "new-status-ship-guid").ship.model
+  end
+
+  test "status creates unknown shard_user and reassigns existing ship" do
     post "/api/status", params: base_status_payload.merge(shard_uuid: "unknown"), as: :json
 
-    assert_response :not_found
-    assert_equal({ "status" => "error", "message" => "Shard not found" }, response_json)
+    assert_response :success
+    created_shard = Shard.find_by!(channel_uuid: "unknown")
+    created_shard_user = ShardUser.find_by!(user: @user, shard_id: created_shard.id)
+    assert_equal created_shard, @user_ship.reload.shard
+    assert_equal created_shard_user, @user_ship.shard_user
   end
 
   test "status creates unknown ship with valid ship model" do
@@ -597,13 +620,6 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     assert_equal @ship.model, response_json["ship"]["model"]
   end
 
-  test "status rejects unknown ship model when creating ship" do
-    post "/api/status", params: base_status_payload.merge(ship_guid: "new-status-ship-guid", ship_model: "Unknown Model"), as: :json
-
-    assert_response :not_found
-    assert_equal({ "status" => "error", "message" => "Ship model not found" }, response_json)
-  end
-
   test "status requires player name before creating unknown ship" do
     post "/api/status", params: base_status_payload.except(:player_name).merge(ship_guid: "new-status-ship-guid"), as: :json
 
@@ -611,7 +627,7 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     assert_equal({ "status" => "error", "message" => "player_name is required" }, response_json)
   end
 
-  test "status rejects existing ship for different player" do
+  test "status overwrites existing ship for different player" do
     other_user = User.create!(
       username: "OtherPilot",
       twitch_id: "other-player-guid",
@@ -629,19 +645,21 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
       params: base_status_payload.merge(player_guid: other_user.twitch_id, player_name: other_user.username),
       as: :json
 
-    assert_response :bad_request
-    assert_equal({ "status" => "error", "message" => "Ship does not belong to this player" }, response_json)
+    assert_response :success
+    assert_equal other_user, @user_ship.reload.user
+    assert_equal ShardUser.find_by!(user: other_user, shard_id: @shard.id), @user_ship.shard_user
   end
 
-  test "status rejects existing ship for different shard" do
+  test "status overwrites existing ship for different shard" do
     other_shard = Shard.create!(name: "OtherShard", region: "us", channel_uuid: "other-shard-guid")
 
     post "/api/status",
       params: base_status_payload.merge(shard_uuid: other_shard.channel_uuid),
       as: :json
 
-    assert_response :bad_request
-    assert_equal({ "status" => "error", "message" => "Ship does not belong to this shard" }, response_json)
+    assert_response :success
+    assert_equal other_shard, @user_ship.reload.shard
+    assert_equal ShardUser.find_by!(user: @user, shard_id: other_shard.id), @user_ship.shard_user
   end
 
   test "repeated status calls with same ship guid do not create duplicate ships" do

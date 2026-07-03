@@ -205,6 +205,38 @@ class TradeServiceTest < ActiveSupport::TestCase
     end
   end
 
+  test "status preserves shard user serialized data when updating location and wallet" do
+    new_location = Location.create!(
+      name: "Area 18",
+      classification: "city",
+      star_system_name: "Stanton"
+    )
+    @shard_user.update!(
+      inventory: { "medpen" => 2 },
+      currency: { "credits" => 10 },
+      stats: { "runs" => 3 }
+    )
+
+    TradeService.status(**status_payload(location: new_location.name, wallet_balance: 55_000))
+
+    @shard_user.reload
+    assert_equal({ "medpen" => 2 }, @shard_user.inventory)
+    assert_equal({ "credits" => 10 }, @shard_user.currency)
+    assert_equal({ "runs" => 3 }, @shard_user.stats)
+    assert_equal 55_000, @shard_user.wallet_balance
+    assert_equal new_location.name, @shard_user.current_location_name
+  end
+
+  test "status restores missing user ship shard associations" do
+    @user_ship.update_columns(shard_id: nil, shard_user_id: nil)
+
+    result = TradeService.status(**status_payload)
+
+    assert_equal "success", result[:status]
+    assert_equal @shard, @user_ship.reload.shard
+    assert_equal @shard_user, @user_ship.shard_user
+  end
+
   test "status preserves success response shape" do
     response = TradeService.status(
       **status_payload
@@ -272,12 +304,17 @@ class TradeServiceTest < ActiveSupport::TestCase
     assert_equal "shard_uuid is required", error.message
   end
 
-  test "status rejects unknown shard uuid" do
-    error = assert_raises(ActiveRecord::RecordNotFound) do
-      TradeService.status(**status_payload(shard_uuid: "unknown"))
+  test "status creates unknown shard uuid" do
+    result = nil
+
+    assert_difference("Shard.count", 1) do
+      result = TradeService.status(**status_payload(shard_uuid: "unknown"))
     end
 
-    assert_equal "Shard not found", error.message
+    created_shard = Shard.find_by!(channel_uuid: "unknown")
+    assert_equal "success", result[:status]
+    assert_equal "Shard unknown", created_shard.name
+    assert_equal "unknown", created_shard.region
   end
 
   test "status creates unknown ship with valid model and player guid" do
@@ -312,17 +349,20 @@ class TradeServiceTest < ActiveSupport::TestCase
     assert_equal @ship.model, UserShip.find_by!(guid: "trimmed-status-ship-guid").ship.model
   end
 
-  test "status rejects unknown ship model when creating unknown ship" do
-    error = assert_raises(ActiveRecord::RecordNotFound) do
-      TradeService.status(
+  test "status creates unknown ship model when creating unknown ship" do
+    assert_difference("Ship.count", 1) do
+      result = TradeService.status(
         **status_payload(
           ship_guid: "unknown",
           ship_model: "Unknown Model"
         )
       )
+
+      assert_equal "success", result[:status]
     end
 
-    assert_equal "Ship model not found", error.message
+    assert_equal "Unknown Model", Ship.find_by!(model: "Unknown Model").model
+    assert_equal "Unknown Model", UserShip.find_by!(guid: "unknown").ship.model
   end
 
   test "status requires player guid for new payload" do
@@ -401,35 +441,58 @@ class TradeServiceTest < ActiveSupport::TestCase
     end
   end
 
-  test "status rejects ship from a different shard" do
-    other_shard = Shard.create!(name: "OtherShard", region: "us", channel_uuid: "other-shard-guid")
+  test "repeated status calls for new status records are idempotent" do
+    payload = status_payload(
+      ship_guid: "idempotent-new-status-ship-guid",
+      ship_model: "RSI Zeus CL",
+      shard_uuid: "idempotent-shard-guid",
+      player_guid: "idempotent-player-guid",
+      player_name: "IdempotentPilot"
+    )
 
-    error = assert_raises(TradeService::ValidationError) do
-      TradeService.status(**status_payload(shard_uuid: other_shard.channel_uuid))
+    assert_difference("User.count", 1) do
+      assert_difference("Shard.count", 1) do
+        assert_difference("ShardUser.count", 1) do
+          assert_difference("Ship.count", 1) do
+            assert_difference("UserShip.count", 1) do
+              TradeService.status(**payload)
+              TradeService.status(**payload)
+            end
+          end
+        end
+      end
     end
-
-    assert_equal "Ship does not belong to this shard", error.message
   end
 
-  test "status rejects ship from a different player" do
+  test "status overwrites ship from a different shard" do
+    other_shard = Shard.create!(name: "OtherShard", region: "us", channel_uuid: "other-shard-guid")
+
+    result = TradeService.status(**status_payload(shard_uuid: other_shard.channel_uuid))
+
+    assert_equal "success", result[:status]
+    assert_equal other_shard, @user_ship.reload.shard
+    assert_equal ShardUser.find_by!(user: @user, shard_id: other_shard.id), @user_ship.shard_user
+  end
+
+  test "status overwrites ship from a different player" do
     other_user = User.create!(
       username: "OtherPilot",
       twitch_id: "other-player-guid",
       uid: "other-player-guid",
       user_type: "player"
     )
-    ShardUser.create!(user: other_user, shard_id: @shard.id, shard_name: @shard.name)
+    other_shard_user = ShardUser.create!(user: other_user, shard_id: @shard.id, shard_name: @shard.name)
 
-    error = assert_raises(TradeService::ValidationError) do
-      TradeService.status(
-        **status_payload(
-          player_guid: other_user.twitch_id,
-          player_name: other_user.username
-        )
+    result = TradeService.status(
+      **status_payload(
+        player_guid: other_user.twitch_id,
+        player_name: other_user.username
       )
-    end
+    )
 
-    assert_equal "Ship does not belong to this player", error.message
+    assert_equal "success", result[:status]
+    assert_equal other_user, @user_ship.reload.user
+    assert_equal other_shard_user, @user_ship.shard_user
   end
 
   test "status by shard uuid does not call shard_uuid on shard user" do
