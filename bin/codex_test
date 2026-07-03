@@ -138,31 +138,9 @@ db_profile_summary() {
 }
 
 check_postgres() {
-  local probe_db
-  probe_db="${PGDATABASE:-postgres}"
-
-  info "Postgres reachability"
-  if command -v pg_isready >/dev/null 2>&1; then
-    if ! pg_isready; then
-      fail "Postgres service/socket failure" "pg_isready could not reach the local PostgreSQL server."
-    fi
-  else
-    printf "pg_isready is not installed; using psql probe only.\n"
-  fi
-
-  if ! command -v psql >/dev/null 2>&1; then
-    fail "Postgres service/socket failure" "psql is not installed or not on PATH."
-  fi
-
-  if [ -n "${DATABASE_URL:-}" ]; then
-    run_capture "Postgres authentication probe" psql -w "$DATABASE_URL" -c "select current_user, current_database();" || {
-      fail "$FAILURE_CLASS" "Postgres is reachable, but authentication failed for DATABASE_URL. Check the test-only role, password, host, and database in .env.codex."
-    }
-  else
-    run_capture "Postgres authentication probe" psql -w -d "$probe_db" -c "select current_user, current_database();" || {
-      fail "$FAILURE_CLASS" "Postgres is reachable, but authentication failed for the active profile. Provide .env.codex with a test-only DATABASE_URL or POSTGRES_*/PG* variables, or create/grant the matching local PostgreSQL role."
-    }
-  fi
+  run_capture "Codex database doctor" bin/codex_db_doctor --require-connection || {
+    fail "$FAILURE_CLASS" "Codex database access is not ready. Fix the reported Rails test database profile before Rails tests can run."
+  }
 }
 
 run_bundle_install() {

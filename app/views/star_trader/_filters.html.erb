@@ -22,8 +22,8 @@
 
     <div class="grid grid-cols-2 gap-3">
       <div>
-        <%= form.label :trade_mode, "Trade mode", class: "block text-xs font-semibold uppercase text-zinc-400" %>
-        <%= form.select :trade_mode, options_for_select([["Any", ""], ["Player can buy", "buy"], ["Player can sell", "sell"], ["Both", "both"]], @filter_params[:trade_mode]), {}, class: "mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400" %>
+        <%= form.label :trade_mode, "Player action", class: "block text-xs font-semibold uppercase text-zinc-400" %>
+        <%= form.select :trade_mode, options_for_select([["Any", ""], ["Player can buy (terminal sells)", "buy"], ["Player can sell (terminal buys)", "sell"], ["Both actions", "both"]], @filter_params[:trade_mode]), {}, class: "mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400" %>
       </div>
       <div>
         <%= form.label :location_type, "Location type", class: "block text-xs font-semibold uppercase text-zinc-400" %>
@@ -34,7 +34,7 @@
     <div class="grid grid-cols-2 gap-3">
       <div>
         <%= form.label :sort, "Sort", class: "block text-xs font-semibold uppercase text-zinc-400" %>
-        <%= form.select :sort, options_for_select([["Updated", "updated"], ["Location", "location"], ["Commodity", "commodity"], ["Buy price", "buy_price"], ["Sell price", "sell_price"], ["Inventory", "inventory"], ["Demand", "demand"], ["Profit margin", "profit_margin"]], @filter_params[:sort]), {}, class: "mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400" %>
+        <%= form.select :sort, options_for_select([["Updated", "updated"], ["Location", "location"], ["Commodity", "commodity"], ["Player buy price", "buy_price"], ["Player sell price", "sell_price"], ["Inventory", "inventory"], ["Demand", "demand"], ["Player spread", "profit_margin"]], @filter_params[:sort]), {}, class: "mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400" %>
       </div>
       <div>
         <%= form.label :direction, "Direction", class: "block text-xs font-semibold uppercase text-zinc-400" %>

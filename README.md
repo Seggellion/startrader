@@ -92,16 +92,45 @@ Restart the WSL session after changing group membership, or run:
 newgrp railpress
 ```
 
-For Codex sessions that should not depend on a personal local PostgreSQL role, create a limited test-only PostgreSQL role and copy `.env.codex.example` to `.env.codex`. Use either `DATABASE_URL` or `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `POSTGRES_PORT`, and `POSTGRES_TEST_DB`. Do not grant that role access to production data.
+Diagnose the database path without running the full test suite:
 
-One safe local role shape is:
-
-```sql
-CREATE ROLE startrader_codex LOGIN PASSWORD 'change-me';
-CREATE DATABASE star_trader_test OWNER startrader_codex;
+```bash
+bin/codex_db_doctor
 ```
 
-If the database already exists, grant ownership or privileges only for the test database before running `bin/codex_test`.
+If `bin/codex_db_doctor` reports `fe_sendauth: no password supplied` while `POSTGRES_HOST`, `PGHOST`, and `DATABASE_URL` are unset, Rails is already using the Unix socket path and local PostgreSQL is requiring password auth for that socket connection. Fix that with either the railpress/peer rule in local PostgreSQL, or use the limited Codex role below.
+
+For Codex sessions that should not depend on a personal local PostgreSQL role, create a limited test-only PostgreSQL role and copy `.env.codex.example` to `.env.codex`. Use either `DATABASE_URL` or `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `POSTGRES_PORT`, and `POSTGRES_TEST_DB`. Do not grant that role access to production data.
+
+One safe local role setup is:
+
+```bash
+sudo -u postgres createuser --pwprompt startrader_codex
+sudo -u postgres createdb -O startrader_codex star_trader_test
+```
+
+If the database already exists, grant ownership or privileges only for the test database before running `bin/codex_test`:
+
+```bash
+sudo -u postgres psql -c "ALTER DATABASE star_trader_test OWNER TO startrader_codex;"
+```
+
+Inspect the current local roles and test database with:
+
+```bash
+sudo -u postgres psql -c "\du"
+sudo -u postgres psql -c "\l star_trader_test"
+```
+
+Then create `.env.codex` locally:
+
+```bash
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_USER=startrader_codex
+POSTGRES_PASSWORD=<local_only_password>
+POSTGRES_TEST_DB=star_trader_test
+```
 
 ---
 

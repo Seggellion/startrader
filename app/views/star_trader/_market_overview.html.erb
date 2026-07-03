@@ -1,6 +1,6 @@
 <section aria-label="Market overview" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-  <%= render "overview_card", label: "Best buy", facility: @overview[:best_buy], value: (@overview[:best_buy] ? market_price(@overview[:best_buy].local_sell_price) : "None") %>
-  <%= render "overview_card", label: "Best sell", facility: @overview[:best_sell], value: (@overview[:best_sell] ? market_price(@overview[:best_sell].local_buy_price) : "None") %>
+  <%= render "overview_card", label: "Best player buy", facility: @overview[:best_buy], value: (@overview[:best_buy] ? market_price(player_buy_price_for(@overview[:best_buy])) : "None") %>
+  <%= render "overview_card", label: "Best player sell", facility: @overview[:best_sell], value: (@overview[:best_sell] ? market_price(player_sell_price_for(@overview[:best_sell])) : "None") %>
   <%= render "overview_card", label: "Volatile", facility: @overview[:volatile], value: (@overview[:volatile]&.commodity_name || "None") %>
 
   <div class="rounded-lg border border-zinc-800 bg-zinc-900/80 p-4">

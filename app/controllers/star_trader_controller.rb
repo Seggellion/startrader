@@ -1,5 +1,7 @@
 class StarTraderController < ApplicationController
   PER_PAGE = 50
+  PLAYER_BUY_PRICE_SQL = "COALESCE(NULLIF(production_facilities.local_sell_price, 0), production_facilities.price_sell, 0)"
+  PLAYER_SELL_PRICE_SQL = "COALESCE(NULLIF(production_facilities.local_buy_price, 0), production_facilities.price_buy, 0)"
 
   before_action :set_filter_options, only: %i[index market]
 
@@ -67,12 +69,12 @@ class StarTraderController < ApplicationController
 
     case @filter_params[:trade_mode]
     when "buy"
-      scope = scope.where("COALESCE(production_facilities.local_sell_price, production_facilities.price_sell, 0) > 0")
+      scope = scope.where("#{PLAYER_BUY_PRICE_SQL} > 0")
     when "sell"
-      scope = scope.where("COALESCE(production_facilities.local_buy_price, production_facilities.price_buy, 0) > 0")
+      scope = scope.where("#{PLAYER_SELL_PRICE_SQL} > 0")
     when "both"
-      scope = scope.where("COALESCE(production_facilities.local_sell_price, production_facilities.price_sell, 0) > 0")
-                   .where("COALESCE(production_facilities.local_buy_price, production_facilities.price_buy, 0) > 0")
+      scope = scope.where("#{PLAYER_BUY_PRICE_SQL} > 0")
+                   .where("#{PLAYER_SELL_PRICE_SQL} > 0")
     end
 
     scope.order(Arel.sql("#{sort_column} #{sort_direction} NULLS LAST"), id: :asc)
@@ -82,11 +84,11 @@ class StarTraderController < ApplicationController
     {
       "location" => "production_facilities.location_name",
       "commodity" => "production_facilities.commodity_name",
-      "buy_price" => "production_facilities.local_sell_price",
-      "sell_price" => "production_facilities.local_buy_price",
+      "buy_price" => PLAYER_BUY_PRICE_SQL,
+      "sell_price" => PLAYER_SELL_PRICE_SQL,
       "inventory" => "production_facilities.inventory",
       "demand" => "production_facilities.scu_buy",
-      "profit_margin" => "(COALESCE(production_facilities.local_buy_price, 0) - COALESCE(production_facilities.local_sell_price, 0))",
+      "profit_margin" => "(#{PLAYER_SELL_PRICE_SQL} - #{PLAYER_BUY_PRICE_SQL})",
       "updated" => "production_facilities.updated_at"
     }.fetch(@filter_params[:sort].presence, "production_facilities.updated_at")
   end
@@ -97,8 +99,8 @@ class StarTraderController < ApplicationController
 
   def market_overview
     {
-      best_buy: ProductionFacility.where("local_sell_price > 0").order(local_sell_price: :asc).includes(:commodity, :location).first,
-      best_sell: ProductionFacility.where("local_buy_price > 0").order(local_buy_price: :desc).includes(:commodity, :location).first,
+      best_buy: ProductionFacility.where("#{PLAYER_BUY_PRICE_SQL} > 0").order(Arel.sql("#{PLAYER_BUY_PRICE_SQL} ASC")).includes(:commodity, :location).first,
+      best_sell: ProductionFacility.where("#{PLAYER_SELL_PRICE_SQL} > 0").order(Arel.sql("#{PLAYER_SELL_PRICE_SQL} DESC")).includes(:commodity, :location).first,
       volatile: ProductionFacility.where("price_sell_avg > 0 OR price_buy_avg > 0")
         .order(Arel.sql("ABS(COALESCE(local_sell_price, 0) - COALESCE(price_sell_avg, 0)) + ABS(COALESCE(local_buy_price, 0) - COALESCE(price_buy_avg, 0)) DESC"))
         .includes(:commodity, :location)

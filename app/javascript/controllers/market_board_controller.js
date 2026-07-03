@@ -6,8 +6,8 @@ export default class extends Controller {
     "selectedContext",
     "selectedCommodity",
     "selectedFacility",
-    "selectedBuy",
-    "selectedSell"
+    "selectedPlayerBuy",
+    "selectedPlayerSell"
   ]
 
   selectRow(event) {
@@ -37,8 +37,8 @@ export default class extends Controller {
     this.setTargets(this.selectedContextTargets, selection.context || "Uncharted")
     this.setTargets(this.selectedCommodityTargets, selection.commodityName || "-")
     this.setTargets(this.selectedFacilityTargets, selection.facilityName || "-")
-    this.setTargets(this.selectedBuyTargets, this.formatPrice(selection.buyPrice))
-    this.setTargets(this.selectedSellTargets, this.formatPrice(selection.sellPrice))
+    this.setTargets(this.selectedPlayerBuyTargets, this.formatPrice(selection.playerBuyPrice))
+    this.setTargets(this.selectedPlayerSellTargets, this.formatPrice(selection.playerSellPrice))
 
     this.element.querySelectorAll("[data-market-board-location-name-param]").forEach((item) => {
       item.classList.toggle("bg-zinc-800/80", item === row)
@@ -54,8 +54,8 @@ export default class extends Controller {
       commodityName: row.dataset.marketBoardCommodityNameParam,
       systemName: row.dataset.marketBoardSystemNameParam,
       context: row.dataset.marketBoardContextParam,
-      buyPrice: row.dataset.marketBoardBuyPriceParam,
-      sellPrice: row.dataset.marketBoardSellPriceParam
+      playerBuyPrice: row.dataset.marketBoardPlayerBuyPriceParam,
+      playerSellPrice: row.dataset.marketBoardPlayerSellPriceParam
     }
   }
 

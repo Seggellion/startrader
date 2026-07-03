@@ -1,18 +1,18 @@
 <% location = facility.location %>
-<% buy_price = facility.local_sell_price.to_d.positive? ? facility.local_sell_price : facility.price_sell %>
-<% sell_price = facility.local_buy_price.to_d.positive? ? facility.local_buy_price : facility.price_buy %>
+<% player_buy_price = player_buy_price_for(facility) %>
+<% player_sell_price = player_sell_price_for(facility) %>
 <% spread = market_spread(facility) %>
 
 <article id="<%= dom_id(facility, :market_row) %>"
-  class="grid gap-3 bg-zinc-900/60 p-4 transition-colors duration-700 hover:bg-zinc-800/70 lg:grid-cols-[1.25fr_1fr_0.8fr_0.8fr_0.8fr_0.8fr_0.8fr_110px] lg:items-center"
+  class="grid gap-3 bg-zinc-900/60 p-4 transition-colors duration-700 hover:bg-zinc-800/70 lg:grid-cols-[1.25fr_1fr_0.9fr_0.9fr_0.8fr_0.8fr_0.8fr_110px] lg:items-center"
   data-controller="market-row"
   data-market-board-location-name-param="<%= facility.location_name %>"
   data-market-board-facility-name-param="<%= facility.facility_name %>"
   data-market-board-commodity-name-param="<%= facility.commodity_name %>"
   data-market-board-system-name-param="<%= location&.star_system_name %>"
   data-market-board-context-param="<%= market_location_context(location) %>"
-  data-market-board-buy-price-param="<%= buy_price %>"
-  data-market-board-sell-price-param="<%= sell_price %>"
+  data-market-board-player-buy-price-param="<%= player_buy_price %>"
+  data-market-board-player-sell-price-param="<%= player_sell_price %>"
   data-action="click->market-board#selectRow">
   <div class="min-w-0">
     <h3 class="truncate text-base font-semibold text-white"><%= facility.location_name.presence || facility.facility_name %></h3>
@@ -26,13 +26,13 @@
   </div>
 
   <div class="flex items-center justify-between gap-3 lg:block lg:text-right">
-    <span class="text-xs uppercase text-zinc-500 lg:hidden">Buy</span>
-    <span class="font-mono text-sm text-emerald-200"><%= buy_price.to_d.positive? ? market_price(buy_price) : "-" %></span>
+    <span class="text-xs uppercase text-zinc-500 lg:hidden">Buy from terminal</span>
+    <span class="font-mono text-sm text-emerald-200"><%= terminal_sells_to_player?(facility) ? market_price(player_buy_price) : "-" %></span>
   </div>
 
   <div class="flex items-center justify-between gap-3 lg:block lg:text-right">
-    <span class="text-xs uppercase text-zinc-500 lg:hidden">Sell</span>
-    <span class="font-mono text-sm text-amber-200"><%= sell_price.to_d.positive? ? market_price(sell_price) : "-" %></span>
+    <span class="text-xs uppercase text-zinc-500 lg:hidden">Sell to terminal</span>
+    <span class="font-mono text-sm text-amber-200"><%= terminal_buys_from_player?(facility) ? market_price(player_sell_price) : "-" %></span>
   </div>
 
   <div class="flex items-center justify-between gap-3 lg:block lg:text-right">
@@ -46,7 +46,7 @@
   </div>
 
   <div class="flex items-center justify-between gap-3 lg:block lg:text-right">
-    <span class="text-xs uppercase text-zinc-500 lg:hidden">Spread</span>
+    <span class="text-xs uppercase text-zinc-500 lg:hidden">Player spread</span>
     <span class="font-mono text-sm <%= spread.positive? ? "text-emerald-200" : "text-zinc-500" %>"><%= spread.positive? ? market_price(spread) : "-" %></span>
   </div>
 

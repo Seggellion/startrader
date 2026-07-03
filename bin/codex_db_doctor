@@ -1,0 +1,303 @@
+#!/usr/bin/env bash
+set -u
+
+APP_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$APP_ROOT"
+
+REQUIRE_CONNECTION=0
+if [ "${1:-}" = "--require-connection" ]; then
+  REQUIRE_CONNECTION=1
+fi
+
+info() {
+  printf "\n== %s ==\n" "$1"
+}
+
+warn() {
+  printf "WARNING: %s\n" "$*" >&2
+}
+
+redacted() {
+  local value="${1:-}"
+  if [ -z "$value" ]; then
+    printf "unset"
+  else
+    printf "set"
+  fi
+}
+
+redact_url() {
+  printf "%s" "$1" | sed -E 's#(postgres(ql)?://)[^:@/]+(:[^@/]*)?@#\1[redacted]@#'
+}
+
+load_codex_env() {
+  local env_file="${CODEX_ENV_FILE:-.env.codex}"
+
+  if [ -f "$env_file" ]; then
+    info "Loading $env_file"
+    set -a
+    # shellcheck disable=SC1090
+    . "$env_file"
+    set +a
+  else
+    info "Codex env"
+    printf "%s not present; using shell environment and config/database.yml defaults.\n" "$env_file"
+  fi
+}
+
+effective_test_db() {
+  printf "%s" "${POSTGRES_TEST_DB:-star_trader_test}"
+}
+
+effective_host() {
+  printf "%s" "${POSTGRES_HOST:-${PGHOST:-}}"
+}
+
+effective_port() {
+  printf "%s" "${POSTGRES_PORT:-${PGPORT:-}}"
+}
+
+effective_user() {
+  printf "%s" "${POSTGRES_USER:-${PGUSER:-}}"
+}
+
+print_user_context() {
+  info "Linux user and groups"
+  whoami
+  id
+  groups
+
+  if getent group railpress >/dev/null 2>&1; then
+    getent group railpress
+    if id -nG | tr ' ' '\n' | grep -qx railpress; then
+      printf "railpress membership: yes\n"
+    else
+      printf "railpress membership: no\n"
+    fi
+  else
+    printf "railpress group: missing\n"
+  fi
+}
+
+print_tool_context() {
+  info "Postgres client"
+  if command -v psql >/dev/null 2>&1; then
+    command -v psql
+    psql --version
+  else
+    warn "psql is not installed or not on PATH."
+  fi
+
+  if command -v pg_isready >/dev/null 2>&1; then
+    command -v pg_isready
+  else
+    warn "pg_isready is not installed or not on PATH."
+  fi
+}
+
+print_env_context() {
+  local host port user db
+  host="$(effective_host)"
+  port="$(effective_port)"
+  user="$(effective_user)"
+  db="$(effective_test_db)"
+
+  info "Database environment"
+  printf "DATABASE_URL: "
+  if [ -n "${DATABASE_URL:-}" ]; then
+    redact_url "$DATABASE_URL"
+    printf "\n"
+  else
+    printf "unset\n"
+  fi
+  printf "POSTGRES_HOST/PGHOST: %s\n" "${host:-unset}"
+  printf "POSTGRES_PORT/PGPORT: %s\n" "${port:-unset}"
+  printf "POSTGRES_USER/PGUSER: %s\n" "${user:-unset}"
+  printf "POSTGRES_PASSWORD/PGPASSWORD: %s\n" "$(redacted "${POSTGRES_PASSWORD:-${PGPASSWORD:-}}")"
+  printf "POSTGRES_TEST_DB: %s\n" "$db"
+}
+
+print_rails_profile() {
+  local host port user db
+  host="$(effective_host)"
+  port="$(effective_port)"
+  user="$(effective_user)"
+  db="$(effective_test_db)"
+
+  info "Rails test database profile"
+  if [ -n "${DATABASE_URL:-}" ]; then
+    printf "config/database.yml will use DATABASE_URL for test primary and cable.\n"
+  else
+    printf "database: %s\n" "$db"
+    printf "host: %s\n" "${host:-Unix socket/libpq default}"
+    printf "port: %s\n" "${port:-libpq default}"
+    printf "username: %s\n" "${user:-current PostgreSQL role/libpq default}"
+    printf "password: %s\n" "$(redacted "${POSTGRES_PASSWORD:-${PGPASSWORD:-}}")"
+  fi
+}
+
+print_cluster_context() {
+  info "Postgres cluster"
+  if command -v pg_lsclusters >/dev/null 2>&1; then
+    pg_lsclusters
+  else
+    printf "pg_lsclusters is not installed; skipping cluster list.\n"
+  fi
+
+  if [ -d /var/run/postgresql ]; then
+    ls -la /var/run/postgresql
+  fi
+}
+
+psql_args_for_profile() {
+  local host port user db
+  host="$(effective_host)"
+  port="$(effective_port)"
+  user="$(effective_user)"
+  db="$(effective_test_db)"
+
+  PSQL_ARGS=(-w)
+  if [ -n "${DATABASE_URL:-}" ]; then
+    PSQL_ARGS+=("$DATABASE_URL")
+  else
+    if [ -n "$host" ]; then
+      PSQL_ARGS+=(-h "$host")
+    fi
+    if [ -n "$port" ]; then
+      PSQL_ARGS+=(-p "$port")
+    fi
+    if [ -n "$user" ]; then
+      PSQL_ARGS+=(-U "$user")
+    fi
+    PSQL_ARGS+=(-d "$db")
+  fi
+}
+
+run_pg_isready() {
+  local host port
+  host="$(effective_host)"
+  port="$(effective_port)"
+
+  info "Postgres reachability"
+  if ! command -v pg_isready >/dev/null 2>&1; then
+    printf "pg_isready unavailable; skipping.\n"
+    return 0
+  fi
+
+  PG_READY_ARGS=()
+  if [ -n "$host" ]; then
+    PG_READY_ARGS+=(-h "$host")
+  fi
+  if [ -n "$port" ]; then
+    PG_READY_ARGS+=(-p "$port")
+  fi
+
+  pg_isready "${PG_READY_ARGS[@]}"
+}
+
+probe_connection() {
+  info "Postgres authentication probe"
+  if ! command -v psql >/dev/null 2>&1; then
+    warn "psql is not installed or not on PATH."
+    return 1
+  fi
+
+  psql_args_for_profile
+  printf "+ psql"
+  for arg in "${PSQL_ARGS[@]}"; do
+    case "$arg" in
+      postgresql://*|postgres://*) printf " %s" "$(redact_url "$arg")" ;;
+      *) printf " %s" "$arg" ;;
+    esac
+  done
+  printf " -c select current_user, current_database();\n"
+
+  psql "${PSQL_ARGS[@]}" -c "select current_user, current_database();" 2>&1
+}
+
+probe_tcp_comparison() {
+  info "TCP localhost comparison"
+  if [ -n "${DATABASE_URL:-}" ] || [ -n "$(effective_host)" ]; then
+    printf "Skipping comparison because the active profile already specifies a host or DATABASE_URL.\n"
+    return 0
+  fi
+
+  psql -w -h localhost -d "$(effective_test_db)" -c "select current_user, current_database();" 2>&1
+}
+
+probe_inventory() {
+  info "Role/database inventory"
+  if sudo -n -u postgres psql -tAc "select rolname from pg_roles where rolname in ('$(whoami)', 'startrader_codex', 'postgres') order by 1;" >/tmp/codex-db-roles.$$ 2>/tmp/codex-db-roles.err.$$; then
+    printf "roles:\n"
+    sed '/^[[:space:]]*$/d' /tmp/codex-db-roles.$$
+    rm -f /tmp/codex-db-roles.$$ /tmp/codex-db-roles.err.$$
+  else
+    printf "Could not inspect roles with sudo -n -u postgres; sudo requires a password or this user is not allowed.\n"
+    rm -f /tmp/codex-db-roles.$$ /tmp/codex-db-roles.err.$$
+  fi
+
+  if sudo -n -u postgres psql -tAc "select datname from pg_database where datname in ('star_trader_development', 'star_trader_test', 'postgres') order by 1;" >/tmp/codex-db-dbs.$$ 2>/tmp/codex-db-dbs.err.$$; then
+    printf "databases:\n"
+    sed '/^[[:space:]]*$/d' /tmp/codex-db-dbs.$$
+    rm -f /tmp/codex-db-dbs.$$ /tmp/codex-db-dbs.err.$$
+  else
+    printf "Could not inspect databases with sudo -n -u postgres; sudo requires a password or this user is not allowed.\n"
+    rm -f /tmp/codex-db-dbs.$$ /tmp/codex-db-dbs.err.$$
+  fi
+}
+
+print_next_steps() {
+  cat <<'TEXT'
+
+== Setup guidance ==
+The active Rails test profile is passwordless only when local PostgreSQL allows it.
+
+Path A, railpress/socket/peer auth:
+  Ensure pg_hba.conf has a local rule that allows the active WSL user or the railpress-managed local roles to connect over the Unix socket without a password, then reload PostgreSQL.
+  This repo already leaves host unset for local/test when PGHOST/POSTGRES_HOST are unset, so Rails will use the Unix socket path.
+
+Path B, limited Codex test role:
+  sudo -u postgres createuser --pwprompt startrader_codex
+  sudo -u postgres createdb -O startrader_codex star_trader_test
+
+  If star_trader_test already exists:
+  sudo -u postgres psql -c "ALTER DATABASE star_trader_test OWNER TO startrader_codex;"
+
+  To inspect the active local roles/databases:
+  sudo -u postgres psql -c "\du"
+  sudo -u postgres psql -c "\l star_trader_test"
+
+  Then create .env.codex from .env.codex.example and fill in the local-only password:
+  POSTGRES_HOST=localhost
+  POSTGRES_PORT=5432
+  POSTGRES_USER=startrader_codex
+  POSTGRES_PASSWORD=<local_only_password>
+  POSTGRES_TEST_DB=star_trader_test
+TEXT
+}
+
+load_codex_env
+print_user_context
+print_tool_context
+print_env_context
+print_rails_profile
+print_cluster_context
+run_pg_isready
+probe_inventory
+
+if probe_connection; then
+  probe_tcp_comparison || true
+  info "Result"
+  printf "Codex database access works for the Rails test profile.\n"
+  exit 0
+else
+  status=$?
+fi
+
+print_next_steps
+
+if [ "$REQUIRE_CONNECTION" -eq 1 ]; then
+  exit "$status"
+fi
+
+exit 0
