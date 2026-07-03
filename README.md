@@ -68,6 +68,43 @@ The tick runner uses PostgreSQL advisory locks so duplicate queued jobs or multi
 
 ---
 
+## Local Codex Verification
+
+Run the local verification path with:
+
+```bash
+bin/codex_test
+```
+
+The script checks the pinned Ruby version, Bundler, the current Linux user and groups, PostgreSQL reachability, test database preparation, and the Rails test suite.
+
+This app pins Ruby `3.2.2` in `Gemfile` and `.ruby-version`. If your shell is not initialized with that Ruby, `bin/codex_test` will use `rbenv exec` when rbenv is available.
+
+Development and test database configuration defaults to local PostgreSQL through libpq defaults: Unix socket, current PostgreSQL role, and the `star_trader_test` database for tests. If your local PostgreSQL setup requires the `railpress` Linux group, add the Codex/Linux user to that group:
+
+```bash
+sudo usermod -aG railpress <linux_user>
+```
+
+Restart the WSL session after changing group membership, or run:
+
+```bash
+newgrp railpress
+```
+
+For Codex sessions that should not depend on a personal local PostgreSQL role, create a limited test-only PostgreSQL role and copy `.env.codex.example` to `.env.codex`. Use either `DATABASE_URL` or `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `POSTGRES_PORT`, and `POSTGRES_TEST_DB`. Do not grant that role access to production data.
+
+One safe local role shape is:
+
+```sql
+CREATE ROLE startrader_codex LOGIN PASSWORD 'change-me';
+CREATE DATABASE star_trader_test OWNER startrader_codex;
+```
+
+If the database already exists, grant ownership or privileges only for the test database before running `bin/codex_test`.
+
+---
+
 ## 🧑‍💻 **Getting Started**
 
 ### **Prerequisites**

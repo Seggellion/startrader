@@ -37,7 +37,8 @@ class GateTravelService
     raise StandardError, "No ship found for ship_guid #{ship_guid}" unless ship
     raise StandardError, "No shard found for ship_guid #{ship_guid}" unless shard
 
-    current_location = user_ship.location || Location.find_by(name: user_ship.location_name)
+    availability = ShipAvailability.new(shard_user: user_ship.shard_user, user_ship: user_ship).validate_usable!
+    current_location = availability.ship_location
     raise StandardError, "Current location not found for ship_guid #{ship_guid}" unless current_location
 
     origin_location = resolved_origin_gateway(current_location)

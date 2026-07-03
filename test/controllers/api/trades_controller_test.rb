@@ -319,13 +319,14 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     post "/api/status", params: base_status_payload, as: :json
 
     assert_response :success
-    assert_equal ["cargo", "ship", "status", "wallet_balance"], response_json.keys.sort
+    assert_equal ["cargo", "player_location", "ship", "ships", "status", "wallet_balance"], response_json.keys.sort
     assert_equal "success", response_json["status"]
     assert_equal 40_000, response_json["wallet_balance"]
     assert_equal(
       [
         "arrival_tick",
         "available_cargo_space",
+        "available_at_player_location",
         "current_tick",
         "from_location",
         "location",
@@ -334,12 +335,17 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
         "to_location",
         "total_scu",
         "travel_status",
+        "unavailable_reason",
         "used_scu"
       ],
       response_json["ship"].keys.sort
     )
     assert_equal @ship.model, response_json["ship"]["model"]
     assert_equal @location.name, response_json["ship"]["location"]
+    assert_equal @location.name, response_json["player_location"]
+    assert_equal true, response_json["ship"]["available_at_player_location"]
+    assert_nil response_json["ship"]["unavailable_reason"]
+    assert_equal [@user_ship.guid], response_json["ships"].map { |ship| ship["guid"] }
   end
 
   test "status updates username from player name for existing twitch id" do

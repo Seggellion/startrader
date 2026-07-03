@@ -41,12 +41,8 @@ class User < ApplicationRecord
     user_type == 'admin'
   end
 
- # Example method to get user's active ship
- def active_ship
-  user_ships.first # You could expand this to support "selected" ship logic
-end
-
-
-
+  def active_ship
+    user_ships.order(updated_at: :desc).first
   end
-  
+
+end

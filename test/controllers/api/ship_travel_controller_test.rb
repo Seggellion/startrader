@@ -985,6 +985,218 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     assert_equal 2, ShipTravel.count
   end
 
+  test "ship switching cannot teleport player to a remote ship location" do
+    terra = Location.create!(name: "Terra", classification: "planet", star_system_name: "Terra")
+    pyro = Location.create!(name: "Pyro", classification: "planet", star_system_name: "Terra")
+    hurston = Location.create!(name: "Hurston", classification: "planet", star_system_name: "Terra")
+    hull_e = Ship.create!(model: "MISC Hull E", slug: "misc-hull-e", scu: 98_304, speed: 80)
+    jump = Ship.create!(model: "Origin 890 Jump", slug: "origin-890-jump", scu: 484, speed: 90)
+    user = User.create!(
+      username: "DefectPilot",
+      twitch_id: "defect-player-guid",
+      uid: "defect-player-guid",
+      user_type: "player"
+    )
+    shard_user = ShardUser.create!(user: user, shard: @shard, shard_name: @shard.name)
+    shard_user.update_current_location!(terra)
+    hull_user_ship = UserShip.create!(
+      user: user,
+      ship: hull_e,
+      shard: @shard,
+      shard_user: shard_user,
+      shard_name: @shard.name,
+      guid: "hull-e-guid",
+      ship_slug: hull_e.slug,
+      location_name: terra.name,
+      total_scu: hull_e.scu,
+      used_scu: 0
+    )
+    jump_user_ship = UserShip.create!(
+      user: user,
+      ship: jump,
+      shard: @shard,
+      shard_user: shard_user,
+      shard_name: @shard.name,
+      guid: "890j-guid",
+      ship_slug: jump.slug,
+      location_name: pyro.name,
+      total_scu: jump.scu,
+      used_scu: 0
+    )
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "hull-e-terra-pyro",
+        ship_guid: hull_user_ship.guid,
+        ship_slug: hull_e.slug,
+        player_guid: user.uid,
+        player_name: user.username,
+        from_location: terra.name,
+        to_location: pyro.name
+      )
+    }, as: :json
+
+    assert_response :success
+    hull_travel = ShipTravel.find_by!(travel_guid: "hull-e-terra-pyro")
+    arrive!(hull_travel)
+    assert_equal pyro.name, hull_user_ship.reload.location_name
+    assert_equal pyro.name, shard_user.reload.current_location_name
+
+    post "/api/status", params: status_payload(user, jump_user_ship, jump), as: :json
+    assert_response :success
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "890j-pyro-hurston",
+        ship_guid: jump_user_ship.guid,
+        ship_slug: jump.slug,
+        player_guid: user.uid,
+        player_name: user.username,
+        from_location: pyro.name,
+        to_location: hurston.name
+      )
+    }, as: :json
+
+    assert_response :success
+    jump_travel = ShipTravel.find_by!(travel_guid: "890j-pyro-hurston")
+    arrive!(jump_travel)
+    assert_equal hurston.name, jump_user_ship.reload.location_name
+    assert_equal hurston.name, shard_user.reload.current_location_name
+    assert_equal pyro.name, hull_user_ship.reload.location_name
+
+    assert_no_difference("ShipTravel.count") do
+      post "/api/status", params: status_payload(user, hull_user_ship, hull_e), as: :json
+    end
+
+    assert_response :bad_request
+    assert_equal "Ship is at Pyro, but player is at Hurston.", response_json["message"]
+    assert_equal hurston.name, shard_user.reload.current_location_name
+    assert_equal pyro.name, hull_user_ship.reload.location_name
+
+    post "/api/status", params: status_payload(user, jump_user_ship, jump), as: :json
+    assert_response :success
+    hull_status = response_json["ships"].detect { |ship| ship["guid"] == hull_user_ship.guid }
+    assert_equal false, hull_status["available_at_player_location"]
+    assert_equal pyro.name, hull_status["location"]
+    assert_equal "Ship is at Pyro, but player is at Hurston.", hull_status["unavailable_reason"]
+  end
+
+  test "create rejects travel for a ship away from the player location" do
+    shard_user, user_ship = create_located_player_and_ship(
+      player_location: @to_location,
+      ship_location: @from_location
+    )
+
+    assert_no_difference("ShipTravel.count") do
+      post "/api/travel", params: {
+        ship_travel: travel_payload(
+          travel_guid: "remote-ship-travel",
+          ship_guid: user_ship.guid,
+          player_guid: user_ship.user.uid,
+          player_name: user_ship.user.username,
+          from_location: @from_location.name,
+          to_location: @to_location.name
+        )
+      }, as: :json
+    end
+
+    assert_response :unprocessable_entity
+    assert_equal "Ship is at Orison, but player is at Area18.", response_json["error"]
+    assert_equal @to_location.name, shard_user.reload.current_location_name
+    assert_equal @from_location.name, user_ship.reload.location_name
+  end
+
+  test "create rejects travel for a paused ship" do
+    shard_user, user_ship = create_located_player_and_ship(
+      player_location: @from_location,
+      ship_location: @from_location
+    )
+    ShipTravel.create!(
+      user_ship: user_ship,
+      from_location: @from_location,
+      to_location: @to_location,
+      travel_guid: "paused-travel-guid",
+      departure_tick: 10,
+      arrival_tick: 0,
+      total_duration_ticks: 10,
+      interdict_window_percent: 50,
+      is_paused: true,
+      remaining_ticks_from_arrival: 4
+    )
+
+    assert_no_difference("ShipTravel.count") do
+      post "/api/travel", params: {
+        ship_travel: travel_payload(
+          travel_guid: "new-paused-ship-travel",
+          ship_guid: user_ship.guid,
+          player_guid: user_ship.user.uid,
+          player_name: user_ship.user.username
+        )
+      }, as: :json
+    end
+
+    assert_response :unprocessable_entity
+    assert_equal "Ship is already in transit.", response_json["error"]
+    assert_equal @from_location.name, shard_user.reload.current_location_name
+  end
+
+  test "create processes long past arrival before starting a new travel" do
+    shard_user, user_ship = create_located_player_and_ship(
+      player_location: @from_location,
+      ship_location: @from_location,
+      status: "in_transit"
+    )
+    stale_travel = ShipTravel.create!(
+      user_ship: user_ship,
+      from_location: @from_location,
+      to_location: @to_location,
+      travel_guid: "long-past-travel-guid",
+      departure_tick: 1,
+      arrival_tick: 2,
+      total_duration_ticks: 1,
+      interdict_window_percent: 50
+    )
+    new_destination = Location.create!(name: "Lorville", classification: "city", star_system_name: "Stanton")
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "after-stale-arrival-travel",
+        ship_guid: user_ship.guid,
+        player_guid: user_ship.user.uid,
+        player_name: user_ship.user.username,
+        from_location: @to_location.name,
+        to_location: new_destination.name
+      )
+    }, as: :json
+
+    assert_response :success
+    refute ShipTravel.exists?(stale_travel.id)
+    assert_equal @to_location.name, shard_user.reload.current_location_name
+    assert_equal @to_location.name, ShipTravel.find_by!(travel_guid: "after-stale-arrival-travel").from_location.name
+  end
+
+  test "create rejects known player ship with unknown ship location" do
+    shard_user, user_ship = create_located_player_and_ship(
+      player_location: @from_location,
+      ship_location: nil
+    )
+
+    assert_no_difference("ShipTravel.count") do
+      post "/api/travel", params: {
+        ship_travel: travel_payload(
+          travel_guid: "unknown-ship-location-travel",
+          ship_guid: user_ship.guid,
+          player_guid: user_ship.user.uid,
+          player_name: user_ship.user.username
+        )
+      }, as: :json
+    end
+
+    assert_response :unprocessable_entity
+    assert_equal "Ship location is unknown; initialize the ship location before use.", response_json["error"]
+    assert_equal @from_location.name, shard_user.reload.current_location_name
+  end
+
   private
 
   def travel_payload(overrides = {})
@@ -1119,6 +1331,52 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     )
 
     [user_ship, travel]
+  end
+
+  def create_located_player_and_ship(player_location:, ship_location:, status: "docked")
+    player_guid = "located-player-#{SecureRandom.hex(3)}"
+    user = User.create!(
+      username: "LocatedPilot-#{SecureRandom.hex(3)}",
+      twitch_id: player_guid,
+      uid: player_guid,
+      user_type: "player"
+    )
+    shard_user = ShardUser.create!(user: user, shard: @shard, shard_name: @shard.name)
+    shard_user.update_current_location!(player_location)
+    user_ship = UserShip.create!(
+      user: user,
+      ship: @ship,
+      shard: @shard,
+      shard_user: shard_user,
+      shard_name: @shard.name,
+      guid: "located-ship-#{SecureRandom.hex(3)}",
+      ship_slug: @ship.slug,
+      location_name: ship_location&.name,
+      total_scu: @ship.scu,
+      used_scu: 0,
+      status: status
+    )
+
+    [shard_user, user_ship]
+  end
+
+  def arrive!(travel)
+    Tick.instance.update_columns(current_tick: travel.arrival_tick, sequence: travel.arrival_tick)
+    RabbitmqSender.stub(:send_ship_report, nil) do
+      ShipArrivalJob.perform_now
+    end
+  end
+
+  def status_payload(user, user_ship, ship)
+    {
+      ship_guid: user_ship.guid,
+      ship_model: ship.model,
+      wallet_balance: 40_000,
+      shard_uuid: @shard.channel_uuid,
+      player_guid: user.uid,
+      player_name: user.username,
+      secret_guid: "test-secret"
+    }
   end
 
   def cancel_payload(overrides = {})

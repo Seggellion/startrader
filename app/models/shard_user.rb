@@ -51,6 +51,31 @@ class ShardUser < ApplicationRecord
     update(wallet_balance: new_balance)
   end
 
+  def current_location_name
+    location_payload = last_location || {}
+    location_payload["name"].presence ||
+      location_payload[:name].presence ||
+      location_payload["location_name"].presence ||
+      location_payload[:location_name].presence
+  end
+
+  def current_location
+    Location.find_by(name: current_location_name) if current_location_name.present?
+  end
+
+  def update_current_location!(location)
+    raise ArgumentError, "location is required" if location.blank?
+
+    payload = (last_location || {}).dup
+    payload["id"] = location.id
+    payload["name"] = location.name
+    payload["location_name"] = location.name
+    payload["star_system_name"] = location.star_system_name
+    payload["classification"] = location.classification
+
+    update!(last_location: payload)
+  end
+
   private
 
   def sync_shard_name_from_shard

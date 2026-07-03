@@ -26,15 +26,28 @@ module Api
 
       user_ship = sync.user_ship
       shard = sync.shard
+      shard_user = sync.shard_user
 
       process_due_arrival_for(user_ship)
       user_ship.reload
+
+      initialize_unknown_locations_from_request!(
+        shard_user: shard_user,
+        user_ship: user_ship,
+        from_location_name: permitted_params[:from_location],
+        to_location_name: permitted_params[:to_location]
+      )
+      return if performed?
 
       if travel_in_progress?(user_ship)
         return render json: { error: "Ship is already in transit." }, status: :unprocessable_entity
       end
 
+      availability = ShipAvailability.new(shard_user: shard_user, user_ship: user_ship).validate_usable!
+      user_ship.reload
+
       current_location = resolve_current_location_for_travel(
+        shard_user,
         user_ship,
         permitted_params[:from_location],
         permitted_params[:to_location]
@@ -45,13 +58,6 @@ module Api
         permitted_params[:to_location],
         star_system_name: current_location&.star_system_name
       )
-
-      # Backfill a starting location if still nil (defaults to star system’s planet to keep things valid)
-      if user_ship.location.nil? && destination
-        fallback = Location.planets.find_by(name: destination.star_system_name) # e.g., "Stanton"
-        user_ship.update(location: fallback) if fallback
-        current_location = user_ship.location
-      end
 
       return render json: { error: "Location not found." }, status: :not_found if destination.nil?
 
@@ -101,7 +107,8 @@ module Api
         destination:   destination.name,
         current_tick:  Tick.current,
         arrival_tick:  travel.arrival_tick,
-        time_remaining: travel&.seconds_remaining(Tick.current)
+        time_remaining: travel&.seconds_remaining(Tick.current),
+        player_location: availability.player_location&.name
       }
     rescue StandardError => e
       render json: { error: e.message }, status: :unprocessable_entity
@@ -562,8 +569,30 @@ def resolve_location_by_name(name, star_system_name: nil)
   LocationResolver.resolve(name, star_system_name: star_system_name)
 end
 
-def resolve_current_location_for_travel(user_ship, from_location_name, to_location_name)
-  server_location = user_ship.location
+    def initialize_unknown_locations_from_request!(shard_user:, user_ship:, from_location_name:, to_location_name:)
+      return if from_location_name.blank?
+      return if shard_user.current_location_name.present? || user_ship.location_name.present?
+
+      request_location = resolve_from_location_for_travel(
+        from_location_name: from_location_name,
+        to_location_name: to_location_name,
+        server_location: nil
+      )
+      return if performed?
+
+      unless request_location
+        render json: { error: "from_location could not be resolved." }, status: :unprocessable_entity
+        return
+      end
+
+      ActiveRecord::Base.transaction do
+        user_ship.update!(location_name: request_location.name)
+        shard_user.update_current_location!(request_location)
+      end
+    end
+
+    def resolve_current_location_for_travel(shard_user, user_ship, from_location_name, to_location_name)
+  server_location = shard_user.current_location || user_ship.location
   return server_location if from_location_name.blank?
 
   request_location = resolve_from_location_for_travel(
@@ -581,11 +610,10 @@ def resolve_current_location_for_travel(user_ship, from_location_name, to_locati
   end
 
   if server_location&.id != request_location.id
-    Rails.logger.info(
-      "ShipTravel location sync: ship_guid=#{user_ship.guid} " \
-      "from stored=#{server_location&.name.inspect} to client=#{request_location.name.inspect}"
-    )
-    user_ship.update!(location: request_location)
+    render json: {
+      error: "from_location does not match the player's current location."
+    }, status: :unprocessable_entity
+    return
   end
 
   request_location

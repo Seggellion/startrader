@@ -184,16 +184,23 @@ class TradeService
 
       return no_ship_status_response(shard_user) if user_ship.nil?
 
+      availability = ShipAvailability.new(shard_user: shard_user, user_ship: user_ship).validate_usable!
+      user_ship.reload
+      user_ship.touch
+
       cargo = user_ship_cargo_json(user_ship)
-      ship_travel = ShipTravel.where(user_ship_id: user_ship.id).order(created_at: :desc).first
+      ship_travel = latest_relevant_ship_travel(user_ship)
       current_tick = Tick.order(created_at: :desc).pluck(:current_tick).first
 
       {
         status: 'success',
         wallet_balance: shard_user.wallet_balance,
+        player_location: availability.player_location&.name,
         ship: {
           model: user_ship.ship.model,
           location: user_ship.location_name,
+          available_at_player_location: availability.available,
+          unavailable_reason: availability.reason,
           total_scu: user_ship.total_scu,
           used_scu: user_ship.used_scu,
           available_cargo_space: user_ship.available_cargo_space,
@@ -204,8 +211,34 @@ class TradeService
           current_tick: current_tick,
           time_remaining: ship_travel&.seconds_remaining(current_tick)
         },
+        ships: ships_availability_json(shard_user),
         cargo: cargo,
       }
+    end
+
+    def self.latest_relevant_ship_travel(user_ship)
+      user_ship.ship_travels
+               .where(completed_at_tick: nil)
+               .order(updated_at: :desc)
+               .first ||
+        user_ship.ship_travels.order(created_at: :desc).first
+    end
+
+    def self.ships_availability_json(shard_user)
+      shard_user.user_ships.includes(:ship).order(updated_at: :desc).map do |ship_record|
+        availability = ShipAvailability.new(shard_user: shard_user, user_ship: ship_record).status
+
+        {
+          guid: ship_record.guid,
+          model: ship_record.ship&.model,
+          ship_slug: ship_record.ship_slug.presence || ship_record.ship&.slug,
+          location: availability.ship_location&.name || ship_record.location_name,
+          travel_status: ship_record.status,
+          in_transit: availability.in_transit,
+          available_at_player_location: availability.available,
+          unavailable_reason: availability.reason
+        }
+      end
     end
 
     def self.update_status_wallet_balance!(shard_user, wallet_balance)

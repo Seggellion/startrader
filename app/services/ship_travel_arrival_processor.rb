@@ -16,6 +16,7 @@ class ShipTravelArrivalProcessor
         location_name: travel.to_location.name,
         status: arrival_status
       )
+      update_player_location_if_travel_origin_matches!
 
       RabbitmqSender.send_ship_report(travel) if notify
       travel.cleanup_after_arrival!(current_tick)
@@ -36,6 +37,16 @@ class ShipTravelArrivalProcessor
     when "planet", "moon" then "in orbit"
     when "city", "outpost" then "landed"
     else "floating"
+    end
+  end
+
+  def update_player_location_if_travel_origin_matches!
+    shard_user = travel.user_ship.shard_user
+    return unless shard_user
+
+    current_location = shard_user.current_location
+    if current_location.nil? || current_location.id == travel.from_location_id
+      shard_user.update_current_location!(travel.to_location)
     end
   end
 end

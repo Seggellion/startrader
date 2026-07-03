@@ -1,0 +1,195 @@
+#!/usr/bin/env bash
+set -u
+
+APP_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$APP_ROOT"
+
+FAILURE_CLASS=""
+RBENV_PREFIX=()
+
+info() {
+  printf "\n== %s ==\n" "$1"
+}
+
+fail() {
+  FAILURE_CLASS="$1"
+  shift
+  printf "\n[%s]\n" "$FAILURE_CLASS" >&2
+  printf "%s\n" "$*" >&2
+  exit 1
+}
+
+run_capture() {
+  local label="$1"
+  shift
+  local log_file
+  log_file="$(mktemp "${TMPDIR:-/tmp}/codex-test.XXXXXX")"
+
+  info "$label"
+  printf "+ %s\n" "$*"
+  if "$@" >"$log_file" 2>&1; then
+    cat "$log_file"
+    rm -f "$log_file"
+    return 0
+  fi
+
+  cat "$log_file" >&2
+  classify_failure "$log_file"
+  rm -f "$log_file"
+  return 1
+}
+
+classify_failure() {
+  local log_file="$1"
+
+  if grep -Eiq "Ruby version|RubyVersionMismatch|rbenv: version|rbenv:.*not installed|bundle: command not found|Bundler::" "$log_file"; then
+    FAILURE_CLASS="Ruby/toolchain failure"
+  elif grep -Eiq "role .* does not exist|no password supplied|password authentication failed|Peer authentication failed|fe_sendauth" "$log_file"; then
+    FAILURE_CLASS="Postgres role/authentication failure"
+  elif grep -Eiq "No such file or directory|could not connect|Connection refused|server closed the connection|pg_isready" "$log_file"; then
+    FAILURE_CLASS="Postgres service/socket failure"
+  elif grep -Eiq "permission denied|not in railpress|newgrp railpress" "$log_file"; then
+    FAILURE_CLASS="Linux user/group membership failure"
+  elif grep -Eiq "ActiveRecord::|PG::|db:prepare|database .* does not exist|schema" "$log_file"; then
+    FAILURE_CLASS="Rails database preparation failure"
+  else
+    FAILURE_CLASS="Actual application test failure"
+  fi
+}
+
+required_ruby() {
+  awk -F'"' '/^ruby / { print $2; exit }' Gemfile
+}
+
+setup_rbenv() {
+  if command -v rbenv >/dev/null 2>&1; then
+    RBENV_PREFIX=(rbenv exec)
+  fi
+}
+
+ruby_cmd() {
+  "${RBENV_PREFIX[@]}" "$@"
+}
+
+load_codex_env() {
+  local env_file="${CODEX_ENV_FILE:-.env.codex}"
+
+  if [ -f "$env_file" ]; then
+    info "Loading $env_file"
+    set -a
+    # shellcheck disable=SC1090
+    . "$env_file"
+    set +a
+  fi
+}
+
+check_ruby() {
+  local expected actual ruby_version_file
+  expected="$(required_ruby)"
+  ruby_version_file="$(sed 's/^ruby-//' .ruby-version 2>/dev/null || true)"
+
+  info "Ruby"
+  printf "Gemfile ruby: %s\n" "$expected"
+  printf ".ruby-version: %s\n" "${ruby_version_file:-missing}"
+  if [ "${ruby_version_file:-}" != "$expected" ]; then
+    fail "Ruby/toolchain failure" ".ruby-version does not match Gemfile. Expected $expected."
+  fi
+
+  if ! actual="$(ruby_cmd ruby -e 'print RUBY_VERSION' 2>&1)"; then
+    printf "%s\n" "$actual" >&2
+    fail "Ruby/toolchain failure" "Could not run Ruby $expected. Install it with rbenv, or initialize the correct Ruby manager before running this script."
+  fi
+
+  printf "Active ruby: %s\n" "$actual"
+  if [ "$actual" != "$expected" ]; then
+    fail "Ruby/toolchain failure" "Active Ruby is $actual, but this app requires $expected. If rbenv has the version installed, run this command through bin/codex_test so it can use rbenv exec."
+  fi
+
+  ruby_cmd ruby -v
+  ruby_cmd bundle -v
+}
+
+check_user_and_groups() {
+  info "Linux user and groups"
+  whoami
+  id
+  groups
+
+  if getent group railpress >/dev/null 2>&1; then
+    getent group railpress
+    if ! id -nG | tr ' ' '\n' | grep -qx railpress; then
+      fail "Linux user/group membership failure" "The current Linux user is not in the railpress group. Run: sudo usermod -aG railpress $(whoami), then restart WSL or run: newgrp railpress."
+    fi
+  else
+    printf "railpress group was not found; continuing because explicit database credentials may be in use.\n"
+  fi
+}
+
+db_profile_summary() {
+  info "Database profile"
+  if [ -n "${DATABASE_URL:-}" ]; then
+    printf "Using DATABASE_URL for test database configuration.\n"
+  elif [ -n "${POSTGRES_USER:-${PGUSER:-}}" ] || [ -n "${POSTGRES_PASSWORD:-${PGPASSWORD:-}}" ] || [ -n "${POSTGRES_HOST:-${PGHOST:-}}" ]; then
+    printf "Using explicit POSTGRES_*/PG* variables for test database configuration.\n"
+    printf "Test database: %s\n" "${POSTGRES_TEST_DB:-star_trader_test}"
+  else
+    printf "Using config/database.yml local defaults: Unix socket, current PostgreSQL role, database star_trader_test.\n"
+  fi
+}
+
+check_postgres() {
+  local probe_db
+  probe_db="${PGDATABASE:-postgres}"
+
+  info "Postgres reachability"
+  if command -v pg_isready >/dev/null 2>&1; then
+    if ! pg_isready; then
+      fail "Postgres service/socket failure" "pg_isready could not reach the local PostgreSQL server."
+    fi
+  else
+    printf "pg_isready is not installed; using psql probe only.\n"
+  fi
+
+  if ! command -v psql >/dev/null 2>&1; then
+    fail "Postgres service/socket failure" "psql is not installed or not on PATH."
+  fi
+
+  if [ -n "${DATABASE_URL:-}" ]; then
+    run_capture "Postgres authentication probe" psql -w "$DATABASE_URL" -c "select current_user, current_database();" || {
+      fail "$FAILURE_CLASS" "Postgres is reachable, but authentication failed for DATABASE_URL. Check the test-only role, password, host, and database in .env.codex."
+    }
+  else
+    run_capture "Postgres authentication probe" psql -w -d "$probe_db" -c "select current_user, current_database();" || {
+      fail "$FAILURE_CLASS" "Postgres is reachable, but authentication failed for the active profile. Provide .env.codex with a test-only DATABASE_URL or POSTGRES_*/PG* variables, or create/grant the matching local PostgreSQL role."
+    }
+  fi
+}
+
+run_bundle_install() {
+  run_capture "Bundle install" ruby_cmd bundle install || fail "$FAILURE_CLASS" "bundle install failed."
+}
+
+prepare_database() {
+  run_capture "Rails test database prepare" env RAILS_ENV=test "${RBENV_PREFIX[@]}" bundle exec rails db:prepare || {
+    fail "$FAILURE_CLASS" "Rails could not prepare the test database."
+  }
+}
+
+run_tests() {
+  run_capture "Rails test suite" env RAILS_ENV=test "${RBENV_PREFIX[@]}" bundle exec rails test || {
+    fail "$FAILURE_CLASS" "Rails tests did not pass."
+  }
+}
+
+load_codex_env
+setup_rbenv
+check_ruby
+check_user_and_groups
+db_profile_summary
+check_postgres
+run_bundle_install
+prepare_database
+run_tests
+
+info "Result"
+printf "Codex local verification passed.\n"
