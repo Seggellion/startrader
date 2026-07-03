@@ -27,6 +27,14 @@ class Api::ShipsControllerTest < ActionDispatch::IntegrationTest
       shard_name: @shard.name,
       wallet_balance: 10_000
     )
+    @orison = Location.find_or_create_by!(name: "Orison") do |location|
+      location.classification = "city"
+      location.star_system_name = "Stanton"
+    end
+    @area18 = Location.find_or_create_by!(name: "Area18") do |location|
+      location.classification = "city"
+      location.star_system_name = "Stanton"
+    end
     @ship = Ship.create!(model: "Drake Caterpillar", slug: "drake-caterpillar", scu: 100, speed: 100)
     @user_ship = UserShip.create!(
       user: @user,
@@ -35,6 +43,7 @@ class Api::ShipsControllerTest < ActionDispatch::IntegrationTest
       shard_user: @shard_user,
       guid: "ship-guid",
       ship_slug: @ship.slug,
+      location_name: @orison.name,
       total_scu: @ship.scu,
       used_scu: 0
     )
@@ -191,6 +200,115 @@ class Api::ShipsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
     assert_equal({ "Status" => "error", "Message" => "", "ErrorText" => "Ship not found." }, response_json)
     assert_dump_response_shape
+  end
+
+  test "deliver ship updates location and removes cargo" do
+    UserShipCargo.create!(user_ship: @user_ship, commodity: @commodity, scu: 7)
+    UserShipCargo.create!(user_ship: @user_ship, commodity: @other_commodity, scu: 5)
+    @user_ship.update!(used_scu: 99)
+
+    post "/api/ships/deliver_ship", params: {
+      ship_guid: @user_ship.guid,
+      location: @area18.name,
+      secret_guid: "test-secret"
+    }, as: :json
+
+    assert_response :success
+    assert_equal "success", response_json["Status"]
+    assert_equal "delivered ship to Area18 and removed 7 scu of aluminum and 5 scu of copper", response_json["Message"]
+    assert_equal "", response_json["ErrorText"]
+    assert_dump_response_shape
+    assert_equal @area18.name, @user_ship.reload.location_name
+    assert_equal 0, @user_ship.user_ship_cargos.count
+    assert_equal 0, @user_ship.used_scu
+  end
+
+  test "deliver ship with no cargo still updates location" do
+    @user_ship.recalculate_used_scu!
+
+    post "/api/ships/deliver_ship", params: {
+      ship_guid: @user_ship.guid,
+      location: @area18.name,
+      secret_guid: "test-secret"
+    }, as: :json
+
+    assert_response :success
+    assert_equal(
+      { "Status" => "success", "Message" => "delivered ship to Area18 with no cargo to remove", "ErrorText" => "" },
+      response_json
+    )
+    assert_dump_response_shape
+    assert_equal @area18.name, @user_ship.reload.location_name
+    assert_equal 0, @user_ship.used_scu
+  end
+
+  test "deliver ship requires ship_guid" do
+    post "/api/ships/deliver_ship", params: {
+      location: @area18.name,
+      secret_guid: "test-secret"
+    }, as: :json
+
+    assert_response :unprocessable_entity
+    assert_equal({ "Status" => "error", "Message" => "", "ErrorText" => "Missing ship_guid." }, response_json)
+    assert_dump_response_shape
+  end
+
+  test "deliver ship requires location" do
+    post "/api/ships/deliver_ship", params: {
+      ship_guid: @user_ship.guid,
+      secret_guid: "test-secret"
+    }, as: :json
+
+    assert_response :unprocessable_entity
+    assert_equal({ "Status" => "error", "Message" => "", "ErrorText" => "Missing location." }, response_json)
+    assert_dump_response_shape
+  end
+
+  test "deliver ship requires secret_guid" do
+    post "/api/ships/deliver_ship", params: {
+      ship_guid: @user_ship.guid,
+      location: @area18.name
+    }, as: :json
+
+    assert_response :unprocessable_entity
+    assert_equal({ "Status" => "error", "Message" => "", "ErrorText" => "Missing secret_guid." }, response_json)
+    assert_dump_response_shape
+  end
+
+  test "deliver ship returns standard error for unknown ship_guid" do
+    post "/api/ships/deliver_ship", params: {
+      ship_guid: "missing-ship-guid",
+      location: @area18.name,
+      secret_guid: "test-secret"
+    }, as: :json
+
+    assert_response :unprocessable_entity
+    assert_equal({ "Status" => "error", "Message" => "", "ErrorText" => "Ship not found." }, response_json)
+    assert_dump_response_shape
+  end
+
+  test "deliver ship requires a known location" do
+    post "/api/ships/deliver_ship", params: {
+      ship_guid: @user_ship.guid,
+      location: "Unknown Landing Zone",
+      secret_guid: "test-secret"
+    }, as: :json
+
+    assert_response :unprocessable_entity
+    assert_equal({ "Status" => "error", "Message" => "", "ErrorText" => "Location not found: Unknown Landing Zone" }, response_json)
+    assert_dump_response_shape
+    assert_equal @orison.name, @user_ship.reload.location_name
+  end
+
+  test "deliver ship authenticates with x secret guid header" do
+    post "/api/ships/deliver_ship", params: {
+      ship_guid: @user_ship.guid,
+      location: @area18.name
+    }, headers: { "X-Secret-Guid" => "test-secret" }, as: :json
+
+    assert_response :success
+    assert_equal "success", response_json["Status"]
+    assert_equal @area18.name, @user_ship.reload.location_name
   end
 
   private

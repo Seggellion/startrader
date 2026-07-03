@@ -76,6 +76,21 @@ Run the local verification path with:
 bin/codex_test
 ```
 
+Codex should use `bin/codex_test` for verification, not raw `bin/rails test`. The helper is self-contained for non-interactive WSL: it prepends rbenv, forces the Ruby pinned by `.ruby-version` and `Gemfile`, prints Ruby diagnostics, then runs Bundler and Rails through that Ruby.
+
+To run targeted tests through the same Ruby launcher:
+
+```bash
+bin/codex_test test/controllers/api/ship_travel_controller_test.rb test/models/user_ship_test.rb
+```
+
+For lower-level commands, wrap them with:
+
+```bash
+bin/codex_exec bundle exec rails test test/models/user_ship_test.rb
+bin/codex_exec --ruby-diagnostics
+```
+
 The script checks the pinned Ruby version, Bundler, the current Linux user and groups, PostgreSQL reachability, test database preparation, and the Rails test suite.
 
 This app pins Ruby `3.2.2` in `Gemfile` and `.ruby-version`. If your shell is not initialized with that Ruby, `bin/codex_test` will use `rbenv exec` when rbenv is available.

@@ -86,9 +86,15 @@ Rails.application.routes.draw do
     post 'user_ships/:guid/resume',    to: 'ship_travel#resume_by_guid',    as: :resume_by_guid
     post 'user_ships/:guid/destroy',   to: 'ship_travel#user_ship_destroy', as: :user_ship_destroy
 
-    resources :ships, only: [:index]
+    resources :ships, only: [:index] do
+      collection do
+        post :dump_cargo
+        post :deliver_ship
+      end
+    end
     resources :commodities, only: [:index]
     post 'jettison', to: 'ships#dump_cargo'
+    post 'deliver_ship', to: 'ships#deliver_ship'
 
     get "interdictable_ships", to: "ship_travel#interdictable_index"
     get 'location/:user_ship_id', to: 'ship_travel#location', as: 'location'

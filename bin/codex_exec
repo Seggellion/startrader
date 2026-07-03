@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$APP_ROOT"
+
+usage() {
+  cat <<'TEXT'
+Usage:
+  bin/codex_exec --ruby-diagnostics
+  bin/codex_exec <command> [args...]
+
+Runs a command with the Ruby version pinned by this project.
+TEXT
+}
+
+required_ruby() {
+  if [ -f .ruby-version ]; then
+    sed 's/^ruby-//' .ruby-version
+    return
+  fi
+
+  awk -F'"' '/^ruby / { print $2; exit }' Gemfile
+}
+
+fail() {
+  printf "\n[Ruby/toolchain failure]\n%s\n" "$*" >&2
+  exit 1
+}
+
+prepend_path() {
+  case ":$PATH:" in
+    *":$1:"*) ;;
+    *) PATH="$1:$PATH" ;;
+  esac
+}
+
+expected="$(required_ruby)"
+if [ -z "$expected" ]; then
+  fail "Could not determine the project Ruby from .ruby-version or Gemfile."
+fi
+
+export RBENV_ROOT="${RBENV_ROOT:-$HOME/.rbenv}"
+if [ -d "$RBENV_ROOT" ]; then
+  prepend_path "$RBENV_ROOT/bin"
+  prepend_path "$RBENV_ROOT/shims"
+  export PATH
+fi
+
+if ! command -v rbenv >/dev/null 2>&1; then
+  fail "rbenv is not available on PATH. Install rbenv or ensure $RBENV_ROOT/bin is present before running Codex verification."
+fi
+
+if ! RBENV_VERSION="$expected" rbenv prefix >/dev/null 2>&1; then
+  fail "Ruby $expected is not installed for rbenv. Install it with: rbenv install $expected"
+fi
+
+export RBENV_VERSION="$expected"
+export BUNDLE_GEMFILE="$APP_ROOT/Gemfile"
+
+actual="$(rbenv exec ruby -e 'print RUBY_VERSION' 2>&1)" || fail "Could not run Ruby $expected through rbenv."
+if [ "$actual" != "$expected" ]; then
+  fail "rbenv selected Ruby $actual, but this app requires $expected."
+fi
+
+if [ "${1:-}" = "--ruby-diagnostics" ]; then
+  printf "APP_ROOT=%s\n" "$APP_ROOT"
+  printf "RBENV_ROOT=%s\n" "$RBENV_ROOT"
+  printf "RBENV_VERSION=%s\n" "$RBENV_VERSION"
+  printf "PATH=%s\n" "$PATH"
+  printf "ruby: "
+  rbenv exec ruby -v
+  printf "which ruby: %s\n" "$(rbenv which ruby)"
+  printf "bundle: "
+  rbenv exec bundle -v
+  printf "which bundle: %s\n" "$(rbenv which bundle)"
+  printf "bundle exec ruby: "
+  rbenv exec bundle exec ruby -v
+  exit 0
+fi
+
+if [ "$#" -eq 0 ]; then
+  usage >&2
+  exit 2
+fi
+
+exec rbenv exec "$@"
