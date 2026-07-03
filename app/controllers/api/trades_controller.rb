@@ -119,6 +119,7 @@ module Api
         "shard_uuid_present=#{payload[:shard_uuid].present?} " \
         "player_guid_present=#{payload[:player_guid].present?} " \
         "player_name_present=#{payload[:player_name].present?} " \
+        "location_present=#{payload[:location].present?} " \
         "wallet_balance_present=#{payload[:wallet_balance].present?}"
       )
 
@@ -128,6 +129,7 @@ module Api
         shard_uuid: payload[:shard_uuid],
         player_guid: payload[:player_guid],
         player_name: payload[:player_name],
+        location: payload[:location],
         wallet_balance: payload[:wallet_balance],
         username: payload[:username],
         shard: payload[:shard]
@@ -186,6 +188,7 @@ module Api
       shard_uuid = first_present_param(sources, :shard_uuid)
       player_guid = first_present_param(sources, :player_guid)
       explicit_player_name = first_present_param(sources, :player_name)
+      location = first_present_param(sources, :location)
       wallet_balance = first_present_param(sources, :wallet_balance)
       username = first_present_param(sources, :username)
       new_status_payload = ship_guid.present? || ship_model.present? || shard_uuid.present? ||
@@ -197,6 +200,7 @@ module Api
         shard_uuid: shard_uuid,
         player_guid: player_guid,
         player_name: explicit_player_name || (username if new_status_payload),
+        location: location,
         wallet_balance: wallet_balance,
         username: username,
         shard: shard_uuid || first_present_param(sources, :shard)

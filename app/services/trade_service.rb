@@ -20,6 +20,7 @@ class TradeService
       shard_uuid: nil,
       player_guid: nil,
       player_name: nil,
+      location: nil,
       wallet_balance: nil,
       username: nil,
       shard: nil
@@ -32,6 +33,7 @@ class TradeService
         "ship_guid_present=#{ship_guid.present?} ship_model_present=#{ship_model.present?} " \
         "shard_uuid_present=#{shard_uuid.present?} " \
         "player_guid_present=#{player_guid.present?} player_name_present=#{player_name.present?} " \
+        "location_present=#{location.present?} " \
         "username_present=#{username.present?} shard_present=#{shard.present?}"
       )
 
@@ -48,6 +50,7 @@ class TradeService
           shard_uuid: shard_uuid,
           player_guid: player_guid,
           player_name: player_name,
+          location: location,
           wallet_balance: wallet_balance
         )
       end
@@ -55,11 +58,17 @@ class TradeService
       raise ValidationError, 'username is required for legacy status' if username.blank?
       raise ValidationError, 'shard is required for legacy status' if shard.blank?
 
-      legacy_status(username: username, wallet_balance: wallet_balance, shard: shard)
+      legacy_status(username: username, location: location, wallet_balance: wallet_balance, shard: shard)
     end
 
-    def self.status_by_ship_guid(ship_guid:, ship_model:, shard_uuid:, player_guid:, player_name:, wallet_balance: nil)
+    def self.status_by_ship_guid(ship_guid:, ship_model:, shard_uuid:, player_guid:, player_name:, location: nil, wallet_balance: nil)
       validate_wallet_balance!(wallet_balance)
+      resolved_location = resolve_status_location!(
+        location_name: location,
+        player_name: player_name,
+        shard_uuid: shard_uuid,
+        ship_guid: ship_guid
+      )
 
       sync = StarTraderShipSync.call(
         ship_guid: ship_guid,
@@ -70,14 +79,67 @@ class TradeService
         default_location_name: default_location_name_for_status
       )
 
+      update_status_location!(
+        shard_user: sync.shard_user,
+        user_ship: sync.user_ship,
+        location_name: location,
+        resolved_location: resolved_location,
+        player_name: player_name,
+        shard_uuid: shard_uuid,
+        ship_guid: ship_guid
+      )
+
       status_response_for(shard_user: sync.shard_user, user_ship: sync.user_ship, wallet_balance: wallet_balance)
     end
 
-    def self.legacy_status(username:, wallet_balance: nil, shard:)
+    def self.resolve_status_location!(location_name:, player_name:, shard_uuid:, ship_guid:)
+      return if location_name.blank?
+
+      resolved_location = LocationResolver.resolve_exact(location_name)
+      return resolved_location if resolved_location
+
+      Rails.logger.warn(
+        "[TradeService.status] location_update failed " \
+        "player=#{player_name.inspect} shard_uuid=#{shard_uuid.inspect} " \
+        "ship_guid=#{ship_guid.inspect} incoming_location=#{location_name.inspect}"
+      )
+      raise ValidationError, "Location not found: #{location_name}"
+    end
+
+    def self.update_status_location!(shard_user:, user_ship:, location_name:, resolved_location:, player_name:, shard_uuid:, ship_guid:)
+      return unless resolved_location
+
+      Rails.logger.info(
+        "[TradeService.status] location_update applying " \
+        "player=#{player_name.inspect} shard_uuid=#{shard_uuid.inspect} " \
+        "ship_guid=#{ship_guid.inspect} incoming_location=#{location_name.inspect} " \
+        "resolved_location_id=#{resolved_location.id} resolved_location_name=#{resolved_location.name.inspect}"
+      )
+
+      ActiveRecord::Base.transaction do
+        shard_user.update_current_location!(resolved_location)
+        user_ship&.update!(location_name: resolved_location.name)
+      end
+
+      Rails.logger.info(
+        "[TradeService.status] location_update applied " \
+        "player=#{player_name.inspect} shard_uuid=#{shard_uuid.inspect} " \
+        "ship_guid=#{ship_guid.inspect} incoming_location=#{location_name.inspect} " \
+        "resolved_location_id=#{resolved_location.id} resolved_location_name=#{resolved_location.name.inspect}"
+      )
+    end
+
+    def self.legacy_status(username:, location: nil, wallet_balance: nil, shard:)
       raise ValidationError, 'username is required for legacy status' if username.blank?
       raise ValidationError, 'shard is required for legacy status' if shard.blank?
 
       validate_wallet_balance!(wallet_balance)
+      resolved_location = resolve_status_location!(
+        location_name: location,
+        player_name: username,
+        shard_uuid: shard,
+        ship_guid: nil
+      )
 
       shard_record = Shard.find_by(channel_uuid: shard)
       raise ActiveRecord::RecordNotFound, 'Shard not found' unless shard_record
@@ -85,10 +147,21 @@ class TradeService
       user = find_or_create_user(username, shard_record)
       shard_user = user.shard_users.find_by(shard_id: shard_record.id)
       raise ActiveRecord::RecordNotFound, 'Shard user not found' unless shard_user
+      user_ship = shard_user.user_ships.order(updated_at: :desc).first
+
+      update_status_location!(
+        shard_user: shard_user,
+        user_ship: user_ship,
+        location_name: location,
+        resolved_location: resolved_location,
+        player_name: username,
+        shard_uuid: shard,
+        ship_guid: user_ship&.guid
+      )
 
       status_response_for(
         shard_user: shard_user,
-        user_ship: shard_user.user_ships.order(updated_at: :desc).first,
+        user_ship: user_ship,
         wallet_balance: wallet_balance
       )
 

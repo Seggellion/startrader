@@ -116,16 +116,106 @@ class TradeServiceTest < ActiveSupport::TestCase
     assert_equal 40_000, @shard_user.reload.wallet_balance
   end
 
+  test "status with location updates shard user current location" do
+    new_location = Location.create!(
+      name: "Area 18",
+      classification: "city",
+      star_system_name: "Stanton"
+    )
+
+    TradeService.status(**status_payload(location: new_location.name))
+
+    assert_equal new_location.name, @shard_user.reload.current_location_name
+    assert_equal new_location.id, @shard_user.last_location["id"]
+  end
+
+  test "status with location updates matching user ship location only" do
+    new_location = Location.create!(
+      name: "Area 18",
+      classification: "city",
+      star_system_name: "Stanton"
+    )
+    other_ship = Ship.create!(model: "MISC Hull A", slug: "misc-hull-a", scu: 64, speed: 80)
+    other_user_ship = UserShip.create!(
+      user: @user,
+      ship: other_ship,
+      shard: @shard,
+      shard_user: @shard_user,
+      guid: "other-ship-guid",
+      ship_slug: other_ship.slug,
+      location_name: @location.name,
+      total_scu: other_ship.scu,
+      used_scu: 0
+    )
+
+    TradeService.status(**status_payload(location: new_location.name))
+
+    assert_equal new_location.name, @user_ship.reload.location_name
+    assert_equal @location.name, other_user_ship.reload.location_name
+  end
+
+  test "status without location preserves existing location fields" do
+    @shard_user.update_current_location!(@location)
+
+    TradeService.status(**status_payload)
+
+    assert_equal @location.name, @shard_user.reload.current_location_name
+    assert_equal @location.name, @user_ship.reload.location_name
+  end
+
+  test "legacy status with location updates shard user and current ship" do
+    new_location = Location.create!(
+      name: "Area 18",
+      classification: "city",
+      star_system_name: "Stanton"
+    )
+
+    TradeService.status(
+      username: @user.username,
+      shard: @shard.channel_uuid,
+      location: new_location.name
+    )
+
+    assert_equal new_location.name, @shard_user.reload.current_location_name
+    assert_equal new_location.name, @user_ship.reload.location_name
+  end
+
+  test "status with unknown location raises validation error and preserves locations" do
+    @shard_user.update_current_location!(@location)
+
+    error = assert_raises(TradeService::ValidationError) do
+      TradeService.status(**status_payload(location: "Not A Real Place"))
+    end
+
+    assert_equal "Location not found: Not A Real Place", error.message
+    assert_equal @location.name, @shard_user.reload.current_location_name
+    assert_equal @location.name, @user_ship.reload.location_name
+  end
+
+  test "status with unknown location does not create unknown ship" do
+    assert_no_difference("UserShip.count") do
+      assert_raises(TradeService::ValidationError) do
+        TradeService.status(
+          **status_payload(
+            ship_guid: "new-ship-with-bad-location",
+            location: "Not A Real Place"
+          )
+        )
+      end
+    end
+  end
+
   test "status preserves success response shape" do
     response = TradeService.status(
       **status_payload
     )
 
-    assert_equal [:cargo, :ship, :status, :wallet_balance], response.keys.sort
+    assert_equal [:cargo, :player_location, :ship, :ships, :status, :wallet_balance], response.keys.sort
     assert_equal(
       [
         :arrival_tick,
         :available_cargo_space,
+        :available_at_player_location,
         :current_tick,
         :from_location,
         :location,
@@ -134,6 +224,7 @@ class TradeServiceTest < ActiveSupport::TestCase
         :to_location,
         :total_scu,
         :travel_status,
+        :unavailable_reason,
         :used_scu
       ],
       response[:ship].keys.sort

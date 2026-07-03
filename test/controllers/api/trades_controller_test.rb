@@ -365,6 +365,83 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     assert_equal @location.name, response_json["ship"]["location"]
   end
 
+  test "status with top-level location updates shard user and matching ship" do
+    new_location = Location.create!(
+      name: "Area 18",
+      classification: "city",
+      star_system_name: "Stanton"
+    )
+
+    post "/api/status", params: base_status_payload.merge(location: new_location.name), as: :json
+
+    assert_response :success
+    assert_equal new_location.name, @shard_user.reload.current_location_name
+    assert_equal new_location.name, @user_ship.reload.location_name
+    assert_equal new_location.name, response_json["player_location"]
+    assert_equal new_location.name, response_json["ship"]["location"]
+  end
+
+  test "status with nested trade location updates shard user and matching ship" do
+    new_location = Location.create!(
+      name: "Area 18",
+      classification: "city",
+      star_system_name: "Stanton"
+    )
+
+    post "/api/status", params: { trade: base_status_payload.merge(location: new_location.name) }, as: :json
+
+    assert_response :success
+    assert_equal new_location.name, @shard_user.reload.current_location_name
+    assert_equal new_location.name, @user_ship.reload.location_name
+  end
+
+  test "status without location preserves existing location fields" do
+    @shard_user.update_current_location!(@location)
+
+    post "/api/status", params: base_status_payload, as: :json
+
+    assert_response :success
+    assert_equal @location.name, @shard_user.reload.current_location_name
+    assert_equal @location.name, @user_ship.reload.location_name
+  end
+
+  test "status with unknown location returns error and preserves existing locations" do
+    @shard_user.update_current_location!(@location)
+
+    post "/api/status", params: base_status_payload.merge(location: "Not A Real Place"), as: :json
+
+    assert_response :bad_request
+    assert_equal({ "status" => "error", "message" => "Location not found: Not A Real Place" }, response_json)
+    assert_equal @location.name, @shard_user.reload.current_location_name
+    assert_equal @location.name, @user_ship.reload.location_name
+  end
+
+  test "status location updates only ship matching ship_guid" do
+    new_location = Location.create!(
+      name: "Area 18",
+      classification: "city",
+      star_system_name: "Stanton"
+    )
+    other_ship = Ship.create!(model: "MISC Hull A", slug: "misc-hull-a", scu: 64, speed: 80)
+    other_user_ship = UserShip.create!(
+      user: @user,
+      ship: other_ship,
+      shard: @shard,
+      shard_user: @shard_user,
+      guid: "other-ship-guid",
+      ship_slug: other_ship.slug,
+      location_name: @location.name,
+      total_scu: other_ship.scu,
+      used_scu: 0
+    )
+
+    post "/api/status", params: base_status_payload.merge(location: new_location.name), as: :json
+
+    assert_response :success
+    assert_equal new_location.name, @user_ship.reload.location_name
+    assert_equal @location.name, other_user_ship.reload.location_name
+  end
+
   test "status uses username only as player name fallback for new payload" do
     post "/api/status",
       params: base_status_payload.except(:player_name).merge(username: @user.username),
@@ -386,6 +463,27 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal "success", response_json["status"]
     assert_equal @ship.model, response_json["ship"]["model"]
+  end
+
+  test "status with legacy location updates shard user and current ship" do
+    new_location = Location.create!(
+      name: "Area 18",
+      classification: "city",
+      star_system_name: "Stanton"
+    )
+
+    post "/api/status",
+      params: {
+        username: @user.username,
+        shard: @shard.channel_uuid,
+        location: new_location.name,
+        secret_guid: "test-secret"
+      },
+      as: :json
+
+    assert_response :success
+    assert_equal new_location.name, @shard_user.reload.current_location_name
+    assert_equal new_location.name, @user_ship.reload.location_name
   end
 
   test "status rejects missing secret_guid" do
