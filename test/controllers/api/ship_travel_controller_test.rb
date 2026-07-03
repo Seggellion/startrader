@@ -1193,7 +1193,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :unprocessable_entity
-    assert_equal "Ship location is unknown; initialize the ship location before use.", response_json["error"]
+    assert_equal "Ship location is unknown, please use *status to update ship location.", response_json["error"]
     assert_equal @from_location.name, shard_user.reload.current_location_name
   end
 
