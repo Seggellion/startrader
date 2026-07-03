@@ -40,6 +40,7 @@ module Api
 
     def buy
       trade_params = params[:trade] || {}
+      request_id = request.request_id
 
       username = trade_params[:player_name]
       wallet_balance = trade_params[:wallet_balance]
@@ -48,23 +49,34 @@ module Api
       shard = trade_params[:shard_uuid]
       ship_guid = trade_params[:ship_guid]
       ship_slug = trade_params[:ship_slug]
+      payload_summary = trade_debug_payload_summary(trade_params)
+
+      trade_debug_info('Api::TradesController#buy entry', request_id: request_id)
+      trade_debug_info('Api::TradesController#buy payload', payload_summary.merge(request_id: request_id))
 
       if username.blank? || shard.blank?
+        trade_debug_warn('Api::TradesController#buy branch missing required parameters', payload_summary.merge(request_id: request_id))
         render json: { status: 'error', message: 'Missing required parameters' }, status: :unprocessable_entity and return
       end
 
       if (commodity_name.blank? && scu.blank?) || blank_scu_listing_request?(trade_params)
+        trade_debug_info('Api::TradesController#buy branch listing request', payload_summary.merge(request_id: request_id))
         result = TradeService.list_available_commodities(
           username: username,
           shard_uuid: shard,
           ship_guid: ship_guid,
-          ship_slug: ship_slug
+          ship_slug: ship_slug,
+          request_id: request_id
         )
       elsif commodity_name.blank?
+        trade_debug_warn('Api::TradesController#buy branch missing commodity name', payload_summary.merge(request_id: request_id))
         render json: { status: 'error', message: 'Missing commodity name for purchase.' }, status: :unprocessable_entity and return
       elsif scu.blank?
+        trade_debug_warn('Api::TradesController#buy branch missing SCU', payload_summary.merge(request_id: request_id))
         render json: { status: 'error', message: 'Missing SCU amount for purchase.' }, status: :unprocessable_entity and return
       else
+        trade_debug_info('Api::TradesController#buy branch purchase request', payload_summary.merge(request_id: request_id))
+        trade_debug_info('Api::TradesController#buy before TradeService.buy', payload_summary.merge(request_id: request_id))
         result = TradeService.buy(
           username: username,
           wallet_balance: wallet_balance,
@@ -72,12 +84,29 @@ module Api
           scu: scu,
           shard: shard,
           ship_guid: ship_guid,
-          ship_slug: ship_slug
+          ship_slug: ship_slug,
+          request_id: request_id
         )
       end
 
+      trade_debug_info(
+        'Api::TradesController#buy after service return',
+        request_id: request_id,
+        status: result[:status],
+        message: result[:message]
+      )
+
       render json: result, status: :ok
     rescue StandardError => e
+      trade_debug_error(
+        'Api::TradesController#buy failed',
+        (defined?(payload_summary) && payload_summary ? payload_summary : {}).merge(
+          request_id: (defined?(request_id) ? request_id : request.request_id),
+          error_class: e.class.name,
+          error_message: e.message,
+          backtrace: e.backtrace&.join("\n")
+        )
+      )
       render json: { status: 'error', message: e.message }, status: :unprocessable_entity
     end
 
@@ -119,6 +148,35 @@ module Api
 
     def blank_scu_listing_request?(trade_params)
       (trade_params.key?(:scu) || trade_params.key?('scu')) && trade_params[:scu].blank?
+    end
+
+    def trade_debug_info(message, context = {})
+      Rails.logger.info("[TradeDebug] #{message} #{trade_debug_context(context)}")
+    end
+
+    def trade_debug_warn(message, context = {})
+      Rails.logger.warn("[TradeDebug] #{message} #{trade_debug_context(context)}")
+    end
+
+    def trade_debug_error(message, context = {})
+      Rails.logger.error("[TradeDebug] #{message} #{trade_debug_context(context)}")
+    end
+
+    def trade_debug_context(context)
+      context.compact.map { |key, value| "#{key}=#{value.inspect}" }.join(' ')
+    end
+
+    def trade_debug_payload_summary(trade_params)
+      {
+        player_name: trade_params[:player_name],
+        commodity_name: trade_params[:commodity_name],
+        scu: trade_params[:scu],
+        shard_uuid: trade_params[:shard_uuid],
+        shard_name: trade_params[:shard_name],
+        ship_guid: trade_params[:ship_guid],
+        ship_slug: trade_params[:ship_slug],
+        wallet_balance_present: trade_params[:wallet_balance].present?
+      }
     end
 
     def normalized_status_payload

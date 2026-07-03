@@ -240,17 +240,226 @@ class TradeService
       end
     end
 
+    def self.trade_debug(message, context = {})
+      Rails.logger.info("[TradeDebug] #{message} #{trade_debug_context(context)}")
+    end
 
-    def self.buy(username:, wallet_balance:, commodity_name:, scu:, shard:, ship_guid:, ship_slug:)
+    def self.trade_debug_warn(message, context = {})
+      Rails.logger.warn("[TradeDebug] #{message} #{trade_debug_context(context)}")
+    end
 
-      
-      user = User.where("LOWER(username) = ?", username.downcase).first!
-      commodity = Commodity.where("name ILIKE ?", commodity_name).first!
+    def self.trade_debug_error(message, context = {})
+      Rails.logger.error("[TradeDebug] #{message} #{trade_debug_context(context)}")
+    end
+
+    def self.trade_debug_context(context)
+      context.compact.map { |key, value| "#{key}=#{trade_debug_value(value)}" }.join(' ')
+    rescue StandardError => e
+      "debug_context_error=#{e.class.name.inspect} debug_context_error_message=#{e.message.inspect}"
+    end
+
+    def self.trade_debug_value(value)
+      case value
+      when ActiveRecord::Base
+        "#<#{value.class.name} id=#{value.id.inspect}>".inspect
+      else
+        value.inspect
+      end
+    rescue StandardError => e
+      "#<debug_value_error #{e.class.name}: #{e.message}>".inspect
+    end
+
+    def self.trade_debug_input_summary(username:, commodity_name: nil, scu: nil, shard: nil, ship_guid: nil, ship_slug: nil, wallet_balance: nil, request_id: nil)
+      {
+        request_id: request_id,
+        username: username,
+        commodity_name: commodity_name,
+        scu: scu,
+        shard: shard,
+        ship_guid: ship_guid,
+        ship_slug: ship_slug,
+        wallet_balance_present: wallet_balance.present?
+      }
+    end
+
+    def self.safe_record_value(record, attribute)
+      return nil unless record&.respond_to?(attribute)
+
+      record.public_send(attribute)
+    rescue StandardError => e
+      "debug_error:#{e.class.name}"
+    end
+
+    def self.safe_relation_count(record, association)
+      return nil unless record&.respond_to?(association)
+
+      record.public_send(association).count
+    rescue StandardError => e
+      "debug_error:#{e.class.name}"
+    end
+
+    def self.trade_debug_user_summary(user)
+      {
+        user_found: user.present?,
+        user_id: user&.id,
+        username: user&.username,
+        twitch_id_present: user&.twitch_id.present?,
+        shard_users_count: safe_relation_count(user, :shard_users)
+      }
+    end
+
+    def self.trade_debug_shard_user_summary(shard_user)
+      {
+        shard_user_found: shard_user.present?,
+        shard_user_id: shard_user&.id,
+        shard_user_shard_id: shard_user&.shard_id,
+        shard_user_shard_name: shard_user&.shard_name,
+        wallet_balance: shard_user&.wallet_balance,
+        user_ship_count: safe_relation_count(shard_user, :user_ships)
+      }
+    end
+
+    def self.trade_debug_shard_users_for(user)
+      return [] unless user
+
+      user.shard_users.map do |candidate|
+        {
+          id: candidate.id,
+          shard_id: candidate.shard_id,
+          shard_name: candidate.shard_name,
+          wallet_balance: candidate.wallet_balance,
+          user_ships_count: safe_relation_count(candidate, :user_ships)
+        }
+      end
+    rescue StandardError => e
+      [{ debug_error: e.class.name, message: e.message }]
+    end
+
+    def self.trade_debug_user_ship_summary(user_ship)
+      {
+        user_ship_found: user_ship.present?,
+        user_ship_id: user_ship&.id,
+        guid: user_ship&.guid,
+        ship_id: user_ship&.ship_id,
+        ship_slug: safe_record_value(user_ship, :ship_slug),
+        location_name: user_ship&.location_name,
+        total_scu: user_ship&.total_scu,
+        used_scu: user_ship&.used_scu,
+        available_cargo_space: safe_record_value(user_ship, :available_cargo_space),
+        status: user_ship&.status
+      }
+    end
+
+    def self.trade_debug_facility_summary(facility)
+      {
+        facility_id: facility&.id,
+        location_name: facility&.location_name,
+        commodity_name: facility&.commodity_name,
+        inventory: safe_record_value(facility, :inventory),
+        price_buy: safe_record_value(facility, :price_buy),
+        local_buy_price: safe_record_value(facility, :local_buy_price),
+        status_buy: safe_record_value(facility, :status_buy),
+        status_sell: safe_record_value(facility, :status_sell),
+        production_rate: safe_record_value(facility, :production_rate),
+        consumption_rate: safe_record_value(facility, :consumption_rate)
+      }.compact
+    end
+
+
+    def self.buy(username:, wallet_balance:, commodity_name:, scu:, shard:, ship_guid:, ship_slug:, request_id: nil)
+      input_summary = trade_debug_input_summary(
+        username: username,
+        commodity_name: commodity_name,
+        scu: scu,
+        shard: shard,
+        ship_guid: ship_guid,
+        ship_slug: ship_slug,
+        wallet_balance: wallet_balance,
+        request_id: request_id
+      )
+      trade_debug('TradeService.buy entry', input_summary)
+
+      normalized_username = username.downcase
+      trade_debug('TradeService.buy before user lookup', input_summary.merge(normalized_username: normalized_username))
+      user_relation = User.where("LOWER(username) = ?", normalized_username)
+      user = user_relation.first
+      trade_debug('TradeService.buy after user lookup', input_summary.merge(trade_debug_user_summary(user)))
+      user ||= user_relation.first!
+
+      trade_debug('TradeService.buy before commodity lookup', input_summary.merge(requested_commodity_name: commodity_name))
+      commodity_relation = Commodity.where("name ILIKE ?", commodity_name)
+      commodity = commodity_relation.first
+      trade_debug(
+        'TradeService.buy after commodity lookup',
+        input_summary.merge(
+          commodity_found: commodity.present?,
+          commodity_id: commodity&.id,
+          commodity_name: commodity&.name,
+          is_sellable: commodity&.is_sellable
+        )
+      )
+      commodity ||= commodity_relation.first!
+
+      requested_shard_uuid = shard
+      trade_debug('TradeService.buy before shard lookup', input_summary.merge(requested_shard_uuid: requested_shard_uuid))
       shard = Shard.find_by(channel_uuid: shard)
-      shard_name = shard.name  
+      trade_debug(
+        'TradeService.buy after shard lookup',
+        input_summary.merge(
+          shard_found: shard.present?,
+          shard_id: shard&.id,
+          shard_name: shard&.name,
+          channel_uuid: shard&.channel_uuid
+        )
+      )
+
+      shard_name = shard.name
+      trade_debug(
+        'TradeService.buy before shard_user lookup',
+        input_summary.merge(
+          user_id: user.id,
+          shard_id: shard&.id,
+          shard_name: shard_name,
+          lookup_condition: 'LOWER(shard_name) = shard_name.downcase',
+          available_shard_users: trade_debug_shard_users_for(user)
+        )
+      )
       shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard_name.downcase).first
-      shard_user.update(wallet_balance:wallet_balance)
+      trade_debug('TradeService.buy after shard_user lookup', input_summary.merge(trade_debug_shard_user_summary(shard_user)))
+
+      trade_debug(
+        'TradeService.buy before shard_user.update',
+        input_summary.merge(
+          about_to_update_shard_user: true,
+          shard_user_nil: shard_user.nil?,
+          wallet_balance_class: wallet_balance.class.name
+        )
+      )
+      if shard_user.nil?
+        trade_debug_error(
+          'TradeService.buy shard_user nil before update - likely source of undefined method update for nil:NilClass',
+          input_summary.merge(user_id: user.id, shard_id: shard&.id, shard_name: shard_name)
+        )
+      end
+      wallet_update_result = shard_user.update(wallet_balance:wallet_balance)
+      trade_debug(
+        'TradeService.buy after shard_user.update',
+        input_summary.merge(
+          wallet_update_result: wallet_update_result,
+          wallet_balance_after_update: shard_user&.wallet_balance,
+          validation_errors: (shard_user&.errors&.full_messages if wallet_update_result == false)
+        )
+      )
      
+      trade_debug(
+        'TradeService.buy before resolve_trade_ship',
+        input_summary.merge(
+          user_id: user.id,
+          shard_user_id: shard_user&.id,
+          shard_id: shard&.id,
+          create_missing: true
+        )
+      )
       user_ship = resolve_trade_ship(
         user: user,
         shard_user: shard_user,
@@ -259,14 +468,31 @@ class TradeService
         ship_slug: ship_slug,
         create_missing: true
       )
+      trade_debug('TradeService.buy after resolve_trade_ship', input_summary.merge(trade_debug_user_ship_summary(user_ship)))
       
 
       if shard_user.wallet_balance == 0
         raise InsufficientCreditsError, "INSF FNDS '#{username}'."
       end
       
+      trade_location_names_for_debug = trade_location_names(user_ship.location_name)
+      trade_debug(
+        'TradeService.buy before facility resolution',
+        input_summary.merge(
+          user_ship_location_name: user_ship.location_name,
+          resolved_trade_location_names: trade_location_names_for_debug
+        )
+      )
       candidate_facilities = buyable_facilities_for_trade_location(user_ship.location_name).to_a
+      trade_debug(
+        'TradeService.buy candidate facilities',
+        input_summary.merge(
+          candidate_facility_count: candidate_facilities.count,
+          candidate_facilities: candidate_facilities.map { |candidate| trade_debug_facility_summary(candidate) }
+        )
+      )
       facility = candidate_facilities.find { |candidate| candidate.commodity_name.to_s.casecmp?(commodity.name) }
+      trade_debug('TradeService.buy selected facility', input_summary.merge(selected_facility_id: facility&.id))
       location_name = facility&.location_name.presence || trade_facility_location_name(user_ship.location_name, candidate_facilities)
 
       if facility.nil?
@@ -275,6 +501,7 @@ class TradeService
         raise InsufficientInventoryError, "#{facility.location_name} Facility does not have enough inventory to sell."
       end
 
+      original_scu = scu
       if scu == "max"
         scu = ""
       end
@@ -295,6 +522,22 @@ class TradeService
     
       total_cost = transaction_total_capital(scu: scu, unit_price: buy_price)
       loading_time_seconds = loading_time_seconds_for_scu(scu)
+      loading_ticks = loading_ticks_for_scu(scu)
+      trade_debug(
+        'TradeService.buy SCU and pricing',
+        input_summary.merge(
+          original_scu: original_scu,
+          normalized_scu: scu,
+          buy_price: buy_price,
+          max_affordable_scu: max_affordable_scu,
+          max_cargo_space: max_cargo_space,
+          max_facility_inventory: max_facility_inventory,
+          final_scu: scu,
+          total_cost: total_cost,
+          loading_time_seconds: loading_time_seconds,
+          loading_ticks: loading_ticks
+        )
+      )
     
       # ✅ Validate Commodity Availability
       raise CommodityNotAvailableError, "Commodity not available at this location." unless facility.commodity.is_sellable
@@ -302,53 +545,75 @@ class TradeService
 
       # ✅ Perform Transaction
       ActiveRecord::Base.transaction do
+        wallet_before_credits = shard_user.wallet_balance
+        trade_debug('TradeService.buy transaction before shard_user.update_credits', input_summary.merge(shard_user_id: shard_user.id, wallet_balance_before: wallet_before_credits, credits_delta: -total_cost))
         shard_user.update_credits(-total_cost)
+        trade_debug('TradeService.buy transaction after shard_user.update_credits', input_summary.merge(shard_user_id: shard_user.id, wallet_balance_before: wallet_before_credits, wallet_balance_after: shard_user.reload.wallet_balance))
     
+        trade_debug('TradeService.buy transaction before cargo find_or_initialize', input_summary.merge(user_ship_id: user_ship.id, commodity_id: commodity.id))
         cargo = user_ship.user_ship_cargos.find_or_initialize_by(commodity_id: commodity.id)
+        cargo_scu_before = cargo.scu
+        cargo_new_record = cargo.new_record?
+        trade_debug('TradeService.buy transaction after cargo find_or_initialize', input_summary.merge(cargo_id: cargo.id, cargo_new_record: cargo_new_record, cargo_scu_before: cargo_scu_before))
         cargo.scu = cargo.scu.to_i + scu
         cargo.buy_price = buy_price
         cargo.commodity_name = commodity.name
+        trade_debug('TradeService.buy transaction before cargo save', input_summary.merge(cargo_id: cargo.id, cargo_scu_before: cargo_scu_before, cargo_scu_after: cargo.scu, buy_price: buy_price))
         cargo.save!
+        trade_debug('TradeService.buy transaction after cargo save', input_summary.merge(cargo_id: cargo.id, cargo_scu_after: cargo.scu))
 
-# Find existing StarBitizenRun for the same commodity, ship, and buy location
-star_bitizen_run = StarBitizenRun.find_by(
-  user: user,
-  user_ship: user_ship,
-  commodity_name: commodity.name,
-  buy_location_name: location_name,
-  shard: shard,
-  local_sell_price: nil
-)
+        trade_debug(
+          'TradeService.buy transaction before StarBitizenRun lookup',
+          input_summary.merge(user_id: user.id, user_ship_id: user_ship.id, commodity_name: commodity.name, buy_location_name: location_name, shard_id: shard&.id)
+        )
+        star_bitizen_run = StarBitizenRun.find_by(
+          user: user,
+          user_ship: user_ship,
+          commodity_name: commodity.name,
+          buy_location_name: location_name,
+          shard: shard,
+          local_sell_price: nil
+        )
+        trade_debug('TradeService.buy transaction after StarBitizenRun lookup', input_summary.merge(star_bitizen_run_id: star_bitizen_run&.id, star_bitizen_run_found: star_bitizen_run.present?))
 
-    if star_bitizen_run
-      # ✅ Update existing StarBitizenRun record
-      star_bitizen_run.update!(
-        local_buy_price: buy_price, # Update to latest buy price
-        scu: star_bitizen_run.scu + scu, # Add to existing SCU
-        profit: 0 # Reset profit until sold
-      )
-    else
-      # ✅ Create new StarBitizenRun record if none exists
-      star_bitizen_run = StarBitizenRun.create!(
-        user: user,
-        commodity: commodity,
-        commodity_name: commodity.name,
-        local_buy_price: buy_price,
-        local_sell_price: nil, # Will be updated later
-        scu: scu,
-        buy_location_name: location_name,
-        sell_location_name: nil, # Will be updated later
-        profit: 0,
-        user_ship_cargo_id: user_ship.user_ship_cargos.last.id,
-        user_ship_id: user_ship.id,
-        shard: shard # Track game shard
-      )
-    end
+        if star_bitizen_run
+          star_bitizen_run_scu_before = star_bitizen_run.scu
+          trade_debug('TradeService.buy transaction before StarBitizenRun update', input_summary.merge(star_bitizen_run_id: star_bitizen_run.id, scu_before: star_bitizen_run_scu_before, scu_delta: scu, local_buy_price: buy_price))
+          # ✅ Update existing StarBitizenRun record
+          star_bitizen_run.update!(
+            local_buy_price: buy_price, # Update to latest buy price
+            scu: star_bitizen_run.scu + scu, # Add to existing SCU
+            profit: 0 # Reset profit until sold
+          )
+          trade_debug('TradeService.buy transaction after StarBitizenRun update', input_summary.merge(star_bitizen_run_id: star_bitizen_run.id, scu_before: star_bitizen_run_scu_before, scu_after: star_bitizen_run.scu))
+        else
+          trade_debug('TradeService.buy transaction before StarBitizenRun create', input_summary.merge(user_id: user.id, user_ship_id: user_ship.id, cargo_id: user_ship.user_ship_cargos.last&.id, scu: scu, local_buy_price: buy_price))
+          # ✅ Create new StarBitizenRun record if none exists
+          star_bitizen_run = StarBitizenRun.create!(
+            user: user,
+            commodity: commodity,
+            commodity_name: commodity.name,
+            local_buy_price: buy_price,
+            local_sell_price: nil, # Will be updated later
+            scu: scu,
+            buy_location_name: location_name,
+            sell_location_name: nil, # Will be updated later
+            profit: 0,
+            user_ship_cargo_id: user_ship.user_ship_cargos.last.id,
+            user_ship_id: user_ship.id,
+            shard: shard # Track game shard
+          )
+          trade_debug('TradeService.buy transaction after StarBitizenRun create', input_summary.merge(star_bitizen_run_id: star_bitizen_run.id, scu: star_bitizen_run.scu))
+        end
 
+        facility_inventory_before = facility.inventory
+        trade_debug('TradeService.buy transaction before facility inventory update', input_summary.merge(facility_id: facility.id, inventory_before: facility_inventory_before, scu_delta: -scu))
         facility.update!(inventory: facility.inventory - scu)
+        trade_debug('TradeService.buy transaction after facility inventory update', input_summary.merge(facility_id: facility.id, inventory_before: facility_inventory_before, inventory_after: facility.inventory))
       end
 
       user_ship_cargo = user_ship.user_ship_cargos.last
+      trade_debug('TradeService.buy after transaction', input_summary.merge(user_ship_cargo_id: user_ship_cargo&.id, wallet_balance: shard_user.reload.wallet_balance))
 
     
       # ✅ Return API Response
@@ -356,11 +621,21 @@ star_bitizen_run = StarBitizenRun.find_by(
         status: 'success',
         wallet_balance: shard_user.wallet_balance,
         loading_time: loading_time_seconds,
-        loading_ticks: loading_ticks_for_scu(scu),
+        loading_ticks: loading_ticks,
         scu: scu,
         capital: total_cost,
         message: "Purchased #{scu} SCU of #{commodity_name} at #{location_name}"
       }
+    rescue StandardError => e
+      trade_debug_error(
+        'TradeService.buy failed',
+        (defined?(input_summary) && input_summary ? input_summary : {}).merge(
+          error_class: e.class.name,
+          error_message: e.message,
+          backtrace: e.backtrace&.join("\n")
+        )
+      )
+      raise
     end    
 
    # I need to build something that can split a starbitizenrun if they decided to split their cargo.
@@ -516,13 +791,59 @@ star_bitizen_run = StarBitizenRun.find_by(
       end
       
 
-      def self.list_available_commodities(username:, shard_uuid:, ship_guid: nil, ship_slug: nil)
-        shard = Shard.find_by(channel_uuid: shard_uuid)        
+      def self.list_available_commodities(username:, shard_uuid:, ship_guid: nil, ship_slug: nil, request_id: nil)
+        input_summary = trade_debug_input_summary(
+          username: username,
+          shard: shard_uuid,
+          ship_guid: ship_guid,
+          ship_slug: ship_slug,
+          request_id: request_id
+        )
+        trade_debug('TradeService.list_available_commodities entry', input_summary)
+
+        trade_debug('TradeService.list_available_commodities before shard lookup', input_summary.merge(requested_shard_uuid: shard_uuid))
+        shard = Shard.find_by(channel_uuid: shard_uuid)
+        trade_debug(
+          'TradeService.list_available_commodities after shard lookup',
+          input_summary.merge(
+            shard_found: shard.present?,
+            shard_id: shard&.id,
+            shard_name: shard&.name,
+            channel_uuid: shard&.channel_uuid
+          )
+        )
         shard_name = shard.name
-        user = User.where("LOWER(username) = ?", username.downcase).first!
+
+        normalized_username = username.downcase
+        trade_debug('TradeService.list_available_commodities before user lookup', input_summary.merge(normalized_username: normalized_username))
+        user_relation = User.where("LOWER(username) = ?", normalized_username)
+        user = user_relation.first
+        trade_debug('TradeService.list_available_commodities after user lookup', input_summary.merge(trade_debug_user_summary(user)))
+        user ||= user_relation.first!
+
+        trade_debug(
+          'TradeService.list_available_commodities before shard_user lookup',
+          input_summary.merge(
+            user_id: user.id,
+            shard_id: shard&.id,
+            shard_name: shard_name,
+            lookup_condition: 'LOWER(shard_name) = shard_name.downcase',
+            available_shard_users: trade_debug_shard_users_for(user)
+          )
+        )
         shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard_name.downcase).first
+        trade_debug('TradeService.list_available_commodities after shard_user lookup', input_summary.merge(trade_debug_shard_user_summary(shard_user)))
         raise ShipNotFoundError, "No ship found for user '#{username}'." if shard_user.nil?
 
+        trade_debug(
+          'TradeService.list_available_commodities before resolve_trade_ship',
+          input_summary.merge(
+            user_id: user.id,
+            shard_user_id: shard_user&.id,
+            shard_id: shard&.id,
+            create_missing: false
+          )
+        )
         user_ship = resolve_trade_ship(
           user: user,
           shard_user: shard_user,
@@ -531,10 +852,26 @@ star_bitizen_run = StarBitizenRun.find_by(
           ship_slug: ship_slug,
           create_missing: false
         )
+        trade_debug('TradeService.list_available_commodities after resolve_trade_ship', input_summary.merge(trade_debug_user_ship_summary(user_ship)))
         raise ShipNotFoundError, "No ship found for user '#{username}'." if user_ship.nil?
 
         location_name = user_ship.location_name
+        trade_location_names_for_debug = trade_location_names(location_name)
+        trade_debug(
+          'TradeService.list_available_commodities before facility lookup',
+          input_summary.merge(
+            user_ship_location_name: location_name,
+            resolved_trade_location_names: trade_location_names_for_debug
+          )
+        )
         commodities = buyable_facilities_for_trade_location(location_name).includes(:commodity).to_a
+        trade_debug(
+          'TradeService.list_available_commodities facilities found',
+          input_summary.merge(
+            candidate_facility_count: commodities.count,
+            candidate_facilities: commodities.map { |facility| trade_debug_facility_summary(facility) }
+          )
+        )
         response_location_name = trade_facility_location_name(location_name, commodities)
 
         commodities = commodities.map do |facility|
@@ -543,6 +880,7 @@ star_bitizen_run = StarBitizenRun.find_by(
             price: player_buy_price(facility)
           }
         end
+        trade_debug('TradeService.list_available_commodities response commodity count', input_summary.merge(returned_commodity_count: commodities.count, response_location_name: response_location_name))
 
         if commodities.empty?
           return {
@@ -559,6 +897,16 @@ star_bitizen_run = StarBitizenRun.find_by(
           location: response_location_name,
           commodities: commodities
         }
+      rescue StandardError => e
+        trade_debug_error(
+          'TradeService.list_available_commodities failed',
+          (defined?(input_summary) && input_summary ? input_summary : {}).merge(
+            error_class: e.class.name,
+            error_message: e.message,
+            backtrace: e.backtrace&.join("\n")
+          )
+        )
+        raise
       end
 
       def self.facilities_selling_to_player
