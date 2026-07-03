@@ -16,12 +16,12 @@
         <dd class="mt-1 truncate font-semibold text-zinc-100" data-market-board-target="selectedFacility"><%= facility.facility_name %></dd>
       </div>
       <div class="rounded-md border border-zinc-800 bg-zinc-950/60 p-3">
-        <dt class="text-xs uppercase text-zinc-500">Buy from terminal</dt>
-        <dd class="mt-1 font-mono text-emerald-200" data-market-board-target="selectedPlayerBuy"><%= terminal_sells_to_player?(facility) ? market_price(player_buy_price) : "-" %></dd>
+        <dt class="text-xs uppercase text-zinc-500">Player buy price</dt>
+        <dd class="mt-1 font-mono text-emerald-200" data-market-board-target="selectedPlayerBuy"><%= player_can_buy_from?(facility) && player_buy_price.positive? ? market_price(player_buy_price) : "-" %></dd>
       </div>
       <div class="rounded-md border border-zinc-800 bg-zinc-950/60 p-3">
-        <dt class="text-xs uppercase text-zinc-500">Sell to terminal</dt>
-        <dd class="mt-1 font-mono text-amber-200" data-market-board-target="selectedPlayerSell"><%= terminal_buys_from_player?(facility) ? market_price(player_sell_price) : "-" %></dd>
+        <dt class="text-xs uppercase text-zinc-500">Player sell price</dt>
+        <dd class="mt-1 font-mono text-amber-200" data-market-board-target="selectedPlayerSell"><%= player_can_sell_to?(facility) && player_sell_price.positive? ? market_price(player_sell_price) : "-" %></dd>
       </div>
     </dl>
   <% else %>

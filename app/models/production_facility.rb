@@ -3,6 +3,24 @@
 class ProductionFacility < ApplicationRecord
   include ActionView::RecordIdentifier
 
+  PLAYER_BUY_PRICE_SQL = "COALESCE(NULLIF(production_facilities.local_buy_price, 0), production_facilities.price_buy, 0)"
+  PLAYER_SELL_PRICE_SQL = "COALESCE(NULLIF(production_facilities.local_sell_price, 0), production_facilities.price_sell, 0)"
+  PLAYER_CAN_BUY_SQL = [
+    "COALESCE(production_facilities.local_buy_price, 0) > 0",
+    "COALESCE(production_facilities.price_buy, 0) > 0",
+    "COALESCE(production_facilities.scu_buy, 0) > 0",
+    "COALESCE(production_facilities.status_buy, 0) > 0",
+    "COALESCE(production_facilities.production_rate, 0) > 0"
+  ].join(" OR ")
+  PLAYER_CAN_SELL_SQL = [
+    "COALESCE(production_facilities.local_sell_price, 0) > 0",
+    "COALESCE(production_facilities.price_sell, 0) > 0",
+    "COALESCE(production_facilities.scu_sell, 0) > 0",
+    "COALESCE(production_facilities.scu_sell_stock, 0) > 0",
+    "COALESCE(production_facilities.status_sell, 0) > 0",
+    "COALESCE(production_facilities.consumption_rate, 0) > 0"
+  ].join(" OR ")
+
   belongs_to :location, primary_key: :name, foreign_key: :location_name, optional: true
 
   # Using `commodity_name` instead of `commodity_id`
@@ -37,6 +55,8 @@ class ProductionFacility < ApplicationRecord
   }
   scope :trade_available, -> { with_commodity_name.with_terminal_context.likely_trade_available }
   scope :ordered_for_api, -> { order(:location_name, :terminal_name, :commodity_name, :id) }
+  scope :player_can_buy, -> { where("(#{PLAYER_CAN_BUY_SQL})") }
+  scope :player_can_sell, -> { where("(#{PLAYER_CAN_SELL_SQL})") }
 
   def commodity_api_id
     api_id.presence || id
@@ -65,6 +85,31 @@ class ProductionFacility < ApplicationRecord
 
   def api_sell_price
     active_price(local_sell_price, price_sell)
+  end
+
+  def player_can_buy?
+    decimal_value(local_buy_price).positive? ||
+      decimal_value(price_buy).positive? ||
+      scu_buy.to_i.positive? ||
+      status_buy.to_i.positive? ||
+      decimal_value(production_rate).positive?
+  end
+
+  def player_can_sell?
+    decimal_value(local_sell_price).positive? ||
+      decimal_value(price_sell).positive? ||
+      scu_sell.to_i.positive? ||
+      scu_sell_stock.to_i.positive? ||
+      status_sell.to_i.positive? ||
+      decimal_value(consumption_rate).positive?
+  end
+
+  def player_buy_price
+    active_decimal_price(local_buy_price, price_buy)
+  end
+
+  def player_sell_price
+    active_decimal_price(local_sell_price, price_sell)
   end
 
   def purchasable?
@@ -142,6 +187,17 @@ class ProductionFacility < ApplicationRecord
     fallback_price = imported_price.present? ? imported_price.to_d : 0.to_d
 
     (preferred_price.positive? ? preferred_price : fallback_price).to_i
+  end
+
+  def active_decimal_price(local_price, imported_price)
+    preferred_price = decimal_value(local_price)
+    fallback_price = decimal_value(imported_price)
+
+    preferred_price.positive? ? preferred_price : fallback_price
+  end
+
+  def decimal_value(value)
+    value.present? ? value.to_d : 0.to_d
   end
 
   def should_broadcast_market_row?

@@ -26,13 +26,13 @@
   </div>
 
   <div class="flex items-center justify-between gap-3 lg:block lg:text-right">
-    <span class="text-xs uppercase text-zinc-500 lg:hidden">Buy from terminal</span>
-    <span class="font-mono text-sm text-emerald-200"><%= terminal_sells_to_player?(facility) ? market_price(player_buy_price) : "-" %></span>
+    <span class="text-xs uppercase text-zinc-500 lg:hidden">Player buy price</span>
+    <span class="font-mono text-sm text-emerald-200"><%= player_can_buy_from?(facility) && player_buy_price.positive? ? market_price(player_buy_price) : "-" %></span>
   </div>
 
   <div class="flex items-center justify-between gap-3 lg:block lg:text-right">
-    <span class="text-xs uppercase text-zinc-500 lg:hidden">Sell to terminal</span>
-    <span class="font-mono text-sm text-amber-200"><%= terminal_buys_from_player?(facility) ? market_price(player_sell_price) : "-" %></span>
+    <span class="text-xs uppercase text-zinc-500 lg:hidden">Player sell price</span>
+    <span class="font-mono text-sm text-amber-200"><%= player_can_sell_to?(facility) && player_sell_price.positive? ? market_price(player_sell_price) : "-" %></span>
   </div>
 
   <div class="flex items-center justify-between gap-3 lg:block lg:text-right">
@@ -41,7 +41,7 @@
   </div>
 
   <div class="flex items-center justify-between gap-3 lg:block lg:text-right">
-    <span class="text-xs uppercase text-zinc-500 lg:hidden">Demand</span>
+    <span class="text-xs uppercase text-zinc-500 lg:hidden">Buy-side SCU</span>
     <span class="font-mono text-sm text-zinc-100"><%= market_quantity(facility.scu_buy) %></span>
   </div>
 
