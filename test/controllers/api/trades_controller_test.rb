@@ -381,6 +381,48 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     assert_equal new_location.name, response_json["ship"]["location"]
   end
 
+  test "status with active travel returns clean in transit payload" do
+    Tick.delete_all
+    Tick.create!(current_tick: 10, sequence: 1)
+    destination = Location.create!(
+      name: "Area 18",
+      classification: "city",
+      star_system_name: "Stanton"
+    )
+    @user_ship.update!(status: "in_transit")
+    travel = ShipTravel.create!(
+      user_ship: @user_ship,
+      from_location: @location,
+      to_location: destination,
+      travel_guid: "active-status-travel-guid",
+      departure_tick: 5,
+      arrival_tick: 20,
+      total_duration_ticks: 15,
+      interdict_window_percent: 15
+    )
+    travel_attributes = travel.reload.attributes
+
+    assert_no_difference("ShipTravel.count") do
+      post "/api/status", params: base_status_payload.merge(location: @location.name), as: :json
+    end
+
+    assert_response :success
+    assert_equal "success", response_json["status"]
+    refute_equal "error", response_json["status"]
+    refute_includes response.body, "Ship is already in transit."
+    assert_equal "in_transit", response_json["ship_status"]
+    assert_equal "Ship is currently in transit.", response_json["message"]
+    assert_equal @user_ship.guid, response_json["ship_guid"]
+    assert_equal @ship.model, response_json["ship_model"]
+    assert_equal "active-status-travel-guid", response_json.dig("travel", "travel_guid")
+    assert_equal @location.name, response_json.dig("travel", "from_location")
+    assert_equal destination.name, response_json.dig("travel", "to_location")
+    assert_equal 10, response_json.dig("travel", "current_tick")
+    assert_equal 10, response_json.dig("travel", "remaining_ticks")
+    assert_equal false, response_json.dig("travel", "is_paused")
+    assert_equal travel_attributes, travel.reload.attributes
+  end
+
   test "status with nested trade location updates shard user and matching ship" do
     new_location = Location.create!(
       name: "Area 18",

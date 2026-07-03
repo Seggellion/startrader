@@ -227,6 +227,38 @@ class TradeServiceTest < ActiveSupport::TestCase
     assert_equal new_location.name, @shard_user.current_location_name
   end
 
+  test "status reports active travel without raising transit validation" do
+    Tick.delete_all
+    Tick.create!(current_tick: 10, sequence: 1)
+    destination = Location.create!(
+      name: "Area 18",
+      classification: "city",
+      star_system_name: "Stanton"
+    )
+    @user_ship.update!(status: "in_transit")
+    ShipTravel.create!(
+      user_ship: @user_ship,
+      from_location: @location,
+      to_location: destination,
+      travel_guid: "service-active-status-travel-guid",
+      departure_tick: 5,
+      arrival_tick: 20,
+      total_duration_ticks: 15,
+      interdict_window_percent: 15
+    )
+
+    assert_no_difference("ShipTravel.count") do
+      response = TradeService.status(**status_payload(location: @location.name))
+
+      assert_equal "success", response[:status]
+      assert_equal "in_transit", response[:ship_status]
+      assert_equal "Ship is currently in transit.", response[:message]
+      assert_equal "service-active-status-travel-guid", response.dig(:travel, :travel_guid)
+      assert_equal 10, response.dig(:travel, :remaining_ticks)
+      refute_equal "Ship is already in transit.", response.dig(:ship, :unavailable_reason)
+    end
+  end
+
   test "status restores missing user ship shard associations" do
     @user_ship.update_columns(shard_id: nil, shard_user_id: nil)
 

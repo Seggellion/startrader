@@ -132,7 +132,8 @@ module Api
         location: payload[:location],
         wallet_balance: payload[:wallet_balance],
         username: payload[:username],
-        shard: payload[:shard]
+        shard: payload[:shard],
+        request_id: request.request_id
       )
 
       render json: result, status: :ok

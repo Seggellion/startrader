@@ -23,7 +23,8 @@ class TradeService
       location: nil,
       wallet_balance: nil,
       username: nil,
-      shard: nil
+      shard: nil,
+      request_id: nil
     )
       has_new_payload = ship_guid.present? || ship_model.present? || shard_uuid.present? ||
         player_guid.present? || player_name.present?
@@ -34,7 +35,8 @@ class TradeService
         "shard_uuid_present=#{shard_uuid.present?} " \
         "player_guid_present=#{player_guid.present?} player_name_present=#{player_name.present?} " \
         "location_present=#{location.present?} " \
-        "username_present=#{username.present?} shard_present=#{shard.present?}"
+        "username_present=#{username.present?} shard_present=#{shard.present?} " \
+        "request_id=#{request_id.inspect}"
       )
 
       if has_new_payload
@@ -51,17 +53,18 @@ class TradeService
           player_guid: player_guid,
           player_name: player_name,
           location: location,
-          wallet_balance: wallet_balance
+          wallet_balance: wallet_balance,
+          request_id: request_id
         )
       end
 
       raise ValidationError, 'username is required for legacy status' if username.blank?
       raise ValidationError, 'shard is required for legacy status' if shard.blank?
 
-      legacy_status(username: username, location: location, wallet_balance: wallet_balance, shard: shard)
+      legacy_status(username: username, location: location, wallet_balance: wallet_balance, shard: shard, request_id: request_id)
     end
 
-    def self.status_by_ship_guid(ship_guid:, ship_model:, shard_uuid:, player_guid:, player_name:, location: nil, wallet_balance: nil)
+    def self.status_by_ship_guid(ship_guid:, ship_model:, shard_uuid:, player_guid:, player_name:, location: nil, wallet_balance: nil, request_id: nil)
       validate_wallet_balance!(wallet_balance)
       resolved_location = resolve_status_location!(
         location_name: location,
@@ -78,13 +81,14 @@ class TradeService
         player_name: player_name,
         wallet_balance: wallet_balance,
         location_name: location,
-        resolved_location: resolved_location
+        resolved_location: resolved_location,
+        request_id: request_id
       )
 
-      status_response_for(shard_user: sync.shard_user, user_ship: sync.user_ship, wallet_balance: wallet_balance)
+      status_response_for(shard_user: sync.shard_user, user_ship: sync.user_ship, wallet_balance: wallet_balance, request_id: request_id)
     end
 
-    def self.authoritative_status_sync!(ship_guid:, ship_model:, shard_uuid:, player_guid:, player_name:, wallet_balance:, location_name:, resolved_location:)
+    def self.authoritative_status_sync!(ship_guid:, ship_model:, shard_uuid:, player_guid:, player_name:, wallet_balance:, location_name:, resolved_location:, request_id: nil)
       shard = find_or_create_status_shard!(shard_uuid)
       user = find_or_create_status_user!(player_guid: player_guid, player_name: player_name)
       shard_user = user.shard_users.find_or_create_by!(shard_id: shard.id) do |record|
@@ -127,6 +131,7 @@ class TradeService
         previous_user_ship_location: previous_user_ship_location,
         user_ship_was_new: was_new,
         user_ship: user_ship,
+        request_id: request_id,
         user_ship_overwrote_associations: previous_user_ship_user_id != user.id ||
           previous_user_ship_shard_id != shard.id ||
           previous_user_ship_shard_user_id != shard_user.id
@@ -204,9 +209,10 @@ class TradeService
       user_ship.save!
     end
 
-    def self.log_authoritative_status_sync(player_name:, player_guid:, shard_uuid:, ship_guid:, incoming_location:, resolved_location:, previous_shard_user_location:, previous_user_ship_location:, user_ship_was_new:, user_ship:, user_ship_overwrote_associations:)
+    def self.log_authoritative_status_sync(player_name:, player_guid:, shard_uuid:, ship_guid:, incoming_location:, resolved_location:, previous_shard_user_location:, previous_user_ship_location:, user_ship_was_new:, user_ship:, request_id:, user_ship_overwrote_associations:)
       Rails.logger.info(
         "[TradeService.status] authoritative_sync " \
+        "request_id=#{request_id.inspect} " \
         "player=#{player_name.inspect} player_guid=#{player_guid.inspect} " \
         "shard_uuid=#{shard_uuid.inspect} ship_guid=#{ship_guid.inspect} " \
         "previous_shard_user_location=#{previous_shard_user_location.inspect} " \
@@ -256,7 +262,7 @@ class TradeService
       )
     end
 
-    def self.legacy_status(username:, location: nil, wallet_balance: nil, shard:)
+    def self.legacy_status(username:, location: nil, wallet_balance: nil, shard:, request_id: nil)
       raise ValidationError, 'username is required for legacy status' if username.blank?
       raise ValidationError, 'shard is required for legacy status' if shard.blank?
 
@@ -289,7 +295,8 @@ class TradeService
       status_response_for(
         shard_user: shard_user,
         user_ship: user_ship,
-        wallet_balance: wallet_balance
+        wallet_balance: wallet_balance,
+        request_id: request_id
       )
 
       # ✅ Check if user already has a ship
@@ -379,20 +386,25 @@ class TradeService
       0
     end
 
-    def self.status_response_for(shard_user:, user_ship:, wallet_balance:)
+    def self.status_response_for(shard_user:, user_ship:, wallet_balance:, request_id: nil)
       update_status_wallet_balance!(shard_user, wallet_balance)
 
       return no_ship_status_response(shard_user) if user_ship.nil?
 
-      availability = ShipAvailability.new(shard_user: shard_user, user_ship: user_ship).validate_usable!
+      current_tick = Tick.current
+      active_travel = active_status_travel(user_ship, current_tick)
+      availability = status_availability_for(
+        shard_user: shard_user,
+        user_ship: user_ship,
+        active_travel: active_travel
+      )
       user_ship.reload
       user_ship.touch
 
       cargo = user_ship_cargo_json(user_ship)
-      ship_travel = latest_relevant_ship_travel(user_ship)
-      current_tick = Tick.order(created_at: :desc).pluck(:current_tick).first
+      ship_travel = active_travel || latest_relevant_ship_travel(user_ship)
 
-      {
+      response = {
         status: 'success',
         wallet_balance: shard_user.wallet_balance,
         player_location: availability.player_location&.name,
@@ -414,6 +426,84 @@ class TradeService
         ships: ships_availability_json(shard_user),
         cargo: cargo,
       }
+
+      if active_travel
+        travel_payload = status_travel_payload(active_travel, current_tick)
+        Rails.logger.info(
+          "[TradeService.status] active_travel_detected " \
+          "request_id=#{request_id.inspect} user_ship_id=#{user_ship.id.inspect} " \
+          "ship_guid=#{user_ship.guid.inspect} active_travel_id=#{active_travel.id.inspect} " \
+          "travel_guid=#{active_travel.travel_guid.inspect} " \
+          "from_location=#{travel_payload[:from_location].inspect} " \
+          "to_location=#{travel_payload[:to_location].inspect} " \
+          "current_tick=#{current_tick.inspect} arrival_tick=#{active_travel.arrival_tick.inspect} " \
+          "remaining_ticks=#{travel_payload[:remaining_ticks].inspect}"
+        )
+
+        response.merge!(
+          ship_status: 'in_transit',
+          message: 'Ship is currently in transit.',
+          ship_guid: user_ship.guid,
+          ship_model: user_ship.ship&.model,
+          current_location: availability.ship_location&.name || user_ship.location_name,
+          travel: travel_payload
+        )
+      end
+
+      response
+    end
+
+    def self.status_availability_for(shard_user:, user_ship:, active_travel:)
+      player_location = shard_user.current_location
+      ship_location = user_ship.location || Location.find_by(name: user_ship.location_name)
+      player_location ||= ship_location
+
+      reason =
+        if active_travel
+          "Ship is currently in transit."
+        elsif player_location.nil?
+          "Player location is unknown; initialize current location before switching ships."
+        elsif ship_location.nil?
+          "Ship location is unknown; initialize the ship location before use."
+        elsif ship_location.id != player_location.id
+          "Ship is at #{ship_location.name}, but player is at #{player_location.name}."
+        end
+
+      ShipAvailability::Result.new(
+        available: reason.nil?,
+        reason: reason,
+        player_location: player_location,
+        ship_location: ship_location,
+        in_transit: active_travel.present?
+      )
+    end
+
+    def self.active_status_travel(user_ship, current_tick = Tick.current)
+      user_ship.ship_travels
+               .where(completed_at_tick: nil)
+               .where("is_paused = ? OR arrival_tick > ?", true, current_tick)
+               .order(updated_at: :desc)
+               .first
+    end
+
+    def self.status_travel_payload(travel, current_tick = Tick.current)
+      remaining_ticks = if travel.is_paused?
+                          travel.remaining_ticks_from_arrival.to_i
+                        else
+                          [travel.arrival_tick.to_i - current_tick.to_i, 0].max
+                        end
+
+      {
+        travel_guid: travel.travel_guid,
+        from_location: travel.from_location&.name,
+        to_location: travel.to_location&.name,
+        departure_tick: travel.departure_tick,
+        arrival_tick: travel.arrival_tick,
+        current_tick: current_tick,
+        remaining_ticks: remaining_ticks,
+        time_remaining: remaining_ticks * Tick.seconds_per_tick,
+        is_paused: travel.is_paused
+      }
     end
 
     def self.latest_relevant_ship_travel(user_ship)
@@ -426,7 +516,11 @@ class TradeService
 
     def self.ships_availability_json(shard_user)
       shard_user.user_ships.includes(:ship).order(updated_at: :desc).map do |ship_record|
-        availability = ShipAvailability.new(shard_user: shard_user, user_ship: ship_record).status
+        availability = status_availability_for(
+          shard_user: shard_user,
+          user_ship: ship_record,
+          active_travel: active_status_travel(ship_record)
+        )
 
         {
           guid: ship_record.guid,
