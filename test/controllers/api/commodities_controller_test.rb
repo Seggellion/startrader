@@ -25,6 +25,41 @@ class Api::CommoditiesControllerTest < ActionDispatch::IntegrationTest
     @admin = Terminal.create!(api_id: 10_002, name: "Admin", location_name: @orison.name)
   end
 
+  test "commodities index allows cors requests from starbitizen origin" do
+    get "/api/commodities", headers: { "Origin" => "https://starbitizen.com" }
+
+    assert_response :success
+    assert_equal "https://starbitizen.com", response.headers["Access-Control-Allow-Origin"]
+    assert_includes response.headers["Vary"], "Origin"
+  end
+
+  test "commodities index allows cors requests from maidenbot origin" do
+    get "/api/commodities", headers: { "Origin" => "https://maidenbot.com" }
+
+    assert_response :success
+    assert_equal "https://maidenbot.com", response.headers["Access-Control-Allow-Origin"]
+  end
+
+  test "commodities index does not allow unlisted cors origins" do
+    get "/api/commodities", headers: { "Origin" => "https://example.com" }
+
+    assert_response :success
+    assert_nil response.headers["Access-Control-Allow-Origin"]
+  end
+
+  test "commodities index handles starbitizen cors preflight" do
+    options "/api/commodities", headers: {
+      "Origin" => "https://starbitizen.com",
+      "Access-Control-Request-Method" => "GET",
+      "Access-Control-Request-Headers" => "Content-Type"
+    }
+
+    assert_response :success
+    assert_equal "https://starbitizen.com", response.headers["Access-Control-Allow-Origin"]
+    assert_includes response.headers["Access-Control-Allow-Methods"], "GET"
+    assert_includes response.headers["Access-Control-Allow-Headers"], "Content-Type"
+  end
+
   test "returns JSON API commodity resources from production facilities" do
     Commodity.create!(name: "Agricium", is_illegal: true)
     facility = create_facility(
