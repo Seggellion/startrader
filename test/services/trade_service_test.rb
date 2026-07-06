@@ -555,6 +555,60 @@ class TradeServiceTest < ActiveSupport::TestCase
     refute_kind_of Hash, response[:message]
   end
 
+  test "available commodity list resolves ship by guid without requiring shard user" do
+    @shard_user.destroy!
+    user_ship = UserShip.create!(
+      user: @user,
+      ship: @ship,
+      shard: @shard,
+      guid: "orphaned-listing-ship-guid",
+      ship_slug: @ship.slug,
+      location_name: @location.name,
+      total_scu: @ship.scu,
+      used_scu: 0
+    )
+
+    response = TradeService.list_available_commodities(
+      username: @user.username,
+      shard_uuid: @shard.channel_uuid,
+      ship_guid: user_ship.guid,
+      ship_slug: @ship.slug
+    )
+
+    assert_equal "success", response[:status]
+    assert_equal @location.name, response[:location]
+    assert_includes response[:commodities].map { |commodity| commodity[:commodity_name] }, @terminal_buy_commodity.name
+  end
+
+  test "available commodity list uses shard user current location without persisted ship" do
+    @shard_user.update_current_location!(@location)
+    @user_ship.destroy!
+
+    response = TradeService.list_available_commodities(
+      username: @user.username,
+      shard_uuid: @shard.channel_uuid,
+      ship_slug: @ship.slug
+    )
+
+    assert_equal "success", response[:status]
+    assert_equal @location.name, response[:location]
+    assert_includes response[:commodities].map { |commodity| commodity[:commodity_name] }, @terminal_buy_commodity.name
+  end
+
+  test "available commodity list can fall back to ship definition metadata" do
+    @user_ship.destroy!
+
+    response = TradeService.list_available_commodities(
+      username: @user.username,
+      shard_uuid: @shard.channel_uuid,
+      ship_slug: @ship.slug
+    )
+
+    assert_equal "success", response[:status]
+    assert_equal @location.name, response[:location]
+    assert_includes response[:commodities].map { |commodity| commodity[:commodity_name] }, @terminal_buy_commodity.name
+  end
+
   test "sellable commodity list keeps message human-readable and data top-level" do
     response = TradeService.list_sellable_commodities(username: @user.username, shard: @shard.name)
 

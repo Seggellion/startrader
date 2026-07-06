@@ -753,6 +753,7 @@ class TradeService
       )
       shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard_name.downcase).first
       trade_debug('TradeService.buy after shard_user lookup', input_summary.merge(trade_debug_shard_user_summary(shard_user)))
+      raise ShipNotFoundError, "No ship found for user '#{username}'." if shard_user.nil?
 
       trade_debug(
         'TradeService.buy before shard_user.update',
@@ -762,12 +763,6 @@ class TradeService
           wallet_balance_class: wallet_balance.class.name
         )
       )
-      if shard_user.nil?
-        trade_debug_error(
-          'TradeService.buy shard_user nil before update - likely source of undefined method update for nil:NilClass',
-          input_summary.merge(user_id: user.id, shard_id: shard&.id, shard_name: shard_name)
-        )
-      end
       wallet_update_result = shard_user.update(wallet_balance:wallet_balance)
       trade_debug(
         'TradeService.buy after shard_user.update',
@@ -1118,18 +1113,19 @@ class TradeService
       end
       
 
-      def self.list_available_commodities(username:, shard_uuid:, ship_guid: nil, ship_slug: nil, request_id: nil)
+      def self.list_available_commodities(username:, shard_uuid: nil, shard: nil, ship_guid: nil, ship_slug: nil, request_id: nil)
+        requested_shard = shard_uuid.presence || shard
         input_summary = trade_debug_input_summary(
           username: username,
-          shard: shard_uuid,
+          shard: requested_shard,
           ship_guid: ship_guid,
           ship_slug: ship_slug,
           request_id: request_id
         )
         trade_debug('TradeService.list_available_commodities entry', input_summary)
 
-        trade_debug('TradeService.list_available_commodities before shard lookup', input_summary.merge(requested_shard_uuid: shard_uuid))
-        shard = Shard.find_by(channel_uuid: shard_uuid)
+        trade_debug('TradeService.list_available_commodities before shard lookup', input_summary.merge(requested_shard: requested_shard))
+        shard = find_trade_shard(requested_shard)
         trade_debug(
           'TradeService.list_available_commodities after shard lookup',
           input_summary.merge(
@@ -1139,6 +1135,8 @@ class TradeService
             channel_uuid: shard&.channel_uuid
           )
         )
+        raise ActiveRecord::RecordNotFound, 'Shard not found' if shard.nil?
+
         shard_name = shard.name
 
         normalized_username = username.downcase
@@ -1160,10 +1158,9 @@ class TradeService
         )
         shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard_name.downcase).first
         trade_debug('TradeService.list_available_commodities after shard_user lookup', input_summary.merge(trade_debug_shard_user_summary(shard_user)))
-        raise ShipNotFoundError, "No ship found for user '#{username}'." if shard_user.nil?
 
         trade_debug(
-          'TradeService.list_available_commodities before resolve_trade_ship',
+          'TradeService.list_available_commodities before listing location resolution',
           input_summary.merge(
             user_id: user.id,
             shard_user_id: shard_user&.id,
@@ -1171,23 +1168,31 @@ class TradeService
             create_missing: false
           )
         )
-        user_ship = resolve_trade_ship(
+        listing_location = resolve_listing_trade_location(
           user: user,
           shard_user: shard_user,
           shard: shard,
           ship_guid: ship_guid,
-          ship_slug: ship_slug,
-          create_missing: false
+          ship_slug: ship_slug
         )
-        trade_debug('TradeService.list_available_commodities after resolve_trade_ship', input_summary.merge(trade_debug_user_ship_summary(user_ship)))
-        raise ShipNotFoundError, "No ship found for user '#{username}'." if user_ship.nil?
+        trade_debug(
+          'TradeService.list_available_commodities after listing location resolution',
+          input_summary.merge(
+            location_name: listing_location[:location_name],
+            location_source: listing_location[:source],
+            user_ship_id: listing_location[:user_ship]&.id,
+            shard_user_id: listing_location[:shard_user]&.id
+          )
+        )
+        raise ShipNotFoundError, "No ship found for user '#{username}'." if listing_location[:location_name].blank?
 
-        location_name = user_ship.location_name
+        location_name = listing_location[:location_name]
         trade_location_names_for_debug = trade_location_names(location_name)
         trade_debug(
           'TradeService.list_available_commodities before facility lookup',
           input_summary.merge(
-            user_ship_location_name: location_name,
+            listing_location_name: location_name,
+            listing_location_source: listing_location[:source],
             resolved_trade_location_names: trade_location_names_for_debug
           )
         )
@@ -1290,7 +1295,69 @@ class TradeService
         )
       end
 
-      def self.buyable_facilities_for_trade_location(location_name)        
+      def self.find_trade_shard(shard_identifier)
+        normalized = shard_identifier.to_s.strip
+        return if normalized.blank?
+
+        Shard.find_by(channel_uuid: normalized) ||
+          Shard.where("LOWER(name) = ?", normalized.downcase).first
+      end
+
+      def self.resolve_listing_trade_location(user:, shard_user:, shard:, ship_guid: nil, ship_slug: nil)
+        user_ship = find_listing_user_ship(
+          user: user,
+          shard_user: shard_user,
+          shard: shard,
+          ship_guid: ship_guid,
+          ship_slug: ship_slug
+        )
+        return { location_name: user_ship.location_name, source: 'user_ship', user_ship: user_ship, shard_user: shard_user } if user_ship&.location_name.present?
+
+        if shard_user&.current_location_name.present?
+          return {
+            location_name: shard_user.current_location_name,
+            source: 'shard_user_current_location',
+            user_ship: user_ship,
+            shard_user: shard_user
+          }
+        end
+
+        if ship_slug.present? && Ship.exists?(slug: ship_slug)
+          fallback_location_name = default_listing_location_name
+          if fallback_location_name.present?
+            return {
+              location_name: fallback_location_name,
+              source: 'ship_definition_fallback',
+              user_ship: user_ship,
+              shard_user: shard_user
+            }
+          end
+        end
+
+        { location_name: nil, source: 'unresolved', user_ship: user_ship, shard_user: shard_user }
+      end
+
+      def self.find_listing_user_ship(user:, shard_user:, shard:, ship_guid: nil, ship_slug: nil)
+        if ship_guid.present?
+          user_ship = user.user_ships.find_by(guid: ship_guid)
+          return user_ship if user_ship.present?
+        end
+
+        user_ship = shard_user&.user_ships&.order(updated_at: :desc)&.first
+        return user_ship if user_ship.present?
+
+        user_ship = user.user_ships.where(shard_id: shard.id).order(updated_at: :desc).first if shard.present?
+        return user_ship if user_ship.present?
+
+        user.user_ships.where(ship_slug: ship_slug).order(updated_at: :desc).first if ship_slug.present?
+      end
+
+      def self.default_listing_location_name
+        default_location_name_for_status.presence ||
+          facilities_selling_to_player.where.not(location_name: [nil, '']).order(:location_name).pick(:location_name)
+      end
+
+      def self.buyable_facilities_for_trade_location(location_name)
         facilities_selling_to_player
           .where("LOWER(location_name) IN (?)", trade_location_names(location_name).map(&:downcase))
           .includes(:commodity)

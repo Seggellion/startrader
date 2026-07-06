@@ -42,25 +42,35 @@ module Api
       trade_params = params[:trade] || {}
       request_id = request.request_id
 
-      username = trade_params[:player_name]
-      wallet_balance = trade_params[:wallet_balance]
-      commodity_name = trade_params[:commodity_name]
-      scu = trade_params[:scu]
-      shard = trade_params[:shard_uuid]
-      ship_guid = trade_params[:ship_guid]
-      ship_slug = trade_params[:ship_slug]
+      username = trade_param(trade_params, :player_name)
+      wallet_balance = trade_param(trade_params, :wallet_balance)
+      commodity_name = trade_param(trade_params, :commodity_name)
+      scu = trade_param(trade_params, :scu)
+      shard = trade_param(trade_params, :shard_uuid)
+      ship_guid = trade_param(trade_params, :ship_guid)
+      ship_slug = trade_param(trade_params, :ship_slug)
       payload_summary = trade_debug_payload_summary(trade_params)
+      request_classification = buy_request_classification(commodity_name, scu)
 
       trade_debug_info('Api::TradesController#buy entry', request_id: request_id)
-      trade_debug_info('Api::TradesController#buy payload', payload_summary.merge(request_id: request_id))
+      trade_debug_info(
+        'Api::TradesController#buy payload',
+        payload_summary.merge(request_id: request_id, request_classification: request_classification)
+      )
 
       if username.blank? || shard.blank?
-        trade_debug_warn('Api::TradesController#buy branch missing required parameters', payload_summary.merge(request_id: request_id))
+        trade_debug_warn(
+          'Api::TradesController#buy branch missing required parameters',
+          payload_summary.merge(request_id: request_id, request_classification: request_classification)
+        )
         render json: { status: 'error', message: 'Missing required parameters' }, status: :unprocessable_entity and return
       end
 
-      if (commodity_name.blank? && scu.blank?) || blank_scu_listing_request?(trade_params)
-        trade_debug_info('Api::TradesController#buy branch listing request', payload_summary.merge(request_id: request_id))
+      if request_classification == :listing
+        trade_debug_info(
+          'Api::TradesController#buy branch listing request',
+          payload_summary.merge(request_id: request_id, request_classification: request_classification)
+        )
         result = TradeService.list_available_commodities(
           username: username,
           shard_uuid: shard,
@@ -69,14 +79,26 @@ module Api
           request_id: request_id
         )
       elsif commodity_name.blank?
-        trade_debug_warn('Api::TradesController#buy branch missing commodity name', payload_summary.merge(request_id: request_id))
+        trade_debug_warn(
+          'Api::TradesController#buy branch missing commodity name',
+          payload_summary.merge(request_id: request_id, request_classification: request_classification)
+        )
         render json: { status: 'error', message: 'Missing commodity name for purchase.' }, status: :unprocessable_entity and return
       elsif scu.blank?
-        trade_debug_warn('Api::TradesController#buy branch missing SCU', payload_summary.merge(request_id: request_id))
+        trade_debug_warn(
+          'Api::TradesController#buy branch missing SCU',
+          payload_summary.merge(request_id: request_id, request_classification: request_classification)
+        )
         render json: { status: 'error', message: 'Missing SCU amount for purchase.' }, status: :unprocessable_entity and return
       else
-        trade_debug_info('Api::TradesController#buy branch purchase request', payload_summary.merge(request_id: request_id))
-        trade_debug_info('Api::TradesController#buy before TradeService.buy', payload_summary.merge(request_id: request_id))
+        trade_debug_info(
+          'Api::TradesController#buy branch purchase request',
+          payload_summary.merge(request_id: request_id, request_classification: request_classification)
+        )
+        trade_debug_info(
+          'Api::TradesController#buy before TradeService.buy',
+          payload_summary.merge(request_id: request_id, request_classification: request_classification)
+        )
         result = TradeService.buy(
           username: username,
           wallet_balance: wallet_balance,
@@ -97,11 +119,24 @@ module Api
       )
 
       render json: result, status: :ok
+    rescue TradeService::ShipNotFoundError => e
+      trade_debug_error(
+        'Api::TradesController#buy ship not found',
+        (defined?(payload_summary) && payload_summary ? payload_summary : {}).merge(
+          request_id: (defined?(request_id) ? request_id : request.request_id),
+          request_classification: (defined?(request_classification) ? request_classification : nil),
+          error_class: e.class.name,
+          error_message: e.message,
+          backtrace: e.backtrace&.join("\n")
+        )
+      )
+      render json: ship_not_found_response(e.message, payload_summary, request_classification), status: :unprocessable_entity
     rescue StandardError => e
       trade_debug_error(
         'Api::TradesController#buy failed',
         (defined?(payload_summary) && payload_summary ? payload_summary : {}).merge(
           request_id: (defined?(request_id) ? request_id : request.request_id),
+          request_classification: (defined?(request_classification) ? request_classification : nil),
           error_class: e.class.name,
           error_message: e.message,
           backtrace: e.backtrace&.join("\n")
@@ -149,8 +184,29 @@ module Api
 
     private
 
-    def blank_scu_listing_request?(trade_params)
-      (trade_params.key?(:scu) || trade_params.key?('scu')) && trade_params[:scu].blank?
+    def buy_request_classification(commodity_name, scu)
+      return :listing if commodity_name.blank? && scu.blank?
+      return :missing_commodity_name if commodity_name.blank?
+      return :missing_scu if scu.blank?
+
+      :purchase
+    end
+
+    def trade_param(trade_params, key)
+      trade_params[key].presence || trade_params[key.to_s]
+    end
+
+    def ship_not_found_response(message, payload_summary, request_classification)
+      {
+        status: 'error',
+        error: 'ship_not_found',
+        message: message,
+        player_name: payload_summary&.fetch(:player_name, nil),
+        shard_uuid: payload_summary&.fetch(:shard_uuid, nil),
+        ship_guid: payload_summary&.fetch(:ship_guid, nil),
+        ship_slug: payload_summary&.fetch(:ship_slug, nil),
+        request_classification: request_classification
+      }.compact
     end
 
     def trade_debug_info(message, context = {})
@@ -171,14 +227,14 @@ module Api
 
     def trade_debug_payload_summary(trade_params)
       {
-        player_name: trade_params[:player_name],
-        commodity_name: trade_params[:commodity_name],
-        scu: trade_params[:scu],
-        shard_uuid: trade_params[:shard_uuid],
-        shard_name: trade_params[:shard_name],
-        ship_guid: trade_params[:ship_guid],
-        ship_slug: trade_params[:ship_slug],
-        wallet_balance_present: trade_params[:wallet_balance].present?
+        player_name: trade_param(trade_params, :player_name),
+        commodity_name: trade_param(trade_params, :commodity_name),
+        scu: trade_param(trade_params, :scu),
+        shard_uuid: trade_param(trade_params, :shard_uuid),
+        shard_name: trade_param(trade_params, :shard_name),
+        ship_guid: trade_param(trade_params, :ship_guid),
+        ship_slug: trade_param(trade_params, :ship_slug),
+        wallet_balance_present: trade_param(trade_params, :wallet_balance).present?
       }
     end
 

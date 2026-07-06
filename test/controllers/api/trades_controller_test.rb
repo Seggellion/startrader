@@ -132,17 +132,43 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     )
   end
 
-  test "buy with blank scu lists commodities even when commodity name contains parsed amount" do
+  test "buy with commodity name and blank scu returns validation error" do
     post "/api/buy", params: {
       trade: base_trade_payload.merge(commodity_name: "5", scu: "")
+    }, as: :json
+
+    assert_response :unprocessable_entity
+    assert_equal(
+      { "status" => "error", "message" => "Missing SCU amount for purchase." },
+      response_json
+    )
+  end
+
+  test "buy listing with blank commodity name and scu does not require persisted player ship" do
+    @shard_user.update_current_location!(@location)
+    @user_ship.destroy!
+
+    post "/api/buy", params: {
+      trade: base_trade_payload.except(:commodity_name, :scu, :ship_guid)
     }, as: :json
 
     assert_response :success
     assert_equal "success", response_json["status"]
     assert_equal @location.name, response_json["location"]
-    assert_kind_of Array, response_json["commodities"]
     assert_includes response_json["commodities"].map { |commodity| commodity["commodity_name"] }, @commodity.name
-    refute response_json.key?("total_capital")
+  end
+
+  test "buy listing with only ship slug uses ship definition fallback" do
+    @user_ship.destroy!
+
+    post "/api/buy", params: {
+      trade: base_trade_payload.except(:commodity_name, :scu, :ship_guid)
+    }, as: :json
+
+    assert_response :success
+    assert_equal "success", response_json["status"]
+    assert_equal @location.name, response_json["location"]
+    assert_includes response_json["commodities"].map { |commodity| commodity["commodity_name"] }, @commodity.name
   end
 
   test "buy missing only scu returns validation error" do
@@ -157,6 +183,22 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     )
   end
 
+  test "full purchase without shard ship returns structured ship error" do
+    payload = base_trade_payload
+    @shard_user.destroy!
+
+    post "/api/buy", params: { trade: payload }, as: :json
+
+    assert_response :unprocessable_entity
+    assert_equal "error", response_json["status"]
+    assert_equal "ship_not_found", response_json["error"]
+    assert_equal "No ship found for user '#{@user.username}'.", response_json["message"]
+    assert_equal @user.username, response_json["player_name"]
+    assert_equal @shard.channel_uuid, response_json["shard_uuid"]
+    assert_equal @ship.slug, response_json["ship_slug"]
+    assert_equal "purchase", response_json["request_classification"]
+  end
+
   test "buy missing player name returns missing required parameters" do
     post "/api/buy", params: {
       trade: base_trade_payload.except(:player_name)
@@ -169,9 +211,9 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     )
   end
 
-  test "buy missing shard name returns missing required parameters" do
+  test "buy missing shard uuid returns missing required parameters" do
     post "/api/buy", params: {
-      trade: base_trade_payload.except(:shard_name)
+      trade: base_trade_payload.except(:shard_uuid)
     }, as: :json
 
     assert_response :unprocessable_entity
@@ -303,9 +345,9 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     )
   end
 
-  test "sell missing shard name returns missing required parameters" do
+  test "sell missing shard uuid returns missing required parameters" do
     post "/api/sell", params: {
-      trade: base_trade_payload.except(:shard_name)
+      trade: base_trade_payload.except(:shard_uuid)
     }, as: :json
 
     assert_response :unprocessable_entity
@@ -739,6 +781,7 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
       wallet_balance: 10_000,
       commodity_name: @commodity.name,
       scu: 2,
+      shard_uuid: @shard.channel_uuid,
       shard_name: @shard.name,
       ship_guid: @user_ship.guid,
       ship_slug: @ship.slug
