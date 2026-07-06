@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_30_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_06_120000) do
   create_schema "cable"
 
   # These are extensions that must be enabled in order to support this database
@@ -725,7 +725,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_30_120000) do
   add_foreign_key "star_bitizen_runs", "locations", column: "buy_location_id"
   add_foreign_key "star_bitizen_runs", "locations", column: "sell_location_id"
   add_foreign_key "star_bitizen_runs", "user_ship_cargos"
-  add_foreign_key "star_bitizen_runs", "users"
+  add_foreign_key "star_bitizen_runs", "users", on_delete: :cascade
   add_foreign_key "user_ship_cargos", "commodities"
   add_foreign_key "user_ship_cargos", "user_ships"
   add_foreign_key "user_ships", "shard_users"

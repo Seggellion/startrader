@@ -106,6 +106,7 @@ Rails.application.routes.draw do
     post 'status', to: 'trades#status'
     post 'gate_travel', to: 'gate_travel#gate_travel'
     delete "cancel", to: "ship_travel#destroy"
+    post "cancel", to: "ship_travel#destroy"
     resources :locations, only: [:index, :show]
 
     resources :commands, only: [] do
