@@ -31,7 +31,7 @@ class RabbitmqSender
       user.username,
       ship.guid,
       ship.status,
-      ship.ship_slug,
+      ship.model,
       Setting.get('secret_guid'),
       travel.from_location.name,
       travel.to_location.name,
