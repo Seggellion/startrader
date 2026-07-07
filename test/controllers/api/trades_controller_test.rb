@@ -330,7 +330,90 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     assert_equal 769.12, response_json["total_capital"]
     assert_equal 1, cargo.reload.scu
     assert_equal 2, @sell_facility.reload.inventory
-    assert_in_delta 10_769.12, @shard_user.reload.wallet_balance.to_f, 0.01
+    assert_equal 10_769, @shard_user.reload.wallet_balance
+  end
+
+  test "sell persists shard user wallet balance above signed integer limit" do
+    @user.update!(
+      username: "Suddenfr0st",
+      twitch_id: "127718239"
+    )
+    @shard.update!(
+      name: "Seggellion",
+      channel_uuid: "136591885"
+    )
+    @ship.update!(model: "Merchantman", slug: "merchantman", scu: 2880)
+    @user_ship.update!(
+      guid: "e0057e4c-28de-4df8-ba3f-8703e02f1d63",
+      ship_slug: @ship.slug,
+      total_scu: 2880
+    )
+    @shard_user.update!(
+      shard_name: @shard.name,
+      wallet_balance: 1_891_527_568
+    )
+
+    atlasium = Commodity.create!(name: "Atlasium", is_sellable: false)
+    cargo = UserShipCargo.create!(
+      user_ship: @user_ship,
+      commodity: atlasium,
+      scu: 1,
+      buy_price: 12345.67,
+      sell_price: 307_889_769.00
+    )
+    ProductionFacility.create!(
+      facility_name: "Seggellion TDD",
+      location_name: @location.name,
+      commodity_name: atlasium.name,
+      production_rate: 0,
+      consumption_rate: 1,
+      inventory: 0,
+      max_inventory: 10,
+      local_buy_price: nil,
+      local_sell_price: nil,
+      price_buy: 0.0,
+      price_sell: 307_889_769.00,
+      scu_buy: 0,
+      scu_sell_stock: 0,
+      status_buy: 0,
+      status_sell: 1
+    )
+    run = StarBitizenRun.create!(
+      user: @user,
+      user_ship: @user_ship,
+      user_ship_cargo: cargo,
+      commodity: atlasium,
+      commodity_name: atlasium.name,
+      buy_location_name: @location.name,
+      local_buy_price: 12345.67,
+      local_sell_price: nil,
+      profit: 0,
+      scu: 1,
+      shard: @shard.name
+    )
+
+    post "/api/sell", params: {
+      trade: {
+        wallet_balance: "1891527568",
+        commodity_name: atlasium.name,
+        scu: "1",
+        ship_guid: @user_ship.guid,
+        ship_slug: @ship.slug,
+        player_name: @user.username,
+        player_guid: @user.twitch_id,
+        shard_name: @shard.name,
+        shard_uuid: @shard.channel_uuid
+      }
+    }, as: :json
+
+    assert_response :success
+    assert_equal "success", response_json["status"]
+    assert_equal 2_199_417_337, @shard_user.reload.wallet_balance
+
+    run.reload
+    assert_equal 307_889_769, run.profit
+    assert_equal 12345.67.to_d, run.local_buy_price
+    assert_equal 307_889_769.to_d, run.local_sell_price
   end
 
   test "sell missing player name returns missing required parameters" do

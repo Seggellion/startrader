@@ -20,6 +20,12 @@ class ShardUser < ApplicationRecord
   validate :currency_not_nil
   validate :inventory_not_nil
 
+  def self.credit_amount(value)
+    return if value.nil?
+
+    value.to_d.round(0, BigDecimal::ROUND_HALF_UP)
+  end
+
   def initialize(attributes = {})
     super
     self.currency = {} if self.currency.nil?
@@ -43,12 +49,15 @@ class ShardUser < ApplicationRecord
     end
   end
 
+  def wallet_balance=(value)
+    super(self.class.credit_amount(value))
+  end
 
 
   def update_credits(amount)
-    new_balance = wallet_balance.to_f + amount.to_f
+    new_balance = wallet_balance.to_d + amount.to_d
 
-    update(wallet_balance: new_balance)
+    update!(wallet_balance: new_balance)
   end
 
   def current_location_name

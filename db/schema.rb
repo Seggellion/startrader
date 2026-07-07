@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_06_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_07_120000) do
   create_schema "cable"
 
   # These are extensions that must be enabled in order to support this database
@@ -427,7 +427,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_06_120000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "shard_name"
-    t.integer "wallet_balance", default: 0
+    t.bigint "wallet_balance", default: 0
     t.index ["shard_id"], name: "index_shard_users_on_shard_id"
     t.index ["user_id", "shard_id"], name: "index_shard_users_on_user_id_and_shard_id_unique", unique: true
     t.index ["user_id"], name: "index_shard_users_on_user_id"
@@ -574,7 +574,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_06_120000) do
 
   create_table "star_bitizen_runs", force: :cascade do |t|
     t.bigint "user_id", null: false
-    t.integer "profit", default: 0
+    t.bigint "profit", default: 0
     t.integer "scu", default: 0
     t.integer "twitch_channel"
     t.bigint "buy_location_id"
@@ -587,9 +587,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_06_120000) do
     t.string "shard"
     t.string "buy_location_name"
     t.string "sell_location_name"
-    t.integer "local_buy_price"
+    t.decimal "local_buy_price", precision: 15, scale: 2
     t.integer "user_ship_id"
-    t.integer "local_sell_price"
+    t.decimal "local_sell_price", precision: 15, scale: 2
     t.index ["commodity_id"], name: "index_star_bitizen_runs_on_commodity_id"
     t.index ["user_id"], name: "index_star_bitizen_runs_on_user_id"
     t.index ["user_ship_cargo_id"], name: "index_star_bitizen_runs_on_user_ship_cargo_id"

@@ -830,7 +830,7 @@ class TradeService
 
       # ✅ Calculate the maximum affordable SCU based on wallet and cargo space
       buy_price = player_buy_price(facility)
-      max_affordable_scu = (shard_user.wallet_balance / buy_price.to_f).floor
+      max_affordable_scu = (shard_user.wallet_balance.to_d / buy_price.to_d).floor
       max_cargo_space = user_ship.available_cargo_space
       max_facility_inventory = facility.inventory
     
@@ -893,7 +893,7 @@ class TradeService
           user_ship: user_ship,
           commodity_name: commodity.name,
           buy_location_name: location_name,
-          shard: shard,
+          shard: shard_name,
           local_sell_price: nil
         )
         trade_debug('TradeService.buy transaction after StarBitizenRun lookup', input_summary.merge(star_bitizen_run_id: star_bitizen_run&.id, star_bitizen_run_found: star_bitizen_run.present?))
@@ -923,7 +923,7 @@ class TradeService
             profit: 0,
             user_ship_cargo_id: user_ship.user_ship_cargos.last.id,
             user_ship_id: user_ship.id,
-            shard: shard # Track game shard
+            shard: shard_name # Track game shard
           )
           trade_debug('TradeService.buy transaction after StarBitizenRun create', input_summary.merge(star_bitizen_run_id: star_bitizen_run.id, scu: star_bitizen_run.scu))
         end
@@ -945,7 +945,8 @@ class TradeService
         loading_time: loading_time_seconds,
         loading_ticks: loading_ticks,
         scu: scu,
-        capital: total_cost,
+        capital: total_cost.to_f,
+        total_capital: total_cost.to_f,
         message: "Purchased #{scu} SCU of #{commodity_name} at #{location_name}"
       }
     rescue StandardError => e
@@ -1015,7 +1016,7 @@ class TradeService
           user_ship: user_ship,
           commodity_name: cargo_to_sell.commodity.name,
           local_sell_price: nil,
-          shard: shard
+          shard: shard_name
         )
 
                 # Update trade record
@@ -1023,7 +1024,7 @@ class TradeService
                   star_bitizen_run.update!(
                     local_sell_price: sell_price,
                     sell_location_name: location.name,
-                    profit: total_revenue,
+                    profit: ShardUser.credit_amount(total_revenue),
                     scu: scu_to_sell
                   )
                 end
@@ -1036,8 +1037,9 @@ class TradeService
       # ✅ Return API Response
       {
         status: 'success',
-        profit: total_revenue,
-        capital: total_revenue,
+        profit: total_revenue.to_f,
+        capital: total_revenue.to_f,
+        total_capital: total_revenue.to_f,
         wallet_balance: shard_user.wallet_balance,
         scu: scu_to_sell,
         message: "Sold #{scu_to_sell} SCU of #{commodity_name} at #{location_name}"
@@ -1389,7 +1391,7 @@ class TradeService
       end
 
       def self.transaction_total_capital(scu:, unit_price:)
-        (scu.to_d * unit_price.to_d).round(2).to_f
+        (scu.to_d * unit_price.to_d).round(2)
       end
 
       def self.loading_time_seconds_for_scu(scu)

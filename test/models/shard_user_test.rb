@@ -42,6 +42,14 @@ class ShardUserTest < ActiveSupport::TestCase
     assert_includes duplicate.errors[:user_id], "has already been taken"
   end
 
+  test "update credits can cross signed integer limit" do
+    @shard_user.update!(wallet_balance: 2_147_483_640)
+
+    @shard_user.update_credits(100)
+
+    assert_equal 2_147_483_740, @shard_user.reload.wallet_balance
+  end
+
   test "database unique index prevents duplicate shard users when validations are bypassed" do
     now = Time.current
 
