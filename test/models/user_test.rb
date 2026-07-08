@@ -43,6 +43,20 @@ class UserTest < ActiveSupport::TestCase
     refute StarBitizenRun.exists?(run.id)
   end
 
+  test "username uniqueness is case insensitive" do
+    create_user!("Duck")
+
+    duplicate = User.new(
+      username: "duck",
+      twitch_id: "duck-twitch",
+      uid: "duck-guid",
+      user_type: "player"
+    )
+
+    refute duplicate.valid?
+    assert_includes duplicate.errors[:username], "has already been taken"
+  end
+
   private
 
   def create_user!(identifier)

@@ -15,7 +15,8 @@ class User < ApplicationRecord
   has_many :star_bitizen_runs, dependent: :destroy
   has_one :active_ship, -> { order(updated_at: :desc) }, class_name: 'UserShip'
 
-  validates :username, :twitch_id, presence: true
+  validates :username, presence: true, uniqueness: { case_sensitive: false }
+  validates :twitch_id, presence: true
 
 
     # Example method to add a purchased item

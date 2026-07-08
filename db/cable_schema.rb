@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_07_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_08_120000) do
   create_schema "cable"
 
   # These are extensions that must be enabled in order to support this database
@@ -712,6 +712,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_07_120000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.decimal "wallet_balance", precision: 15, scale: 2, default: "0.0"
+    t.index "lower((username)::text)", name: "index_users_on_lower_username_unique", unique: true, where: "((username IS NOT NULL) AND ((username)::text <> ''::text))"
     t.index ["uid"], name: "index_users_on_uid", unique: true
   end
 
