@@ -114,7 +114,7 @@ class PlanetPositionCalculator
     phase_shift = case location.name
                   when /Pyro Gateway/   then 0.0
                   when /Terra Gateway/  then Math::PI / 3
-                  when /Magnus Gateway/ then 2 * Math::PI / 3
+                  when /Nyx Gateway/ then 2 * Math::PI / 3
                   else 0.0
                   end
 

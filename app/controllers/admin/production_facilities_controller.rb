@@ -89,7 +89,7 @@ module Admin
 
       def production_facility_params
         params.require(:production_facility).permit(
-          :facility_name, :commodity_id, :location_name, :production_rate, 
+          :facility_name, :id_commodity, :location_name, :production_rate, 
           :consumption_rate, :inventory, :max_inventory, :local_buy_price, 
           :local_sell_price
         )
