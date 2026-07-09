@@ -462,9 +462,9 @@ class TradeService
         if active_travel
           "Ship is currently in transit."
         elsif player_location.nil?
-          "Player location is unknown; initialize current location before switching ships."
+          "Player location is unknown; initialize current location with *status before use"
         elsif ship_location.nil?
-          "Ship location is unknown; initialize the ship location before use."
+          "Unable to begin travel: initialize the ship location with *status before use."
         elsif ship_location.id != player_location.id
           "Ship is at #{ship_location.name}, but player is at #{player_location.name}."
         end
