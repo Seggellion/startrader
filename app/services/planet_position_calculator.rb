@@ -101,9 +101,23 @@ class PlanetPositionCalculator
   end
 
   # ----- Gateways & co-orbitals: keep outputs in scene units -----
-  def self.calculate_star_gateway_position(location, tick)
-    star = location.parent
-    a_mkm = (location.periapsis + location.apoapsis) / 2.0                  # REAL
+ def self.calculate_space_station_position(location, tick)
+    # 1. More robust parent lookup to include stars
+    parent_body = location.parent || Location.find_by(name: location.parent_name)
+
+    if location.name.include?('-L1') || location.name.include?('-L2')
+      calculate_lagrange_station_position(location, parent_body, tick)
+    elsif parent_body && %w[star star_system].include?(parent_body.classification)
+      # 2. Route dynamically if the parent is the star
+      calculate_star_orbiting_station_position(location, parent_body, tick)
+    else      
+      calculate_co_orbital_station_position(location, parent_body, tick)
+    end
+  end
+
+  # Replaces calculate_star_gateway_position
+  def self.calculate_star_orbiting_station_position(location, star, tick)
+    a_mkm = (location.periapsis + location.apoapsis) / 2.0
     m_c   = star.mass
     t     = period_seconds(a_mkm, m_c)
     n     = 2 * Math::PI / t
@@ -111,28 +125,24 @@ class PlanetPositionCalculator
     elapsed_sec = simulated_elapsed_seconds(tick)
     m = n * (elapsed_sec - T_PERI_EPOCH_SEC)
 
-    phase_shift = case location.name
-                  when /Pyro Gateway/   then 0.0
-                  when /Terra Gateway/  then Math::PI / 3
-                  when /Nyx Gateway/ then 2 * Math::PI / 3
-                  else 0.0
-                  end
+    # Find all stations sharing this exact orbit around the same star.
+    # Plucking just the ID makes this query lighter and gives us a sortable array.
+    shared_orbit_station_ids = Location.where(
+      classification: 'space_station',
+      parent_name: location.parent_name,
+      periapsis: location.periapsis,
+      apoapsis: location.apoapsis
+    ).order(:id).pluck(:id)
+
+    total_stations = shared_orbit_station_ids.size
+    station_index  = shared_orbit_station_ids.index(location.id) || 0
+
+    # Distribute the stations evenly across the 360 degrees (2 * PI radians).
+    # e.g., for 3 stations: index 0 gets 0rad, index 1 gets 2.09rad (120deg), index 2 gets 4.18rad (240deg)
+    phase_shift = total_stations > 0 ? (2 * Math::PI / total_stations) * station_index : 0.0
 
     r_scene = (a_mkm / UNIT_SCALE)
     { x: r_scene * Math.cos(m + phase_shift), y: r_scene * Math.sin(m + phase_shift) }
-  end
-
-
-def self.calculate_space_station_position(location, tick)
-    parent_body = Location.planets.find_by(name: location.parent_name) || Location.moons.find_by(name: location.parent_name)
-  
-    if location.name.include?('-L1') || location.name.include?('-L2')
-      calculate_lagrange_station_position(location, parent_body, tick)
-    elsif location.name.include?('Gateway')
-      calculate_star_gateway_position(location, tick)
-    else      
-      calculate_co_orbital_station_position(location, parent_body, tick)
-    end
   end
 
   def self.calculate_lagrange_station_position(location, parent_body, tick)
