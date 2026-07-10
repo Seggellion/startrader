@@ -73,7 +73,8 @@ class ProductionFacility < ApplicationRecord
     if display_location_name.present? && display_terminal_name.present?
       return display_location_name if display_location_name == display_terminal_name
 
-      "#{display_location_name} - #{display_terminal_name}"
+    #  "#{display_location_name} - #{display_terminal_name}"
+    "#{display_location_name}"
     else
       display_location_name.presence || display_terminal_name.presence
     end
