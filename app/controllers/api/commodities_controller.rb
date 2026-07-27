@@ -38,6 +38,7 @@ module Api
           attributes: {
             name: facility.commodity_display_name,
             location: location_label,
+            system: facility.location.star,
             sell: facility.purchasable? ? facility.api_buy_price : 0,
             buy: facility.sellable? ? facility.api_sell_price : 0,
             vice: facility.vice?,
