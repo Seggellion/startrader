@@ -60,6 +60,33 @@ class LocationResolverTest < ActiveSupport::TestCase
     assert_equal location, LocationResolver.resolve("Area18 trade terminal")
   end
 
+  test "canonical resolution preserves Unicode punctuation and ampersands" do
+    makers_point = Location.create!(
+      name: "Maker's Point",
+      classification: "outpost",
+      star_system_name: "Stanton"
+    )
+    dudley = Location.create!(
+      name: "Dudley & Daughters",
+      classification: "outpost",
+      star_system_name: "Stanton"
+    )
+
+    assert_equal makers_point, LocationResolver.resolve("  M\u00E1ker\u2019s Point  ")
+    assert_equal dudley, LocationResolver.resolve("DUDLEY & DAUGHTERS")
+  end
+
+  test "canonical resolution returns nil for an unknown location" do
+    assert_nil LocationResolver.resolve("Not A Real Place")
+  end
+
+  test "unscoped ambiguous aliases retain deterministic travel resolver behavior" do
+    first_gateway = create_gateway("Nyx Gateway (Pyro)", "Pyro")
+    create_gateway("Nyx Gateway (Stanton)", "Stanton")
+
+    assert_equal first_gateway, LocationResolver.resolve("Nyx Gateway")
+  end
+
   test "does not resolve unsafe short or noise-only inputs" do
     assert_nil LocationResolver.resolve("22")
     assert_nil LocationResolver.resolve("SM")

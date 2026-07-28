@@ -506,6 +506,59 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     assert_equal new_location.name, response_json["ship"]["location"]
   end
 
+  test "status uses travel location matching for aliases whitespace and special characters" do
+    dudley = Location.create!(
+      name: "Dudley & Daughters",
+      classification: "outpost",
+      star_system_name: "Stanton"
+    )
+    makers_point = Location.create!(
+      name: "Maker's Point",
+      classification: "outpost",
+      star_system_name: "Stanton"
+    )
+    shubin_22 = Location.create!(
+      name: "Shubin Mining Facility SM0-22",
+      classification: "outpost",
+      star_system_name: "Stanton",
+      planet_name: "MicroTech"
+    )
+    area18 = Location.create!(
+      name: "Area18",
+      classification: "city",
+      star_system_name: "Stanton",
+      has_trade_terminal: true
+    )
+
+    {
+      "  dUdLeY & dAuGhTeRs  " => dudley,
+      "  M\u00E1ker\u2019s Point  " => makers_point,
+      "SM0-22" => shubin_22,
+      "Shubin 22" => shubin_22,
+      "Area18 TDD" => area18
+    }.each do |input_name, expected_location|
+      post "/api/status", params: base_status_payload.merge(location: input_name), as: :json
+
+      assert_response :success, "expected status to resolve #{input_name.inspect}"
+      assert_equal expected_location.name, @shard_user.reload.current_location_name
+      assert_equal expected_location.name, @user_ship.reload.location_name
+      assert_equal expected_location.name, response_json["player_location"]
+      assert_equal expected_location.name, response_json.dig("ship", "location")
+    end
+  end
+
+  test "status preserves the canonical resolver result for an unscoped ambiguous alias" do
+    first_gateway = Location.create!(name: "Nyx Gateway (Pyro)", classification: "space_station", star_system_name: "Pyro")
+    Location.create!(name: "Nyx Gateway (Stanton)", classification: "space_station", star_system_name: "Stanton")
+
+    post "/api/status", params: base_status_payload.merge(location: "Nyx Gateway"), as: :json
+
+    assert_response :success
+    assert_equal first_gateway, LocationResolver.resolve("Nyx Gateway")
+    assert_equal first_gateway.name, @shard_user.reload.current_location_name
+    assert_equal first_gateway.name, @user_ship.reload.location_name
+  end
+
   test "status with active travel returns clean in transit payload" do
     Tick.delete_all
     Tick.create!(current_tick: 10, sequence: 1)

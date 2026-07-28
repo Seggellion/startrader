@@ -228,7 +228,7 @@ class TradeService
     def self.resolve_status_location!(location_name:, player_name:, shard_uuid:, ship_guid:)
       return if location_name.blank?
 
-      resolved_location = LocationResolver.resolve_exact(location_name)
+      resolved_location = LocationResolver.resolve(location_name)
       return resolved_location if resolved_location
 
       Rails.logger.warn(

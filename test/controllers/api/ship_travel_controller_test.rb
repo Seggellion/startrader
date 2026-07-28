@@ -84,6 +84,53 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     assert_equal destination, ShipTravel.find_by!(travel_guid: "client-travel-guid-shubin-22").to_location
   end
 
+  test "create preserves whitespace case and ampersands in destination matching" do
+    destination = Location.create!(
+      name: "Dudley & Daughters",
+      classification: "outpost",
+      star_system_name: "Stanton"
+    )
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "client-travel-guid-dudley",
+        to_location: "  dUdLeY & dAuGhTeRs  "
+      )
+    }, as: :json
+
+    assert_response :success
+    assert_equal destination.name, response_json["destination"]
+    assert_equal destination, ShipTravel.find_by!(travel_guid: "client-travel-guid-dudley").to_location
+  end
+
+  test "create preserves accented Unicode and typographic apostrophes in destination matching" do
+    destination = Location.create!(
+      name: "Maker's Point",
+      classification: "outpost",
+      star_system_name: "Stanton"
+    )
+
+    post "/api/travel", params: {
+      ship_travel: travel_payload(
+        travel_guid: "client-travel-guid-makers-point",
+        to_location: "M\u00E1ker\u2019s Point"
+      )
+    }, as: :json
+
+    assert_response :success
+    assert_equal destination.name, response_json["destination"]
+    assert_equal destination, ShipTravel.find_by!(travel_guid: "client-travel-guid-makers-point").to_location
+  end
+
+  test "create returns not found for an unknown destination" do
+    post "/api/travel", params: {
+      ship_travel: travel_payload(to_location: "Not A Real Place")
+    }, as: :json
+
+    assert_response :not_found
+    assert_equal({ "error" => "Location not found." }, response_json)
+  end
+
   test "create resolves unqualified gateway destination within from location star system" do
     stanton_gateway_pyro, nyx_gateway_pyro, _nyx_gateway_stanton = create_gateway_locations
 
