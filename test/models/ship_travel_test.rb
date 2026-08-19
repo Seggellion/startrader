@@ -85,6 +85,52 @@ class ShipTravelTest < ActiveSupport::TestCase
     ShipTravel.skip_callback(:destroy, :after, callback) if callback
   end
 
+  test "defaults to the production rabbitmq environment" do
+    travel = create_travel(arrival_tick: 100)
+
+    assert_equal "prod", travel.rabbitmq_environment
+    assert_equal "prod", travel.reload.rabbitmq_environment
+  end
+
+  test "normalizes the rabbitmq environment case and whitespace" do
+    travel = create_travel(arrival_tick: 100, rabbitmq_environment: "  DEV \n")
+
+    assert_equal "dev", travel.reload.rabbitmq_environment
+  end
+
+  test "treats a blank rabbitmq environment as production" do
+    travel = create_travel(arrival_tick: 100, rabbitmq_environment: "  ")
+
+    assert_equal "prod", travel.reload.rabbitmq_environment
+  end
+
+  test "rejects an unsupported rabbitmq environment" do
+    travel = ShipTravel.new(
+      user_ship: create_user_ship,
+      from_location: @from_location,
+      to_location: @to_location,
+      travel_guid: SecureRandom.uuid,
+      departure_tick: 90,
+      arrival_tick: 100,
+      total_duration_ticks: 10,
+      interdict_window_percent: 50,
+      rabbitmq_environment: "staging"
+    )
+
+    refute travel.valid?
+    assert_includes travel.errors[:rabbitmq_environment], "must be one of: prod, dev"
+  end
+
+  test "interdiction and resume preserve the rabbitmq environment" do
+    travel = create_travel(arrival_tick: 100, rabbitmq_environment: "dev")
+
+    travel.interdict!(95)
+    assert_equal "dev", travel.reload.rabbitmq_environment
+
+    travel.resume!(96)
+    assert_equal "dev", travel.reload.rabbitmq_environment
+  end
+
   private
 
   def create_user_ship(status: "docked")
@@ -100,7 +146,7 @@ class ShipTravelTest < ActiveSupport::TestCase
     )
   end
 
-  def create_travel(user_ship: create_user_ship, arrival_tick:, is_paused: false, completed_at_tick: nil)
+  def create_travel(user_ship: create_user_ship, arrival_tick:, is_paused: false, completed_at_tick: nil, rabbitmq_environment: nil)
     ShipTravel.create!(
       user_ship: user_ship,
       from_location: @from_location,
@@ -111,7 +157,8 @@ class ShipTravelTest < ActiveSupport::TestCase
       total_duration_ticks: 10,
       interdict_window_percent: 50,
       is_paused: is_paused,
-      completed_at_tick: completed_at_tick
+      completed_at_tick: completed_at_tick,
+      rabbitmq_environment: rabbitmq_environment
     )
   end
 end

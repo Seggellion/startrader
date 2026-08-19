@@ -6,6 +6,16 @@ class ShipTravel < ApplicationRecord
 
   validates :travel_guid, presence: true, uniqueness: true
 
+  # Which RabbitMQ broker this travel's eventual ShipArrival event belongs to.
+  # Chosen when the travel begins and preserved for the rest of its lifetime,
+  # because the arrival is published long after the originating request is gone.
+  before_validation :normalize_rabbitmq_environment
+  validates :rabbitmq_environment,
+    inclusion: {
+      in: RabbitmqConnection::ENVIRONMENTS,
+      message: "must be one of: #{RabbitmqConnection::ENVIRONMENTS.join(', ')}"
+    }
+
   # "Active" means in-flight and not paused
   scope :active, -> {
     where(is_paused: false, completed_at_tick: nil).where('arrival_tick >= ?', Tick.current)
@@ -187,5 +197,12 @@ scope :interdictable_now_sql, ->(tick = Tick.current) {
     )
 
     destroy!
+  end
+
+  private
+
+  def normalize_rabbitmq_environment
+    normalized = RabbitmqConnection.normalize(rabbitmq_environment)
+    self.rabbitmq_environment = normalized.presence || RabbitmqConnection::DEFAULT_ENVIRONMENT
   end
 end

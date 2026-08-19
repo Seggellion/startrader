@@ -68,6 +68,55 @@ The tick runner uses PostgreSQL advisory locks so duplicate queued jobs or multi
 
 ---
 
+## RabbitMQ Environments
+
+StarTrader publishes `ShipArrival` events to two independent RabbitMQ brokers,
+selected per travel:
+
+```text
+prod -> production broker
+dev  -> development broker
+```
+
+A travel picks its broker when it starts, using a query-string parameter on the
+travel request:
+
+```text
+POST /api/travel?rabbitmq=prod
+POST /api/travel?rabbitmq=dev
+```
+
+The value is stored on the `ship_travels.rabbitmq_environment` column and is
+used later, when the arrival is actually published. Omitting the parameter means
+`prod`, so existing callers are unchanged. Any other value returns `422`.
+
+Everything outside the ShipTravel workflow (for example the streamer
+`CheckStatus` event) always publishes to production.
+
+### Required Railpress settings
+
+Create these under **Admin → Settings** as `text` settings. Each key falls back
+to the matching environment variable, then to the default.
+
+| Purpose | Setting key | ENV fallback | Default |
+| --- | --- | --- | --- |
+| Production host | `rabbitmq_host` | `RABBITMQ_HOST` | `localhost` |
+| Production username | `rabbitmq_username` | `RABBITMQ_USERNAME` | `guest` |
+| Production password | `rabbitmq_password` | `RABBITMQ_PASSWORD` | `guest` |
+| Development host | `rabbitmq_dev_host` | `RABBITMQ_DEV_HOST` | *none, required* |
+| Development username | `rabbitmq_dev_username` | `RABBITMQ_DEV_USERNAME` | `guest` |
+| Development password | `rabbitmq_dev_password` | `RABBITMQ_DEV_PASSWORD` | `guest` |
+
+The development host has no default on purpose. Until `rabbitmq_dev_host` (or
+`RABBITMQ_DEV_HOST`) is set, `rabbitmq=dev` arrivals raise a clear
+"not configured" error rather than quietly connecting to whatever is listening
+locally. Nothing ever falls back from `dev` to `prod` or from `prod` to `dev`.
+
+Store credentials only in Railpress settings or environment variables; never in
+source, migrations, seeds, or fixtures.
+
+---
+
 ## Local Codex Verification
 
 Run the local verification path with:

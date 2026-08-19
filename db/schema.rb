@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_08_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_18_120000) do
   create_schema "cable"
 
   # These are extensions that must be enabled in order to support this database
@@ -459,6 +459,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_120000) do
     t.string "ship_travel_type"
     t.string "travel_guid", null: false
     t.integer "completed_at_tick"
+    t.string "rabbitmq_environment", default: "prod", null: false
     t.index ["completed_at_tick"], name: "index_ship_travels_on_completed_at_tick"
     t.index ["from_location_id"], name: "index_ship_travels_on_from_location_id"
     t.index ["is_paused", "departure_tick", "arrival_tick"], name: "idx_on_is_paused_departure_tick_arrival_tick_218f541b33"

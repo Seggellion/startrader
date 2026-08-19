@@ -1,4 +1,5 @@
 require "test_helper"
+require_relative "../../support/fake_rabbitmq"
 
 class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
   setup do
@@ -1242,6 +1243,174 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
     assert_equal "Ship location is unknown, please use *status to update ship location.", response_json["error"]
     assert_equal @from_location.name, shard_user.reload.current_location_name
+  end
+
+  # --- RabbitMQ environment routing ---------------------------------------
+
+  test "create without rabbitmq keeps the existing production behaviour" do
+    post "/api/travel", params: { ship_travel: travel_payload(travel_guid: "rabbitmq-default") }, as: :json
+
+    assert_response :success
+    assert_equal "prod", response_json["rabbitmq"]
+    assert_equal "prod", ShipTravel.find_by!(travel_guid: "rabbitmq-default").rabbitmq_environment
+  end
+
+  test "create with rabbitmq=prod records the production environment" do
+    post "/api/travel?rabbitmq=prod",
+      params: { ship_travel: travel_payload(travel_guid: "rabbitmq-prod") }, as: :json
+
+    assert_response :success
+    assert_equal "prod", response_json["rabbitmq"]
+    assert_equal "prod", ShipTravel.find_by!(travel_guid: "rabbitmq-prod").rabbitmq_environment
+  end
+
+  test "create with rabbitmq=dev records the development environment" do
+    post "/api/travel?rabbitmq=dev",
+      params: { ship_travel: travel_payload(travel_guid: "rabbitmq-dev") }, as: :json
+
+    assert_response :success
+    assert_equal "dev", response_json["rabbitmq"]
+    assert_equal "dev", ShipTravel.find_by!(travel_guid: "rabbitmq-dev").rabbitmq_environment
+  end
+
+  test "create normalizes the rabbitmq parameter case and whitespace" do
+    post "/api/travel?rabbitmq=#{CGI.escape('  DEV ')}",
+      params: { ship_travel: travel_payload(travel_guid: "rabbitmq-messy") }, as: :json
+
+    assert_response :success
+    assert_equal "dev", response_json["rabbitmq"]
+    assert_equal "dev", ShipTravel.find_by!(travel_guid: "rabbitmq-messy").rabbitmq_environment
+  end
+
+  test "create accepts rabbitmq inside the nested ship_travel body" do
+    post "/api/travel",
+      params: { ship_travel: travel_payload(travel_guid: "rabbitmq-nested", rabbitmq: "dev") }, as: :json
+
+    assert_response :success
+    assert_equal "dev", response_json["rabbitmq"]
+    assert_equal "dev", ShipTravel.find_by!(travel_guid: "rabbitmq-nested").rabbitmq_environment
+  end
+
+  test "create rejects an unsupported rabbitmq environment without creating anything" do
+    assert_no_difference(["ShipTravel.count", "UserShip.count", "User.count"]) do
+      post "/api/travel?rabbitmq=staging",
+        params: { ship_travel: travel_payload(travel_guid: "rabbitmq-staging") }, as: :json
+    end
+
+    assert_response :unprocessable_entity
+    assert_equal "rabbitmq must be one of: prod, dev.", response_json["error"]
+    assert_nil ShipTravel.find_by(travel_guid: "rabbitmq-staging")
+  end
+
+  test "a dev travel publishes its arrival to the development broker" do
+    post "/api/travel?rabbitmq=dev",
+      params: { ship_travel: travel_payload(travel_guid: "rabbitmq-dev-arrival") }, as: :json
+    travel = ShipTravel.find_by!(travel_guid: "rabbitmq-dev-arrival")
+    Tick.instance.update_columns(current_tick: travel.arrival_tick, sequence: travel.arrival_tick)
+
+    recorder = FakeRabbitmq::ChannelRecorder.new
+    RabbitmqConnection.stub(:channel_for, recorder.to_proc) do
+      get "/api/location/#{travel.user_ship_id}"
+    end
+
+    assert_response :success
+    assert_equal ["dev"], recorder.requested_environments
+    assert_equal 1, recorder.publications_for("dev").size
+    assert_empty recorder.publications_for("prod")
+  end
+
+  test "a prod travel publishes its arrival to the production broker" do
+    post "/api/travel?rabbitmq=prod",
+      params: { ship_travel: travel_payload(travel_guid: "rabbitmq-prod-arrival") }, as: :json
+    travel = ShipTravel.find_by!(travel_guid: "rabbitmq-prod-arrival")
+    Tick.instance.update_columns(current_tick: travel.arrival_tick, sequence: travel.arrival_tick)
+
+    recorder = FakeRabbitmq::ChannelRecorder.new
+    RabbitmqConnection.stub(:channel_for, recorder.to_proc) do
+      get "/api/location/#{travel.user_ship_id}"
+    end
+
+    assert_response :success
+    assert_equal ["prod"], recorder.requested_environments
+    assert_empty recorder.publications_for("dev")
+  end
+
+  test "a later request cannot re-route an overdue arrival with its own rabbitmq parameter" do
+    post "/api/travel?rabbitmq=dev",
+      params: { ship_travel: travel_payload(travel_guid: "rabbitmq-overdue-dev") }, as: :json
+    travel = ShipTravel.find_by!(travel_guid: "rabbitmq-overdue-dev")
+    Tick.instance.update_columns(current_tick: travel.arrival_tick, sequence: travel.arrival_tick)
+
+    # The next travel request for the same ship processes the overdue arrival
+    # first. That arrival belongs to the dev travel, not to this request.
+    recorder = FakeRabbitmq::ChannelRecorder.new
+    RabbitmqConnection.stub(:channel_for, recorder.to_proc) do
+      post "/api/travel?rabbitmq=prod", params: {
+        ship_travel: travel_payload(
+          travel_guid: "rabbitmq-overdue-followup",
+          from_location: @to_location.name,
+          to_location: @from_location.name
+        )
+      }, as: :json
+    end
+
+    assert_response :success
+    assert_equal ["dev"], recorder.requested_environments
+    assert_equal 1, recorder.publications_for("dev").size
+    assert_empty recorder.publications_for("prod")
+    assert_equal "prod", ShipTravel.find_by!(travel_guid: "rabbitmq-overdue-followup").rabbitmq_environment
+  end
+
+  test "interdicting and resuming a dev travel preserves its rabbitmq environment" do
+    post "/api/travel?rabbitmq=dev",
+      params: { ship_travel: travel_payload(travel_guid: "rabbitmq-interdict") }, as: :json
+    travel = ShipTravel.find_by!(travel_guid: "rabbitmq-interdict")
+    user_ship = travel.user_ship
+
+    post "/api/user_ships/#{user_ship.guid}/interdict"
+    assert_response :success
+    assert_equal "dev", travel.reload.rabbitmq_environment
+
+    post "/api/user_ships/#{user_ship.guid}/resume"
+    assert_response :success
+    assert_equal "dev", travel.reload.rabbitmq_environment
+
+    Tick.instance.update_columns(current_tick: travel.reload.arrival_tick, sequence: travel.arrival_tick)
+    recorder = FakeRabbitmq::ChannelRecorder.new
+    RabbitmqConnection.stub(:channel_for, recorder.to_proc) do
+      get "/api/location/#{user_ship.id}"
+    end
+
+    assert_equal ["dev"], recorder.requested_environments
+  end
+
+  test "concurrent prod and dev travels publish to their own brokers" do
+    dev_ship_guid = "concurrent-dev-ship"
+    prod_ship_guid = "concurrent-prod-ship"
+
+    post "/api/travel?rabbitmq=dev", params: {
+      ship_travel: travel_payload(travel_guid: "concurrent-dev", ship_guid: dev_ship_guid, player_guid: "concurrent-dev-player", player_name: "ConcurrentDev")
+    }, as: :json
+    assert_response :success
+
+    post "/api/travel?rabbitmq=prod", params: {
+      ship_travel: travel_payload(travel_guid: "concurrent-prod", ship_guid: prod_ship_guid, player_guid: "concurrent-prod-player", player_name: "ConcurrentProd")
+    }, as: :json
+    assert_response :success
+
+    dev_travel = ShipTravel.find_by!(travel_guid: "concurrent-dev")
+    prod_travel = ShipTravel.find_by!(travel_guid: "concurrent-prod")
+    latest_arrival = [dev_travel.arrival_tick, prod_travel.arrival_tick].max
+    Tick.instance.update_columns(current_tick: latest_arrival, sequence: latest_arrival)
+
+    recorder = FakeRabbitmq::ChannelRecorder.new
+    RabbitmqConnection.stub(:channel_for, recorder.to_proc) do
+      ShipArrivalJob.perform_now
+    end
+
+    assert_equal %w[dev prod], recorder.requested_environments.sort
+    assert_equal ["concurrent-dev"], recorder.publications_for("dev").map { |p| p[:message].split("|").last }
+    assert_equal ["concurrent-prod"], recorder.publications_for("prod").map { |p| p[:message].split("|").last }
   end
 
   private

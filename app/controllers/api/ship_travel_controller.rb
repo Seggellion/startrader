@@ -9,6 +9,10 @@ module Api
 
     # POST /api/travel
     def create
+      # Resolved before anything else so an invalid value cannot create a
+      # travel, a user, a ship, or process a due arrival as a side effect.
+      rabbitmq_environment = requested_rabbitmq_environment
+      return if performed?
 
       permitted_params = travel_params
 
@@ -97,10 +101,12 @@ module Api
         user_ship: user_ship,
         from_location: current_location,
         to_location: destination,
-        travel_guid: permitted_params[:travel_guid]
+        travel_guid: permitted_params[:travel_guid],
+        rabbitmq_environment: rabbitmq_environment
       ).call
       render json: {
         status:        "travel_started",
+        rabbitmq:      travel.rabbitmq_environment,
         channel_name: shard.name,
         user_ship_id:  user_ship.id,
         travel_guid:   travel.travel_guid,
@@ -412,6 +418,33 @@ module Api
         }
       end
       
+    # Public contract: POST /api/travel?rabbitmq=prod|dev
+    #
+    # Accepted, in order of precedence: the query string / top level body key,
+    # then ship_travel[rabbitmq] so existing nested payloads can opt in without
+    # a second parameter style. Omitted means production, which is what every
+    # existing caller gets today.
+    def requested_rabbitmq_environment
+      environment = RabbitmqConnection.normalize(raw_rabbitmq_param)
+      return RabbitmqConnection::DEFAULT_ENVIRONMENT if environment.blank?
+
+      unless RabbitmqConnection.valid_environment?(environment)
+        render json: {
+          error: "rabbitmq must be one of: #{RabbitmqConnection::ENVIRONMENTS.join(', ')}."
+        }, status: :unprocessable_entity
+        return
+      end
+
+      environment
+    end
+
+    def raw_rabbitmq_param
+      return params[:rabbitmq] if params[:rabbitmq].present?
+
+      nested = params[:ship_travel]
+      nested[:rabbitmq] if nested.is_a?(ActionController::Parameters)
+    end
+
     def travel_params
       # New payload shape
       params.require(:ship_travel).permit(

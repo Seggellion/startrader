@@ -2,15 +2,18 @@
 class TravelService
   DEFAULT_WINDOW_PERCENT = 15
 
-  attr_reader :user_ship, :to_location, :travel_guid
+  attr_reader :user_ship, :to_location, :travel_guid, :rabbitmq_environment
 
-  def initialize(user_ship:, to_location:, travel_guid:, from_location: nil, interdict_window_percent: nil, start_tick: nil)
+  def initialize(user_ship:, to_location:, travel_guid:, from_location: nil, interdict_window_percent: nil, start_tick: nil, rabbitmq_environment: nil)
     @user_ship = user_ship
     @from_location = from_location || user_ship.location
     @to_location = to_location
     @travel_guid = travel_guid
     @interdict_window_percent = interdict_window_percent || Setting.get("interdiction_window_percent") || DEFAULT_WINDOW_PERCENT
     @start_tick = start_tick
+    # Blank means "keep the historical production behaviour"; anything that is
+    # not a supported environment fails here rather than at arrival time.
+    @rabbitmq_environment = RabbitmqConnection.normalize!(rabbitmq_environment)
   end
 
   def call
@@ -48,7 +51,8 @@ class TravelService
       departure_tick: start_tick,
       arrival_tick: arrival_tick,
       total_duration_ticks: duration,
-      interdict_window_percent: @interdict_window_percent
+      interdict_window_percent: @interdict_window_percent,
+      rabbitmq_environment: @rabbitmq_environment
     )
 
     user_ship.update!(location_name: @from_location.name, status: "in_transit")
