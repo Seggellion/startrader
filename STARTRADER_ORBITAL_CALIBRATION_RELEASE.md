@@ -22,15 +22,11 @@ Numerical ship speed stays unchanged and means Gm/tick. Production has 242 ships
 
 Map presentation is nominally 1 scene unit/Gm; camera fit, label/mesh size and zoom are presentation only. One server snapshot supplies renderer, quotes and travel. Tick is captured once; safe read endpoints do not create ticks, journeys or broker messages. Browser abort/sequence/version checks prevent stale fetches from replacing a newer snapshot. New digested assets activate with the server release; older open pages need a full reload to use the new renderer.
 
-## Verified environment and baseline
+## Environment verification
 
-- App `star-trader`, UUID `6b362b75-1732-42a4-9888-669a393f7f82`; domain `startrader.altama.energy` verified bound to it.
-- Heroku Git remote `https://git.heroku.com/star-trader.git`; heroku-24, Ruby buildpack, no pipeline coupling. Web and worker are Basic dynos. Deployment is exact-commit Git push.
-- `DATABASE_URL` attachment: `postgresql-metric-14477`, resource `fc11b830-1f31-42ef-a2c8-518712e07568`, database `d3o2aaoe4mit3m`, PostgreSQL 16.14. Authenticated read-only audit, not inferred from a cached remote.
-- Previous release **v163**, release UUID `e37ef132-012b-46da-93d0-2848c8e6c8e6`; slug `78059fa2-e53e-4d97-b3e4-8fdeca57138c`; deployed SHA `fecb49f619bf69eeeef9beb50a037dc7a95469a7` verified from slug metadata.
-- Audit found five paused unfinished journeys, all arrival_tick=0, and no ordinary active journeys. Release captures and compares a nonidentifying aggregate fingerprint of stored timing/routing state.
-- Branch `codex/orbital-calibration`; origin main revalidated at the baseline. GitHub main unprotected; no repository rulesets or mandatory checks discovered. Existing unrelated `.claude/` worktree/content preserved.
-- Isolated local PostgreSQL role `startrader_orbital_test`, non-superuser; separate test, celestial-only preview and SQL rehearsal databases. Private ignored environment files are not committed. Test startup forbids real Bunny sessions; actual foreign keys stay enabled with read-only FK validation.
+Production app/domain/database binding, prior source revision, web/worker state, recoverable backup and guarded single-field identity repair are recorded in a local operator manifest. Operational identifiers and journey fingerprints are intentionally omitted from this public summary. No credentials or private environment files are committed.
+
+Local tests use a non-superuser role and separate test, celestial-only preview and SQL rehearsal databases. Actual foreign keys remain enabled; test startup forbids real Bunny sessions. Existing unrelated worktree/content is preserved. Integration uses normal pull requests and verified source commits.
 
 ## Qualification completed
 
@@ -67,20 +63,14 @@ Before-image: ArcCorp PK1366, name ArcCorp, classification planet, Stanton syste
 
 Activation order: revalidate unchanged v163/app/database → capture completed Heroku backup and aggregate travel fingerprint → guarded repair → validate production celestial identities against candidate → integrate verified source → deploy exact integrated commit → verify slug SHA/dynos/catalog/assets → safe quotes and Chrome → observe at least 15 minutes. No arrivals or travel creation are release probes.
 
-Concrete operator commands (run from WSL project root with normal Heroku login; redirect stdin except SQL file input):
-
-```bash
-HEROKU_SKIP_UPDATE_CHECK=1 heroku pg:backups:capture DATABASE_URL --app star-trader </dev/null
-HEROKU_SKIP_UPDATE_CHECK=1 heroku pg:psql DATABASE_URL --app star-trader < script/orbital_identity_repair.sql
-git push heroku "${STARTRADER_RELEASE_SHA}:refs/heads/main"
-HEROKU_SKIP_UPDATE_CHECK=1 heroku releases:info --app star-trader --json </dev/null
-HEROKU_SKIP_UPDATE_CHECK=1 heroku run --exit-code --app star-trader 'bundle exec ruby script/orbital_calibration.rb --tick 10 --from-id 338 --to-id 1018 --speed-gm-per-tick 2' </dev/null
-```
-
-The pure Ruby diagnostic does not boot Rails, open RabbitMQ, create ticks or mutate data. Local/export equivalent: `bin/codex_exec ruby script/orbital_calibration.rb --input PATH --tick 10`. `orbital:validate` Rake task also omits the Rails environment dependency.
-
-On a documented rollback trigger: `heroku rollback v163 --app star-trader </dev/null`, verify both dynos and fresh old assets; only if restoring the missing API ID is required, run the narrow inverse SQL after guards. No full database restore or recalculation of saved journeys is part of routine reversal. Completed Heroku backup is a last-resort recovery point requiring separate assessment of intervening activity.
+Operator deployment and rollback commands, prior release identifiers and completed backup details are retained locally. The pure Ruby diagnostic does not boot Rails, open RabbitMQ, create ticks or mutate data. Local/export equivalent: `bin/codex_exec ruby script/orbital_calibration.rb --input PATH --tick 10`. The `orbital:validate` Rake task omits the Rails environment dependency. Routine reversal never restores the entire database or recalculates saved journeys.
 
 ## Completion record
 
 Integration SHA, production backup/release, live verification and observation interval will be appended after execution. M7/M8 are pending at candidate preparation.
+
+### Live-phase label refinement
+
+Live Google Chrome verification exposed clustered inner Pyro labels. Labels now occupy nonoverlapping screen rectangles with leader lines, without changing mesh positions, physical data, clock or travel calculations. Qualified in the celestial-only preview at fixed tick 696350 across all three systems, with no console errors. The terminating asset build passed. Production observation restarts after this presentation refinement is released.
+
+Updated CelestialBody digest `0922e02a952a90ab71dcdf1d478871e66f5dd3099ee8a77544cfc4176fba0cfc`; CSS `0926b72b94edd0e07e8daa67d6c4ccae8de704d16b7a6d44e3c10c0db6c3684f`. No further data step or schema change.
