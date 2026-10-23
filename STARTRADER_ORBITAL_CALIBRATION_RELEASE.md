@@ -1,6 +1,6 @@
 # Orbital calibration release evidence
 
-23 October 2026. Production execution and observation are pending until the completion record below is filled. Baseline discovery remains historical evidence.
+23 October 2026. Production execution and the required observation are complete; see the completion record below. Baseline discovery remains historical evidence.
 
 ## Approved contract and decisions D01–D09
 
@@ -16,7 +16,7 @@ Catalog `orbital-v1:fefc269b0e50f896`; epoch `2026-10-23T00:00:00Z`, tick origin
 
 Identity uses system/classification/source API ID, reviewed name and parent constraints. Three stars, 14 hosts and Levski make 18 validated identities. Levski explicitly inherits Delamar at zero local offset. Ordinary cities/outposts can inherit a known body center and are labeled `host_center_approximation`. Unmeasured moons/stations, including Arial, return unavailable; they are omitted from the map with an explicit unavailable count. No invented local orbit or intersystem distance is used.
 
-The immutable code catalog wins over imported reference fields; imports/admin edits cannot change protected identities or delete calibrated hosts. Admin edit pages identify effective calibration values. No schema migration, persisted orbital elements, stellar masses, ship speeds or existing journey durations are changed. The only planned production write is the guarded ArcCorp external identity repair described below.
+The immutable code catalog wins over imported reference fields; imports/admin edits cannot change protected identities or delete calibrated hosts. Admin edit pages identify effective calibration values. No schema migration, persisted orbital elements, stellar masses, ship speeds or existing journey durations are changed. The only production data change was the guarded ArcCorp external identity repair described below.
 
 Numerical ship speed stays unchanged and means Gm/tick. Production has 242 ships, positive speeds all 2 and one invalid speed. New ordinary travel uses `max(ceil(distance_Gm / speed), 2)`. Gateway 120-real-second timing, normal system policy, pause/resume sentinel and saved trips retain their existing behavior. Quote keys `from`, `to`, `distance`, `current_tick` remain; metadata/XYZ/version/units are additive. Distance numbers intentionally change from legacy scene separation to physical Gm. External StarBitizen source was not accessible; repository consumers were audited and corrected, and response keys retained. A client assuming legacy scene units must adopt the explicit `distance_unit` contract.
 
@@ -57,20 +57,30 @@ The legacy 8.000000000000002 value rounds up to five ticks at speed two in the a
 
 ## Production data operation and rollback
 
-Before-image: ArcCorp PK1366, name ArcCorp, classification planet, Stanton system/parent, id_star_system68, code ARC, api_id NULL. Local canonical source API ID is 4. Planned single-field diff: `api_id: NULL → 4`; no timestamp or other field changes.
+Before-image: ArcCorp PK1366, name ArcCorp, classification planet, Stanton system/parent, id_star_system68, code ARC, api_id NULL. Local canonical source API ID is 4. Executed single-field diff: `api_id: NULL → 4`; no timestamp or other field changes.
 
-`script/orbital_identity_repair.sql` locks exactly that row and checks every identity field, current API ID and scoped source uniqueness in a transaction. It is idempotent. `script/orbital_identity_rollback.sql` restores only this API ID to NULL after the same identity guard; conflicting later values fail. Forward twice, inverse twice, unrelated field preservation and conflict rejection passed in a separate scratch database. The planned celestial export validates all 18 identities.
+`script/orbital_identity_repair.sql` locks exactly that row and checks every identity field, current API ID and scoped source uniqueness in a transaction. It is idempotent. `script/orbital_identity_rollback.sql` restores only this API ID to NULL after the same identity guard; conflicting later values fail. Forward twice, inverse twice, unrelated field preservation and conflict rejection passed in a separate scratch database. The activated production celestial export and pure diagnostic validate all 18 identities.
 
-Activation order: revalidate unchanged v163/app/database → capture completed Heroku backup and aggregate travel fingerprint → guarded repair → validate production celestial identities against candidate → integrate verified source → deploy exact integrated commit → verify slug SHA/dynos/catalog/assets → safe quotes and Chrome → observe at least 15 minutes. No arrivals or travel creation are release probes.
+Executed activation order: revalidate prior release/app/database → capture completed Heroku backup and aggregate travel fingerprint → guarded repair → validate production celestial identities against candidate → integrate verified source → deploy exact integrated commit → verify slug SHA/dynos/catalog/assets → safe quotes and Chrome → observe at least 15 minutes. No arrivals or travel creation are release probes.
 
 Operator deployment and rollback commands, prior release identifiers and completed backup details are retained locally. The pure Ruby diagnostic does not boot Rails, open RabbitMQ, create ticks or mutate data. Local/export equivalent: `bin/codex_exec ruby script/orbital_calibration.rb --input PATH --tick 10`. The `orbital:validate` Rake task omits the Rails environment dependency. Routine reversal never restores the entire database or recalculates saved journeys.
 
 ## Completion record
 
-Integration SHA, production backup/release, live verification and observation interval will be appended after execution. M7/M8 are pending at candidate preparation.
+M0–M8 are complete. Implementation integrated through PR #22 and presentation refinement through PR #23. Integrated source is `2a89c6c9f10ae401450c158861cd3deae9fb2192`; deployed source was independently verified through authenticated release/slug metadata and both web/worker processes. Operational release identifiers, completed backup and exact observation timestamps remain in the local operator manifest.
+
+Final observation lasted **15 minutes 30 seconds**, with **61 ticks** of progress and six bounded infrastructure health samples. No HTTP5xx, infrastructure error code or process crash appeared in those samples. This is a bounded observation, not indefinite monitoring or a claim about all application logs. Production payload logs were excluded to preserve privacy.
+
+Final read-only checks independently validated all 14 target radii, three stellar masses in kg, 18 identities, anchored clock/version, five representative live quotes, four expected error cases and three fresh page-referenced asset files. Existing saved-journey state remained unchanged. No mutating travel endpoint or arrival-processing GET was used as a probe.
+
+Google Chrome verified all three live maps, distinct Pyro IV/V, Delamar/Levski, zoom-independent physical labels, rapid system switching, reload and later actual tick broadcasts after reconnect. Local stopped-clock behavior was verified separately; production tick scheduling was not paused for testing. Console error checks were empty. The temporary preview server was stopped.
+
+The detailed local operator record is `tmp/orbital-private-release-manifest.md`; supporting local machine evidence includes `tmp/orbital-closeout.json`, `tmp/orbital-live-smoke.json`, and nonidentifying health summaries in `tmp/orbital-health-observations.jsonl`. These ignored local files are not public repository artifacts. The final closeout commit changes documentation only; it does not replace the verified deployed source SHA above.
+
+Retained limits: simulation masses/phases are documented design choices, not measured game ephemerides; unmeasured moon/station geometry is explicitly unavailable; ordinary surface sites use host-center approximations; the broader legacy suite still has the failures documented above.
 
 ### Live-phase label refinement
 
-Live Google Chrome verification exposed clustered inner Pyro labels. Labels now occupy nonoverlapping screen rectangles with leader lines, without changing mesh positions, physical data, clock or travel calculations. Qualified in the celestial-only preview at fixed tick 696350 across all three systems, with no console errors. The terminating asset build passed. Production observation restarts after this presentation refinement is released.
+Live Google Chrome verification exposed clustered inner Pyro labels. Labels now occupy nonoverlapping screen rectangles with leader lines, without changing mesh positions, physical data, clock or travel calculations. Qualified in the celestial-only preview at fixed tick 696350 across all three systems, with no console errors. The terminating asset build passed. The completed production observation followed this presentation refinement.
 
 Updated CelestialBody digest `0922e02a952a90ab71dcdf1d478871e66f5dd3099ee8a77544cfc4176fba0cfc`; CSS `0926b72b94edd0e07e8daa67d6c4ccae8de704d16b7a6d44e3c10c0db6c3684f`. No further data step or schema change.

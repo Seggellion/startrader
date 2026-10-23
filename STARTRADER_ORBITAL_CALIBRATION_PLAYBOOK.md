@@ -3,7 +3,7 @@
 Date: 23 October 2026
 Owner: Dustin Hill
 Starting evidence: supplied StarTrader orbital calibration discovery, inspected at `fecb49f619bf69eeeef9beb50a037dc7a95469a7`
-Status: M0–M5 complete; M6 qualification passed and integration is in progress. M7/M8 pending. Actual decisions and evidence are in STARTRADER_ORBITAL_CALIBRATION_RELEASE.md.
+Status: M0–M8 complete; production release and 15-minute observation verified. Actual decisions and evidence are in STARTRADER_ORBITAL_CALIBRATION_RELEASE.md.
 
 ## Project outcome and execution authority
 
@@ -290,7 +290,7 @@ Required route evidence: Pyro I–Monox; Nyx I–Nyx II; Hurston–Crusader; Lev
 
 ## Execution status (23 October 2026)
 
-| Milestone | Status at kickoff | Completion evidence |
+| Milestone | Current status | Completion evidence |
 | --- | --- | --- |
 | M0 | Complete for documentary discovery | Supplied discovery; runtime gaps carried to M1. |
 | M1 | Complete | Access, identities, contract, decision log. |
@@ -298,8 +298,10 @@ Required route evidence: Pyro I–Monox; Nyx I–Nyx II; Hurston–Crusader; Lev
 | M3 | Complete | Evolving physical model and clock tests. |
 | M4 | Complete | Quotes, travel compatibility, lifecycle tests. |
 | M5 | Complete | Google Chrome and physical/display agreement. |
-| M6 | In progress | Qualification: 153 tests/749 assertions, assets passed; integration pending.  Integrated candidate and release manifest. |
-| M7 | Pending | Actual production release identity. |
-| M8 | Pending | Live checks, observation, closeout. |
+| M6 | Complete | Integrated suite153/749 passes; assets/Chrome qualified. PRs #22/#23 merged; source commit 2a89c6c9f10ae401450c158861cd3deae9fb2192. |
+| M7 | Complete | Verified running source/catalog, web/worker and fresh assets; detailed release/backup identity retained in local operator record. |
+| M8 | Complete | Live mappings/masses/quotes/errors/assets and Chrome pass; 15m30s observation, 61 tick advances, six bounded health samples; saved journeys unchanged. |
 
-Execution evidence: STARTRADER_ORBITAL_CALIBRATION_RELEASE.md records D01–D09, approved simulation parameters, authenticated production identity, test isolation, regression limitations, fixed-clock comparisons, Chrome qualification and guarded SQL repair/inverse. Starting M0 access limitations above remain historical observations. No production calibration has yet been activated.
+Execution evidence: STARTRADER_ORBITAL_CALIBRATION_RELEASE.md records D01–D09, approved simulation parameters, authenticated production identity, test isolation, regression limitations, fixed-clock comparisons, Chrome qualification and guarded SQL repair/inverse. Starting M0 access limitations above remain historical observations. Production calibration is active; operational identifiers and trip fingerprints are retained in the local operator record.
+
+Closeout: M0–M8 achieved. STARTRADER_ORBITAL_CALIBRATION_RELEASE.md contains public qualification evidence and retained limitations; exact operational identifiers, backup, timestamps and aggregate fingerprints are kept in the local operator record. Closeout documentation does not change the deployed application source.
