@@ -117,6 +117,15 @@ export default class extends Controller {
       }
       this.viewCenter={...center};
       this.animation.renderOnce();
+      // Readable diagnostics of actual rendered meshes, not a second orbit
+      // calculator. The server owns orbital time and the activation schedule.
+      this.element.dataset.orbitalSnapshot=JSON.stringify({tick,version:this.version,
+        orbital_seconds:rows[0]?.orbital_seconds,
+        orbital_progression_multiplier:rows[0]?.orbital_progression_multiplier,
+        orbital_activation_anchor:rows[0]?.orbital_activation_anchor,
+        objects:this.bodies.objects.filter(object=>object.userData.locationId!==undefined).map(object=>({
+          id:object.userData.locationId,x:object.position.x/this.bodies.displayScale,
+          y:object.position.y/this.bodies.displayScale,z:object.position.z/this.bodies.displayScale}))});
       this.element.dispatchEvent(new CustomEvent('orbital:snapshot',{detail:{rows,version:this.version,tick}}));
     } catch(error) {
       if (error.name!=='AbortError' && this.connected && seq===this.sequence) this.status.textContent=`Orbital positions unavailable: ${error.message}`;

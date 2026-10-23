@@ -64,6 +64,37 @@ class Api::OrbitalIntegrationTest < ActionDispatch::IntegrationTest
     assert_equal 'kg', star['mass-unit']
   end
 
+  test 'post activation quote map and broadcasts share one orbital clock without changing travel timing' do
+    tick=OrbitalState.catalog.data.fetch('clock').fetch('orbital_progression').first.fetch('activation_tick')+3
+    Tick.order(:id).first.update_columns(current_tick:tick)
+    from=Location.find_by!(name:'Hurston'); to=Location.find_by!(name:'Crusader')
+    post '/api/distance_calculator',params:{distance:{from:from.name,to:to.name}},as: :json
+    assert_response :success
+    quote=response.parsed_body
+    assert_equal 0.01,quote['orbital_progression_multiplier']
+    assert_equal 604800,quote['simulated_seconds_per_tick']
+    assert_equal 6048,quote['orbital_seconds_per_tick']
+    get '/locations',params:{star:'Stanton',tick:tick,version:quote['catalog_version']}
+    assert_response :success
+    row=response.parsed_body.find { |r| r['attributes']['name']==from.name }['attributes']
+    %w[catalog_version orbital_seconds orbital_activation_anchor orbital_progression_multiplier clock].each do |key|
+      assert_equal quote[key],row[key]
+    end
+    assert_equal quote['from_position_gm'],row['position_gm']
+    assert_equal [(quote['distance']/2).ceil,2].max,
+      TravelTimeCalculator.new(ship:Ship.new(speed:2),from_location:from,to_location:to,start_tick:tick).calculate
+    broadcasts=[]; server=Object.new
+    server.define_singleton_method(:broadcast) { |channel,payload| broadcasts << payload if channel=='tick' }
+    ActionCable.stub(:server,server) { Tick.broadcast_tick(tick) }
+    assert_equal OrbitalState.clock_metadata(tick),broadcasts.last.except(:tick,:type,:seconds_per_tick)
+    assert_equal Tick.seconds_per_tick,broadcasts.last[:seconds_per_tick]
+    # Read-only snapshots do not advance a paused tick or mutate saved travel.
+    assert_no_difference ['Tick.count','ShipTravel.count'] do
+      2.times { get '/locations',params:{star:'Nyx',tick:tick} }
+    end
+    assert_equal tick,Tick.order(:id).pick(:current_tick)
+  end
+
   test 'duration consumes physical distance and validates speed without a fivefold rewrite' do
     from = Location.find_by!(name: 'Pyro IV'); to = Location.find_by!(name: 'Pyro V')
     assert_equal 48, TravelTimeCalculator.new(ship: Ship.new(speed: 2), from_location: from, to_location: to, start_tick: 0).calculate

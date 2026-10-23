@@ -3,14 +3,13 @@ class TickChannel < ApplicationCable::Channel
     stream_from "tick"
     # Immediately send current status so clients know whether to render
     running = TickControl.order(:id).pick(:running) || false
+    tick = Tick.order(:id).pick(:current_tick)
     transmit({
       type: "status",
       running: running,
-      tick: Tick.order(:id).pick(:current_tick),
-      catalog_version: OrbitalState.catalog.version,
-      simulated_seconds_per_tick: OrbitalState.catalog.data.fetch('clock').fetch('simulated_seconds_per_tick'),
+      tick: tick,
       seconds_per_tick: Tick.seconds_per_tick
-    })
+    }.merge(tick.nil? ? {} : OrbitalState.clock_metadata(tick)))
   end
 
   def unsubscribed

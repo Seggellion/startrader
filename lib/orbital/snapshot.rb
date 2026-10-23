@@ -2,7 +2,7 @@ require_relative 'catalog'
 
 module Orbital
   class Snapshot
-    attr_reader :catalog, :tick, :elapsed_seconds
+    attr_reader :catalog, :tick, :elapsed_seconds, :orbital_seconds
 
     def initialize(rows:, tick:, catalog: Catalog.new)
       @catalog = catalog
@@ -14,15 +14,14 @@ module Orbital
       @by_name = @rows.group_by { |r| [r['star_system_name'], r['name']] }
       @positions = {}
       @clock = catalog.data.fetch('clock')
-      step = Geometry.number(@clock['simulated_seconds_per_tick'], 'simulated seconds per tick')
-      raise Unavailable, 'Simulation clock step must be positive' unless step.positive?
-      @elapsed_seconds = Geometry.number(@clock['origin_simulation_seconds'], 'anchor seconds') +
-        (@tick - Geometry.number(@clock['origin_tick'], 'anchor tick')) * step
+      @clock_metadata = Clock.new(@clock).metadata(@tick)
+      @elapsed_seconds = @clock_metadata.fetch(:simulation_seconds)
+      @orbital_seconds = @clock_metadata.fetch(:orbital_seconds)
     end
 
     def metadata
       { catalog_version: catalog.version, distance_unit: 'Gm', mass_unit: 'kg',
-        current_tick: tick, simulation_seconds: elapsed_seconds, clock: @clock }
+        current_tick: tick }.merge(@clock_metadata)
     end
 
     def position(id, visited: [])
@@ -69,7 +68,7 @@ module Orbital
         parent_entry = catalog.entry_for(parent)
         raise Unavailable, 'Central mass is unavailable' unless parent_entry
         Geometry.position(periapsis_gm: entry['periapsis_gm'], apoapsis_gm: entry['apoapsis_gm'],
-          phase_deg: entry['phase_deg'], mass_kg: parent_entry['mass_kg'], elapsed_seconds: elapsed_seconds)
+          phase_deg: entry['phase_deg'], mass_kg: parent_entry['mass_kg'], elapsed_seconds: orbital_seconds)
       end
       @positions[key] = Geometry.add(parent_position, local).freeze
     end

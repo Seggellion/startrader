@@ -49,12 +49,13 @@ class OrbitalNestedTest < Minitest::Test
       assert_in_delta 13,s.distance(id('Hurston'),id('HUR-L4 Melodic Fields Station')),1e-9
     end
   end
-  def test_primary_world_positions_and_clock_are_unchanged_from_v1
+  def test_primary_positions_before_activation_and_global_clock_are_unchanged_from_v1
     v1=Orbital::Catalog.new(path:File.expand_path('../config/orbital_calibrations/v1.yml',__dir__))
-    [0,10,700000].each do |tick|
+    activation=@catalog.data.fetch('clock').fetch('orbital_progression').first.fetch('activation_tick')
+    [0,10,activation].each do |tick|
       old=Orbital::Snapshot.new(rows:@rows,tick:tick,catalog:v1)
       v1.entries.each { |e| assert_equal old.position(id(e['name'])),state(tick).position(id(e['name'])) }
-      assert_equal old.metadata[:clock],state(tick).metadata[:clock]
+      old.metadata[:clock].each { |key,value| assert_equal value,state(tick).metadata[:clock][key] }
     end
   end
   def test_invalid_coorbital_model_and_host_fail_explicitly
