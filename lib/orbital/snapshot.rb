@@ -49,6 +49,20 @@ module Orbital
       end
       parent = parent_row(row, entry.fetch('parent'))
       parent_position = position(parent['id'], visited: visited + [key])
+      if entry['coorbital']
+        parent_entry = catalog.entry_for(parent)
+        raise Unavailable, 'Coorbital station requires a calibrated planet' unless parent_entry && parent['classification'] == 'planet'
+        root = parent_row(parent, parent_entry.fetch('parent'))
+        raise Unavailable, 'Coorbital reference must orbit its system star' unless %w[star star_system].include?(root['classification'])
+        center = position(root['id'], visited: visited + [key])
+        model = entry.fetch('coorbital')
+        angle = Geometry.number(model.fetch('phase_offset_deg'), 'coorbital angle') * Math::PI / 180
+        factor = Geometry.number(model.fetch('radial_factor'), 'coorbital radial factor')
+        x = parent_position[:x] - center[:x]; y = parent_position[:y] - center[:y]
+        offset = {x: factor * (x*Math.cos(angle)-y*Math.sin(angle)),
+          y: factor * (x*Math.sin(angle)+y*Math.cos(angle)), z: parent_position[:z]-center[:z]}
+        return @positions[key] = Geometry.add(center, offset).freeze
+      end
       local = if entry.key?('local_offset_gm')
         entry.fetch('local_offset_gm').transform_keys(&:to_sym)
       else
@@ -70,9 +84,17 @@ module Orbital
 
     def report(id)
       row = unique_row(id)
+      entry = catalog.entry_for(row)
+      parent_name = entry ? entry['parent'] : row['parent_name']
+      parent_position = parent_name && position(parent_row(row, parent_name)['id'])
+      world = position(id)
+      local = parent_position && %i[x y z].to_h { |axis| [axis, world.fetch(axis)-parent_position.fetch(axis)] }
       reference = %w[city outpost].include?(row['classification']) ? 'host_center_approximation' : 'body_center'
       metadata.merge(location_id: id, coordinate_frame: "star-centered:#{row['star_system_name']}",
-        point_reference: reference, position_gm: position(id), available: true)
+        point_reference: reference, position_gm: world, parent: parent_name,
+        orbital_model: entry && (entry['coorbital'] ? 'coorbital' : entry['local_offset_gm'] ? 'host_center' : parent_name ? 'kepler' : 'system_origin'),
+        parent_position_gm: parent_position, local_position_gm: local,
+        local_distance_gm: parent_position && Geometry.distance(world,parent_position), available: true)
     rescue Unavailable => e
       metadata.merge(location_id: id, available: false, unavailable_reason: e.message)
     end

@@ -70,6 +70,9 @@ module Api
         "apoapsis"           => effective[:apoapsis],
         "periapsis"          => effective[:periapsis],
         "orbital-source"     => effective[:orbital_source],
+        "orbital-model"      => effective[:orbital_model],
+        "local-orbit-radius-gm" => effective[:local_orbit_radius_gm],
+        "coorbital"          => effective[:coorbital],
         "catalog-version"    => effective[:catalog_version],
         "distance-unit"      => "Gm",
         "mass-unit"          => "kg"

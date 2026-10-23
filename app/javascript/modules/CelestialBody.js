@@ -11,22 +11,26 @@ export class CelestialBody {
     if (![p.x,p.y,p.z].every(Number.isFinite)) return;
     const star = ['star','star_system'].includes(data.classification);
     const city = ['city','outpost'].includes(data.classification);
-    const radius = star ? 2 : city ? 0.45 : 1;
+    const radius = (data.visual_radius_gm || 1)*(star ? 2 : city ? 0.45 : 1);
     const mesh = new THREE.Mesh(new THREE.SphereGeometry(radius, 20, 16),
-      new THREE.MeshBasicMaterial({color: star ? 0xfbbf24 : city ? 0x38bdf8 : 0x86efac}));
+      new THREE.MeshBasicMaterial({color: star ? 0xfbbf24 : city || data.classification==='space_station' ? 0x38bdf8 : 0x86efac}));
     mesh.position.set(p.x*this.displayScale,p.y*this.displayScale,p.z*this.displayScale);
     mesh.userData = {locationId: data.location_id, physicalPositionGm: {...p}};
     this.scene.add(mesh); this.objects.push(mesh);
-    if (data.classification === 'planet' && data.periapsis === data.apoapsis) {
+    if (data.draw_orbit && data.orbital_model==='kepler' && data.periapsis === data.apoapsis) {
       const r = data.periapsis*this.displayScale;
       const points = new THREE.EllipseCurve(0,0,r,r,0,2*Math.PI,false,0).getPoints(160);
       const ring = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(points),
         new THREE.LineBasicMaterial({color: 0x234150, transparent: true, opacity: 0.55}));
-      ring.position.z=-0.1; this.scene.add(ring); this.objects.push(ring);
+      const host=data.parent_position_gm || {x:0,y:0,z:0};
+      ring.position.set(host.x,host.y,host.z-radius*0.1); this.scene.add(ring); this.objects.push(ring);
     }
+    if (data.show_label===false) return;
     const canvas = document.createElement('canvas');
     const ctx=canvas.getContext('2d');
-    const label=star ? data.name : `${data.name} · ${Math.hypot(p.x,p.y,p.z).toFixed(1)} Gm`;
+    const local=['moon','space_station'].includes(data.classification) && data.parent!==data.system;
+    const distance=local ? data.local_distance_gm : Math.hypot(p.x,p.y,p.z);
+    const label=star ? data.name : `${data.name} · ${distance.toFixed(local ? 4 : 1)} Gm${local ? ' from '+data.parent : ''}`;
     ctx.font='24px Arial'; canvas.width=Math.ceil(ctx.measureText(label).width)+20; canvas.height=40;
     ctx.font='24px Arial'; ctx.fillStyle='#e4e4e7'; ctx.fillText(label,10,28);
     const texture=new THREE.CanvasTexture(canvas);

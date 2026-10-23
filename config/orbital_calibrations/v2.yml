@@ -1,0 +1,961 @@
+---
+version: orbital-v2
+status: approved
+units:
+  distance: Gm
+  mass: kg
+  time: seconds
+  phase: degrees
+provenance:
+  targets: Dustin Hill, 23 October 2026
+  identities: Existing authenticated celestial audit, revalidated before activation;
+    system/classification/API ID/name/parent constraints retained.
+  parameters: Dustin Hill authorized documented simulation parameters in this chat
+    on 23 October 2026. Explicit design choices, not game ephemerides.
+  nested_orbits: Documented simulation parameters extending the user-authorized model,
+    23 October 2026. Explicit choices, not game measurements; imported 50–200 placeholders
+    are not reused as Gm.
+clock:
+  epoch: '2026-10-23T00:00:00Z'
+  origin_tick: 0
+  origin_simulation_seconds: 0
+  simulated_seconds_per_tick: 604800
+bodies:
+- name: Stanton
+  api_id: 68
+  classification: star_system
+  system: Stanton
+  parent:
+  mass_kg: 1.98847e+30
+- name: Pyro
+  api_id: 64
+  classification: star_system
+  system: Pyro
+  parent:
+  mass_kg: 1.590776e+30
+- name: Nyx
+  api_id: 55
+  classification: star_system
+  system: Nyx
+  parent:
+  mass_kg: 2.386164e+30
+- name: Pyro I
+  aliases:
+  - Pyro 1
+  api_id: 240
+  classification: planet
+  system: Pyro
+  parent: Pyro
+  target_distance_gm: 8.2
+  phase_deg: 10
+  apoapsis_gm: 8.2
+  periapsis_gm: 8.2
+  mass_kg: 6.0e+25
+- name: Monox
+  aliases:
+  - Pyro 2
+  - Pyro II
+  api_id: 241
+  classification: planet
+  system: Pyro
+  parent: Pyro
+  target_distance_gm: 10.6
+  phase_deg: 80
+  apoapsis_gm: 10.6
+  periapsis_gm: 10.6
+  mass_kg: 6.0e+25
+- name: Bloom
+  aliases:
+  - Pyro 3
+  - Pyro III
+  api_id: 242
+  classification: planet
+  system: Pyro
+  parent: Pyro
+  target_distance_gm: 17.8
+  phase_deg: 150
+  apoapsis_gm: 17.8
+  periapsis_gm: 17.8
+  mass_kg: 6.0e+25
+- name: Pyro IV
+  aliases:
+  - Pyro 4
+  - P4
+  api_id: 243
+  classification: planet
+  system: Pyro
+  parent: Pyro
+  target_distance_gm: 47.6
+  phase_deg: 35
+  apoapsis_gm: 47.6
+  periapsis_gm: 47.6
+  mass_kg: 6.0e+26
+- name: Pyro V
+  aliases:
+  - Pyro 5
+  - P5
+  api_id: 244
+  classification: planet
+  system: Pyro
+  parent: Pyro
+  target_distance_gm: 47.6
+  phase_deg: 215
+  apoapsis_gm: 47.6
+  periapsis_gm: 47.6
+  mass_kg: 1.9e+27
+- name: Terminus
+  aliases:
+  - Pyro 6
+  - Pyro VI
+  api_id: 245
+  classification: planet
+  system: Pyro
+  parent: Pyro
+  target_distance_gm: 68.0
+  phase_deg: 300
+  apoapsis_gm: 68.0
+  periapsis_gm: 68.0
+  mass_kg: 6.0e+25
+- name: Nyx I
+  aliases:
+  - Nyx 1
+  api_id: 204
+  classification: planet
+  system: Nyx
+  parent: Nyx
+  target_distance_gm: 5.0
+  phase_deg: 20
+  apoapsis_gm: 5.0
+  periapsis_gm: 5.0
+  mass_kg: 6.0e+25
+- name: Nyx II
+  aliases:
+  - Nyx 2
+  api_id: 205
+  classification: planet
+  system: Nyx
+  parent: Nyx
+  target_distance_gm: 25.0
+  phase_deg: 200
+  apoapsis_gm: 25.0
+  periapsis_gm: 25.0
+  mass_kg: 6.0e+25
+- name: Delamar
+  api_id: 325
+  classification: planet
+  system: Nyx
+  parent: Nyx
+  target_distance_gm: 15.0
+  phase_deg: 110
+  apoapsis_gm: 15.0
+  periapsis_gm: 15.0
+  mass_kg: 6.0e+22
+- name: Nyx III
+  aliases:
+  - Nyx 3
+  api_id: 206
+  classification: planet
+  system: Nyx
+  parent: Nyx
+  target_distance_gm: 48.0
+  phase_deg: 290
+  apoapsis_gm: 48.0
+  periapsis_gm: 48.0
+  mass_kg: 6.0e+25
+- name: Crusader
+  api_id: 59
+  classification: planet
+  system: Stanton
+  parent: Stanton
+  target_distance_gm: 20.0
+  phase_deg: 75
+  apoapsis_gm: 20.0
+  periapsis_gm: 20.0
+  mass_kg: 1.9e+27
+- name: Hurston
+  api_id: 116
+  classification: planet
+  system: Stanton
+  parent: Stanton
+  target_distance_gm: 13.0
+  phase_deg: 0
+  apoapsis_gm: 13.0
+  periapsis_gm: 13.0
+  mass_kg: 6.0e+25
+- name: MicroTech
+  aliases:
+  - microTech
+  api_id: 190
+  classification: planet
+  system: Stanton
+  parent: Stanton
+  target_distance_gm: 42.0
+  phase_deg: 250
+  apoapsis_gm: 42.0
+  periapsis_gm: 42.0
+  mass_kg: 6.0e+25
+- name: ArcCorp
+  api_id: 4
+  classification: planet
+  system: Stanton
+  parent: Stanton
+  target_distance_gm: 30.0
+  phase_deg: 160
+  apoapsis_gm: 30.0
+  periapsis_gm: 30.0
+  mass_kg: 6.0e+25
+- name: Levski
+  api_id: 2
+  classification: city
+  system: Nyx
+  parent: Delamar
+  accepted_raw_parents:
+  - Nyx
+  - Delamar
+  local_offset_gm:
+    x: 0.0
+    "y": 0.0
+    z: 0.0
+  provenance: User-required Delamar inheritance; known local importer parent defect;
+    public parent Delamar
+- name: Aberdeen
+  api_id: 1
+  classification: moon
+  system: Stanton
+  parent: Hurston
+  mass_kg: 7.35e+22
+  periapsis_gm: 0.05
+  apoapsis_gm: 0.05
+  phase_deg: 110
+  local_orbit_radius_gm: 0.05
+- name: Adir
+  api_id: 2
+  classification: moon
+  system: Pyro
+  parent: Pyro V
+  mass_kg: 7.35e+22
+  periapsis_gm: 0.18
+  apoapsis_gm: 0.18
+  phase_deg: 145
+  local_orbit_radius_gm: 0.18
+- name: Arial
+  api_id: 4
+  classification: moon
+  system: Stanton
+  parent: Hurston
+  mass_kg: 7.35e+22
+  periapsis_gm: 0.03
+  apoapsis_gm: 0.03
+  phase_deg: 15
+  local_orbit_radius_gm: 0.03
+- name: Calliope
+  api_id: 16
+  classification: moon
+  system: Stanton
+  parent: MicroTech
+  mass_kg: 7.35e+22
+  periapsis_gm: 0.08
+  apoapsis_gm: 0.08
+  phase_deg: 10
+  local_orbit_radius_gm: 0.08
+- name: Cellin
+  api_id: 18
+  classification: moon
+  system: Stanton
+  parent: Crusader
+  mass_kg: 7.35e+22
+  periapsis_gm: 0.08
+  apoapsis_gm: 0.08
+  phase_deg: 30
+  local_orbit_radius_gm: 0.08
+- name: Clio
+  api_id: 23
+  classification: moon
+  system: Stanton
+  parent: MicroTech
+  mass_kg: 7.35e+22
+  periapsis_gm: 0.12
+  apoapsis_gm: 0.12
+  phase_deg: 140
+  local_orbit_radius_gm: 0.12
+- name: Daymar
+  api_id: 25
+  classification: moon
+  system: Stanton
+  parent: Crusader
+  mass_kg: 7.35e+22
+  periapsis_gm: 0.07
+  apoapsis_gm: 0.07
+  phase_deg: 155
+  local_orbit_radius_gm: 0.07
+- name: Euterpe
+  api_id: 34
+  classification: moon
+  system: Stanton
+  parent: MicroTech
+  mass_kg: 7.35e+22
+  periapsis_gm: 0.2
+  apoapsis_gm: 0.2
+  phase_deg: 265
+  local_orbit_radius_gm: 0.2
+- name: Fairo
+  api_id: 35
+  classification: moon
+  system: Pyro
+  parent: Pyro V
+  mass_kg: 7.35e+22
+  periapsis_gm: 0.24
+  apoapsis_gm: 0.24
+  phase_deg: 205
+  local_orbit_radius_gm: 0.24
+- name: Fuego
+  api_id: 36
+  classification: moon
+  system: Pyro
+  parent: Pyro V
+  mass_kg: 7.35e+22
+  periapsis_gm: 0.3
+  apoapsis_gm: 0.3
+  phase_deg: 265
+  local_orbit_radius_gm: 0.3
+- name: Ignis
+  api_id: 43
+  classification: moon
+  system: Pyro
+  parent: Pyro V
+  mass_kg: 7.35e+22
+  periapsis_gm: 0.13
+  apoapsis_gm: 0.13
+  phase_deg: 25
+  local_orbit_radius_gm: 0.13
+- name: Ita
+  api_id: 45
+  classification: moon
+  system: Stanton
+  parent: Hurston
+  mass_kg: 7.35e+22
+  periapsis_gm: 0.08
+  apoapsis_gm: 0.08
+  phase_deg: 215
+  local_orbit_radius_gm: 0.08
+- name: Lyria
+  api_id: 50
+  classification: moon
+  system: Stanton
+  parent: ArcCorp
+  mass_kg: 7.35e+22
+  periapsis_gm: 0.08
+  apoapsis_gm: 0.08
+  phase_deg: 55
+  local_orbit_radius_gm: 0.08
+- name: Magda
+  api_id: 51
+  classification: moon
+  system: Stanton
+  parent: Hurston
+  mass_kg: 7.35e+22
+  periapsis_gm: 0.12
+  apoapsis_gm: 0.12
+  phase_deg: 305
+  local_orbit_radius_gm: 0.12
+- name: Vatra
+  api_id: 69
+  classification: moon
+  system: Pyro
+  parent: Pyro V
+  mass_kg: 7.35e+22
+  periapsis_gm: 0.1
+  apoapsis_gm: 0.1
+  phase_deg: 85
+  local_orbit_radius_gm: 0.1
+- name: Vuur
+  api_id: 73
+  classification: moon
+  system: Pyro
+  parent: Pyro V
+  mass_kg: 7.35e+22
+  periapsis_gm: 0.38
+  apoapsis_gm: 0.38
+  phase_deg: 325
+  local_orbit_radius_gm: 0.38
+- name: Wala
+  api_id: 74
+  classification: moon
+  system: Stanton
+  parent: ArcCorp
+  mass_kg: 7.35e+22
+  periapsis_gm: 0.2
+  apoapsis_gm: 0.2
+  phase_deg: 235
+  local_orbit_radius_gm: 0.2
+- name: Yela
+  api_id: 75
+  classification: moon
+  system: Stanton
+  parent: Crusader
+  mass_kg: 7.35e+22
+  periapsis_gm: 0.05
+  apoapsis_gm: 0.05
+  phase_deg: 270
+  local_orbit_radius_gm: 0.05
+- name: ARC-L1 Wide Forest Station
+  api_id: 1
+  classification: space_station
+  system: Stanton
+  parent: ArcCorp
+  coorbital:
+    radial_factor: 0.98
+    phase_offset_deg: 0
+  provenance: Lagrange-inspired simulation placement, locked to the host planet; not
+    an exact three-body equilibrium.
+- name: ARC-L2 Lively Pathway Station
+  api_id: 2
+  classification: space_station
+  system: Stanton
+  parent: ArcCorp
+  coorbital:
+    radial_factor: 1.02
+    phase_offset_deg: 0
+  provenance: Lagrange-inspired simulation placement, locked to the host planet; not
+    an exact three-body equilibrium.
+- name: ARC-L3 Modern Express Station
+  api_id: 3
+  classification: space_station
+  system: Stanton
+  parent: ArcCorp
+  coorbital:
+    radial_factor: 1
+    phase_offset_deg: 180
+  provenance: Lagrange-inspired simulation placement, locked to the host planet; not
+    an exact three-body equilibrium.
+- name: ARC-L4 Faint Glen Station
+  api_id: 4
+  classification: space_station
+  system: Stanton
+  parent: ArcCorp
+  coorbital:
+    radial_factor: 1
+    phase_offset_deg: 60
+  provenance: Lagrange-inspired simulation placement, locked to the host planet; not
+    an exact three-body equilibrium.
+- name: ARC-L5 Yellow Core Station
+  api_id: 5
+  classification: space_station
+  system: Stanton
+  parent: ArcCorp
+  coorbital:
+    radial_factor: 1
+    phase_offset_deg: -60
+  provenance: Lagrange-inspired simulation placement, locked to the host planet; not
+    an exact three-body equilibrium.
+- name: Baijini Point
+  api_id: 6
+  classification: space_station
+  system: Stanton
+  parent: ArcCorp
+  periapsis_gm: 0.0016
+  apoapsis_gm: 0.0016
+  phase_deg: 30
+  local_orbit_radius_gm: 0.0016
+- name: CRU-L1 Ambitious Dream Station
+  api_id: 7
+  classification: space_station
+  system: Stanton
+  parent: Crusader
+  coorbital:
+    radial_factor: 0.98
+    phase_offset_deg: 0
+  provenance: Lagrange-inspired simulation placement, locked to the host planet; not
+    an exact three-body equilibrium.
+- name: CRU-L4 Shallow Fields Station
+  api_id: 8
+  classification: space_station
+  system: Stanton
+  parent: Crusader
+  coorbital:
+    radial_factor: 1
+    phase_offset_deg: 60
+  provenance: Lagrange-inspired simulation placement, locked to the host planet; not
+    an exact three-body equilibrium.
+- name: CRU-L5 Beautiful Glen Station
+  api_id: 9
+  classification: space_station
+  system: Stanton
+  parent: Crusader
+  coorbital:
+    radial_factor: 1
+    phase_offset_deg: -60
+  provenance: Lagrange-inspired simulation placement, locked to the host planet; not
+    an exact three-body equilibrium.
+- name: Everus Harbor
+  api_id: 10
+  classification: space_station
+  system: Stanton
+  parent: Hurston
+  periapsis_gm: 0.0014
+  apoapsis_gm: 0.0014
+  phase_deg: 135
+  local_orbit_radius_gm: 0.0014
+- name: Green Imperial Housing Exchange
+  api_id: 11
+  classification: space_station
+  system: Stanton
+  parent: Yela
+  periapsis_gm: 0.001
+  apoapsis_gm: 0.001
+  phase_deg: 220
+  local_orbit_radius_gm: 0.001
+  aliases:
+  - GrimHEX
+- name: HUR-L1 Green Glade Station
+  api_id: 12
+  classification: space_station
+  system: Stanton
+  parent: Hurston
+  coorbital:
+    radial_factor: 0.98
+    phase_offset_deg: 0
+  provenance: Lagrange-inspired simulation placement, locked to the host planet; not
+    an exact three-body equilibrium.
+- name: HUR-L2 Faithful Dream Station
+  api_id: 13
+  classification: space_station
+  system: Stanton
+  parent: Hurston
+  coorbital:
+    radial_factor: 1.02
+    phase_offset_deg: 0
+  provenance: Lagrange-inspired simulation placement, locked to the host planet; not
+    an exact three-body equilibrium.
+- name: HUR-L3 Thundering Express Station
+  api_id: 14
+  classification: space_station
+  system: Stanton
+  parent: Hurston
+  coorbital:
+    radial_factor: 1
+    phase_offset_deg: 180
+  provenance: Lagrange-inspired simulation placement, locked to the host planet; not
+    an exact three-body equilibrium.
+- name: HUR-L4 Melodic Fields Station
+  api_id: 15
+  classification: space_station
+  system: Stanton
+  parent: Hurston
+  coorbital:
+    radial_factor: 1
+    phase_offset_deg: 60
+  provenance: Lagrange-inspired simulation placement, locked to the host planet; not
+    an exact three-body equilibrium.
+- name: HUR-L5 High Course Station
+  api_id: 16
+  classification: space_station
+  system: Stanton
+  parent: Hurston
+  coorbital:
+    radial_factor: 1
+    phase_offset_deg: -60
+  provenance: Lagrange-inspired simulation placement, locked to the host planet; not
+    an exact three-body equilibrium.
+- name: MIC-L1 Shallow Frontier Station
+  api_id: 17
+  classification: space_station
+  system: Stanton
+  parent: MicroTech
+  coorbital:
+    radial_factor: 0.98
+    phase_offset_deg: 0
+  provenance: Lagrange-inspired simulation placement, locked to the host planet; not
+    an exact three-body equilibrium.
+- name: MIC-L2 Long Forest Station
+  api_id: 18
+  classification: space_station
+  system: Stanton
+  parent: MicroTech
+  coorbital:
+    radial_factor: 1.02
+    phase_offset_deg: 0
+  provenance: Lagrange-inspired simulation placement, locked to the host planet; not
+    an exact three-body equilibrium.
+- name: MIC-L3 Endless Odyssey Station
+  api_id: 19
+  classification: space_station
+  system: Stanton
+  parent: MicroTech
+  coorbital:
+    radial_factor: 1
+    phase_offset_deg: 180
+  provenance: Lagrange-inspired simulation placement, locked to the host planet; not
+    an exact three-body equilibrium.
+- name: MIC-L4 Red Crossroads Station
+  api_id: 20
+  classification: space_station
+  system: Stanton
+  parent: MicroTech
+  coorbital:
+    radial_factor: 1
+    phase_offset_deg: 60
+  provenance: Lagrange-inspired simulation placement, locked to the host planet; not
+    an exact three-body equilibrium.
+- name: MIC-L5 Modern Icarus Station
+  api_id: 21
+  classification: space_station
+  system: Stanton
+  parent: MicroTech
+  coorbital:
+    radial_factor: 1
+    phase_offset_deg: -60
+  provenance: Lagrange-inspired simulation placement, locked to the host planet; not
+    an exact three-body equilibrium.
+- name: Port Olisar
+  api_id: 22
+  classification: space_station
+  system: Stanton
+  parent: Crusader
+  periapsis_gm: 0.002
+  apoapsis_gm: 0.002
+  phase_deg: 240
+  local_orbit_radius_gm: 0.002
+- name: Port Tressler
+  api_id: 23
+  classification: space_station
+  system: Stanton
+  parent: MicroTech
+  periapsis_gm: 0.0016
+  apoapsis_gm: 0.0016
+  phase_deg: 310
+  local_orbit_radius_gm: 0.0016
+- name: Pyro Gateway (Stanton)
+  api_id: 24
+  classification: space_station
+  system: Stanton
+  parent: Stanton
+  periapsis_gm: 52
+  apoapsis_gm: 52
+  phase_deg: 20
+  local_orbit_radius_gm: 52
+- name: Nyx Gateway (Stanton)
+  api_id: 25
+  classification: space_station
+  system: Stanton
+  parent: Stanton
+  periapsis_gm: 56
+  apoapsis_gm: 56
+  phase_deg: 140
+  local_orbit_radius_gm: 56
+- name: Terra Gateway (Stanton)
+  api_id: 26
+  classification: space_station
+  system: Stanton
+  parent: Stanton
+  periapsis_gm: 60
+  apoapsis_gm: 60
+  phase_deg: 260
+  local_orbit_radius_gm: 60
+- name: Seraphim Station
+  api_id: 27
+  classification: space_station
+  system: Stanton
+  parent: Crusader
+  periapsis_gm: 0.003
+  apoapsis_gm: 0.003
+  phase_deg: 60
+  local_orbit_radius_gm: 0.003
+- name: PYAM-FARSTAT-1-2
+  api_id: 28
+  classification: space_station
+  system: Pyro
+  parent: Pyro I
+  periapsis_gm: 0.03
+  apoapsis_gm: 0.03
+  phase_deg: 45
+  local_orbit_radius_gm: 0.03
+- name: PYAM-FARSTAT-1-3
+  api_id: 29
+  classification: space_station
+  system: Pyro
+  parent: Pyro I
+  periapsis_gm: 0.05
+  apoapsis_gm: 0.05
+  phase_deg: 165
+  local_orbit_radius_gm: 0.05
+- name: PYAM-FARSTAT-1-5
+  api_id: 30
+  classification: space_station
+  system: Pyro
+  parent: Pyro I
+  periapsis_gm: 0.07
+  apoapsis_gm: 0.07
+  phase_deg: 285
+  local_orbit_radius_gm: 0.07
+- name: Checkmate Station
+  api_id: 31
+  classification: space_station
+  system: Pyro
+  parent: Monox
+  periapsis_gm: 0.004
+  apoapsis_gm: 0.004
+  phase_deg: 30
+  local_orbit_radius_gm: 0.004
+- name: Orbituary
+  api_id: 32
+  classification: space_station
+  system: Pyro
+  parent: Bloom
+  periapsis_gm: 0.006
+  apoapsis_gm: 0.006
+  phase_deg: 120
+  local_orbit_radius_gm: 0.006
+- name: Starlight Service Station
+  api_id: 33
+  classification: space_station
+  system: Pyro
+  parent: Bloom
+  periapsis_gm: 0.009
+  apoapsis_gm: 0.009
+  phase_deg: 230
+  local_orbit_radius_gm: 0.009
+- name: Patch City
+  api_id: 34
+  classification: space_station
+  system: Pyro
+  parent: Bloom
+  periapsis_gm: 0.012
+  apoapsis_gm: 0.012
+  phase_deg: 310
+  local_orbit_radius_gm: 0.012
+- name: PYAM-FARSTAT-3-5
+  api_id: 35
+  classification: space_station
+  system: Pyro
+  parent: Bloom
+  periapsis_gm: 0.07
+  apoapsis_gm: 0.07
+  phase_deg: 30
+  local_orbit_radius_gm: 0.07
+- name: PYAM-FARSTAT-5-1
+  api_id: 36
+  classification: space_station
+  system: Pyro
+  parent: Pyro V
+  periapsis_gm: 0.04
+  apoapsis_gm: 0.04
+  phase_deg: 90
+  local_orbit_radius_gm: 0.04
+- name: PYAM-FARSTAT-5-3
+  api_id: 37
+  classification: space_station
+  system: Pyro
+  parent: Pyro V
+  periapsis_gm: 0.06
+  apoapsis_gm: 0.06
+  phase_deg: 210
+  local_orbit_radius_gm: 0.06
+- name: Rod's Fuel 'N Supplies
+  api_id: 38
+  classification: space_station
+  system: Pyro
+  parent: Pyro V
+  periapsis_gm: 0.007
+  apoapsis_gm: 0.007
+  phase_deg: 20
+  local_orbit_radius_gm: 0.007
+- name: Rat's Nest
+  api_id: 39
+  classification: space_station
+  system: Pyro
+  parent: Pyro V
+  periapsis_gm: 0.012
+  apoapsis_gm: 0.012
+  phase_deg: 135
+  local_orbit_radius_gm: 0.012
+- name: PYAM-FARSTAT-6-2
+  api_id: 40
+  classification: space_station
+  system: Pyro
+  parent: Pyro IV
+  periapsis_gm: 0.04
+  apoapsis_gm: 0.04
+  phase_deg: 180
+  local_orbit_radius_gm: 0.04
+- name: Endgame
+  api_id: 41
+  classification: space_station
+  system: Pyro
+  parent: Pyro IV
+  periapsis_gm: 0.005
+  apoapsis_gm: 0.005
+  phase_deg: 60
+  local_orbit_radius_gm: 0.005
+- name: Dudley & Daughters
+  api_id: 42
+  classification: space_station
+  system: Pyro
+  parent: Terminus
+  periapsis_gm: 0.006
+  apoapsis_gm: 0.006
+  phase_deg: 10
+  local_orbit_radius_gm: 0.006
+- name: Megumi Refueling
+  api_id: 43
+  classification: space_station
+  system: Pyro
+  parent: Terminus
+  periapsis_gm: 0.012
+  apoapsis_gm: 0.012
+  phase_deg: 145
+  local_orbit_radius_gm: 0.012
+- name: INS Jericho
+  api_id: 44
+  classification: space_station
+  system: Stanton
+  parent: MicroTech
+  periapsis_gm: 0.008
+  apoapsis_gm: 0.008
+  phase_deg: 90
+  local_orbit_radius_gm: 0.008
+- name: Ruin Station
+  api_id: 45
+  classification: space_station
+  system: Pyro
+  parent: Terminus
+  periapsis_gm: 0.025
+  apoapsis_gm: 0.025
+  phase_deg: 260
+  local_orbit_radius_gm: 0.025
+- name: Gaslight
+  api_id: 46
+  classification: space_station
+  system: Pyro
+  parent: Pyro V
+  periapsis_gm: 0.018
+  apoapsis_gm: 0.018
+  phase_deg: 250
+  local_orbit_radius_gm: 0.018
+- name: PYAM-FARSTAT-2-3
+  api_id: 47
+  classification: space_station
+  system: Pyro
+  parent: Monox
+  periapsis_gm: 0.05
+  apoapsis_gm: 0.05
+  phase_deg: 220
+  local_orbit_radius_gm: 0.05
+- name: PYAM-SUPVISR-3-4
+  api_id: 48
+  classification: space_station
+  system: Pyro
+  parent: Bloom
+  periapsis_gm: 0.035
+  apoapsis_gm: 0.035
+  phase_deg: 160
+  local_orbit_radius_gm: 0.035
+- name: PYAM-SUPVISR-3-5
+  api_id: 49
+  classification: space_station
+  system: Pyro
+  parent: Bloom
+  periapsis_gm: 0.045
+  apoapsis_gm: 0.045
+  phase_deg: 280
+  local_orbit_radius_gm: 0.045
+- name: Stanton Gateway (Pyro)
+  api_id: 50
+  classification: space_station
+  system: Pyro
+  parent: Pyro
+  periapsis_gm: 74
+  apoapsis_gm: 74
+  phase_deg: 40
+  local_orbit_radius_gm: 74
+- name: Wikelo Emporium Kinga Station
+  api_id: 51
+  classification: space_station
+  system: Stanton
+  parent: Stanton
+  periapsis_gm: 22
+  apoapsis_gm: 22
+  phase_deg: 40
+  local_orbit_radius_gm: 22
+- name: Wikelo Emporium Dasi Station
+  api_id: 52
+  classification: space_station
+  system: Stanton
+  parent: Stanton
+  periapsis_gm: 28
+  apoapsis_gm: 28
+  phase_deg: 155
+  local_orbit_radius_gm: 28
+- name: Wikelo Emporium Selo Station
+  api_id: 53
+  classification: space_station
+  system: Stanton
+  parent: Stanton
+  periapsis_gm: 36
+  apoapsis_gm: 36
+  phase_deg: 275
+  local_orbit_radius_gm: 36
+- name: Nyx Gateway (Pyro)
+  api_id: 55
+  classification: space_station
+  system: Pyro
+  parent: Pyro
+  periapsis_gm: 78
+  apoapsis_gm: 78
+  phase_deg: 220
+  local_orbit_radius_gm: 78
+- name: Stanton Gateway (Nyx)
+  api_id: 56
+  classification: space_station
+  system: Nyx
+  parent: Nyx
+  periapsis_gm: 54
+  apoapsis_gm: 54
+  phase_deg: 20
+  local_orbit_radius_gm: 54
+- name: Pyro Gateway (Nyx)
+  api_id: 57
+  classification: space_station
+  system: Nyx
+  parent: Nyx
+  periapsis_gm: 56
+  apoapsis_gm: 56
+  phase_deg: 195
+  local_orbit_radius_gm: 56
+- name: People's Service Station Delta
+  api_id: 58
+  classification: space_station
+  system: Nyx
+  parent: Nyx
+  periapsis_gm: 8
+  apoapsis_gm: 8
+  phase_deg: 40
+  local_orbit_radius_gm: 8
+- name: People's Service Station Alpha
+  api_id: 59
+  classification: space_station
+  system: Nyx
+  parent: Nyx
+  periapsis_gm: 12
+  apoapsis_gm: 12
+  phase_deg: 140
+  local_orbit_radius_gm: 12
+- name: People's Service Station Theta
+  api_id: 60
+  classification: space_station
+  system: Nyx
+  parent: Nyx
+  periapsis_gm: 20
+  apoapsis_gm: 20
+  phase_deg: 235
+  local_orbit_radius_gm: 20
+- name: People's Service Station Lambda
+  api_id: 61
+  classification: space_station
+  system: Nyx
+  parent: Nyx
+  periapsis_gm: 30
+  apoapsis_gm: 30
+  phase_deg: 320
+  local_orbit_radius_gm: 30
+target_semantics: constant_circular_radius

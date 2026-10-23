@@ -18,6 +18,19 @@ class OrbitalCatalogTest < ActiveSupport::TestCase
     assert catalog.ready!
   end
 
+  test 'moon and station reimports preserve calibrated local geometry and mass' do
+    moon=Location.create!(name:'Arial',api_id:4,classification:'moon',star_system_name:'Stanton',parent_name:'Hurston')
+    assert Admin::Data::MoonsImporter.import_location('id'=>4,'name'=>'Arial','planet_name'=>'Hurston','star_system_name'=>'Stanton','id_star_system'=>68)
+    assert_equal 70,moon.reload.periapsis
+    assert_equal 0.03,OrbitalState.effective_attributes(moon)[:periapsis]
+    assert_equal 7.35e22,OrbitalState.effective_attributes(moon)[:mass]
+    station=Location.create!(name:'Everus Harbor',api_id:10,classification:'space_station',star_system_name:'Stanton',parent_name:'Hurston')
+    assert Admin::Data::StationsImporter.import_location('id'=>10,'name'=>'Everus Harbor','moon_name'=>'','planet_name'=>'Hurston','star_system_name'=>'Stanton','id_star_system'=>68)
+    assert_equal 'Hurston',station.reload.parent_name
+    assert_equal 0.0014,OrbitalState.effective_attributes(station)[:periapsis]
+    assert_not station.update(parent_name:'Crusader')
+  end
+
   test 'explicit synthetic catalog mass survives the actual star system importer' do
     data = YAML.safe_load_file(Orbital::Catalog::DEFAULT_PATH)
     data['bodies'].find { |e| e['name'] == 'Stanton' }['mass_kg'] = 2.0e30

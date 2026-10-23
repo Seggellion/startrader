@@ -1443,40 +1443,15 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
   end
 
   def create_gateway_locations
-    stanton_gateway_pyro = Location.create!(
-      name: "Stanton Gateway (Pyro)",
-      nickname: "Stanton Gateway (Pyro)",
-      space_station_name: "Stanton Gateway (Pyro)",
-      classification: "space_station",
-      star_system_name: "Pyro",
-      is_available: true,
-      is_visible: true
-    )
-    nyx_gateway_pyro = Location.create!(
-      name: "Nyx Gateway (Pyro)",
-      nickname: "Nyx Gateway (Pyro)",
-      space_station_name: "Nyx Gateway (Pyro)",
-      orbit_name: "Nyx Gateway (Pyro system)",
-      classification: "space_station",
-      star_system_name: "Pyro",
-      is_available: true,
-      is_visible: true
-    )
-    nyx_gateway_stanton = Location.create!(
-      name: "Nyx Gateway (Stanton)",
-      nickname: "Nyx Gateway (Stanton)",
-      space_station_name: "Nyx Gateway (Stanton)",
-      classification: "space_station",
-      star_system_name: "Stanton",
-      is_available: true,
-      is_visible: true
-    )
-
-    [stanton_gateway_pyro, nyx_gateway_pyro, nyx_gateway_stanton]
+    [create_gateway('Stanton Gateway (Pyro)', 'Pyro'),
+      create_gateway('Nyx Gateway (Pyro)', 'Pyro'),
+      create_gateway('Nyx Gateway (Stanton)', 'Stanton')]
   end
 
   def create_gateway(name, star_system_name)
+    entry = OrbitalState.catalog.resolve_alias(name, system: star_system_name)
     Location.create!(
+      api_id: entry && entry['api_id'], parent_name: entry && entry['parent'],
       name: name,
       nickname: name,
       space_station_name: name,

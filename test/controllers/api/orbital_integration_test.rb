@@ -72,6 +72,29 @@ class Api::OrbitalIntegrationTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test 'nested quotes compose planet moon and station positions using one tick' do
+    [['Hurston','Arial',0.03],['Yela','GrimHEX',0.001],['Hurston','Everus Harbor',0.0014],
+      ['Hurston','HUR-L1 Green Glade Station',0.26],['Hurston','HUR-L4 Melodic Fields Station',13]].each do |from,to,expected|
+      assert_no_difference ['Tick.count','ShipTravel.count'] do
+        post '/api/distance_calculator',params:{distance:{from:from,to:to}},as: :json
+      end
+      assert_response :success
+      assert_in_delta expected,response.parsed_body['distance'],1e-9
+    end
+    get '/locations',params:{star:'Stanton',tick:10}
+    assert_response :success
+    assert response.parsed_body.all? { |row| row['attributes']['available'] }
+    report=response.parsed_body.find { |r| r['attributes']['name']=='Arial' }['attributes']
+    assert_equal 'Hurston',report['parent']
+    assert_in_delta 0.03,report['local_distance_gm'],1e-9
+    get '/api/locations',params:{system:'Stanton'}
+    station=response.parsed_body['data'].find { |r| r['attributes']['name']=='HUR-L1 Green Glade Station' }['attributes']
+    assert_equal 'coorbital',station['orbital-model']
+    assert_equal 0.98,station['coorbital']['radial_factor']
+    ship=Struct.new(:speed).new(0.001)
+    assert_equal 30,TravelTimeCalculator.new(ship:ship,from_location:Location.find_by!(name:'Hurston'),to_location:Location.find_by!(name:'Arial'),start_tick:0).calculate
+  end
+
   test 'new travel uses canonical aliases and physical distance without changing saved journeys' do
     from = Location.find_by!(name: 'Pyro IV'); to = Location.find_by!(name: 'Pyro V')
     user = User.create!(username:'OrbitalPilot', twitch_id:'orbital-pilot', uid:'orbital-pilot', user_type:'player')
@@ -96,5 +119,24 @@ class Api::OrbitalIntegrationTest < ActionDispatch::IntegrationTest
     assert_equal before, journey.reload.attributes.slice(*before.keys)
     assert_not from.destroy
     assert ShipTravel.exists?(journey.id)
+  end
+
+  test 'actual new moon to station travel retains ordinary minimum and broker routing' do
+    from=Location.find_by!(name:'Yela'); to=Location.find_by!(name:'Green Imperial Housing Exchange')
+    user=User.create!(username:'MoonPilot',twitch_id:'moon-pilot',uid:'moon-pilot',user_type:'player')
+    shard=Shard.create!(name:'Moon Test',region:'us',channel_uuid:'moon-shard')
+    player=ShardUser.create!(user:user,shard:shard,shard_name:shard.name); player.update_current_location!(from)
+    ship=Ship.create!(model:'Moon Test Ship',slug:'moon-test',speed:2,scu:4)
+    hull=UserShip.create!(user:user,ship:ship,shard:shard,shard_user:player,shard_name:shard.name,
+      guid:'moon-hull',ship_slug:ship.slug,location_name:from.name,total_scu:4,used_scu:0,status:'docked')
+    post '/api/travel?rabbitmq=dev',params:{ship_travel:{ship_guid:hull.guid,ship_slug:ship.slug,
+      player_guid:user.twitch_id,player_name:user.username,shard_uuid:shard.channel_uuid,
+      from_location:'Yela',to_location:'GrimHEX',travel_guid:'moon-journey'}},as: :json
+    assert_response :success
+    trip=ShipTravel.find_by!(travel_guid:'moon-journey')
+    assert_equal 2,trip.total_duration_ticks
+    assert_equal 2,trip.arrival_tick
+    assert_equal to.id,trip.to_location_id
+    assert_equal 'dev',trip.rabbitmq_environment
   end
 end
