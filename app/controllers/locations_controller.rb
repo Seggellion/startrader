@@ -1,82 +1,29 @@
 class LocationsController < ApplicationController
-
-  #  def show
-  #    location = Location.find(params[:id])
-  #    render json: location
-  #  end
-
-
-   def index
-    system_name = params[:star].presence || "Stanton"
-
-    # Fetch the star (if modeled as a Location with classification 'star_system')
-    star = Location.where(classification: "star_system", star_system_name: system_name).first
-
-    # Fetch orbital bodies and trade-relevant places in that system.
-    orbitals = Location
-      .where(star_system_name: system_name)
-      .where(classification: %w[planet moon space_station outpost city])
-      .order(:classification, :name)
-
-    payload = []
-
-    # Include the star first (so the client can register it before planets)
-    if star
-      payload << {
-        id: star.id,
-        attributes: {
-          'name': star.name,
-          'classification': 'star_system',
-          'system': star.star_system_name,
-          'mass': star.mass,
-          'starmass': nil
-        }
-      }
+  def index
+    system = params[:star].presence || 'Stanton'
+    version = OrbitalState.catalog.version
+    if params[:version].present? && params[:version] != version
+      return render json: {error: 'Orbital catalog changed; reload the snapshot', catalog_version: version}, status: :conflict
     end
-
-    # Then include planets, moons, stations, and trade locations when modeled.
-    orbitals.each do |location|
-      payload << {
-        id: location.id,
-        attributes: {
-          'name': location.name,
-          'classification': location.classification,
-          'system': location.star_system_name,
-          'parent': location.parent_name,
-          'apoapsis': location.apoapsis,
-          'periapsis': location.periapsis,
-          'mass': location.mass,
-          'starmass': location.star&.mass
-        }
-      }
-    end
-
-    render json: payload
+    tick = params[:tick].present? ? Integer(params[:tick], 10) : OrbitalState.current_tick!
+    state = OrbitalState.snapshot(tick: tick, systems: [system])
+    response.set_header('X-Orbital-Catalog-Version', version)
+    render json: Location.where(star_system_name: system).order(:id).map { |location|
+      effective = OrbitalState.effective_attributes(location)
+      { id: location.id, attributes: effective.merge(name: location.name, classification: location.classification,
+          system: system, starmass: OrbitalState.catalog.resolve_alias(system)&.fetch('mass_kg', nil))
+          .merge(state.report(location.id)) }
+    }
+  rescue Orbital::Unavailable, ArgumentError => error
+    render json: {error: error.message}, status: :unprocessable_entity
   end
 
-
-
-    def show
-      user_ship = current_user.user_ships.find(params[:id])
-      active_travel = user_ship.active_travel
-  
-      if active_travel
-        render json: {
-          in_transit: true,
-          from_location: active_travel.from_location.name,
-          to_location: active_travel.to_location.name,
-          departure_tick: active_travel.departure_tick,
-          arrival_tick: active_travel.arrival_tick,
-          current_tick: Tick.current
-        }
-      else
-        render json: {
-          in_transit: false,
-          location: user_ship.location.name
-        }
-      end
-    end
-
-
+  def show
+    user_ship = current_user.user_ships.find(params[:id])
+    travel = user_ship.active_travel
+    render json: travel ? {in_transit: true, from_location: travel.from_location.name,
+      to_location: travel.to_location.name, departure_tick: travel.departure_tick,
+      arrival_tick: travel.arrival_tick, current_tick: Tick.current} :
+      {in_transit: false, location: user_ship.location&.name}
   end
-  
+end

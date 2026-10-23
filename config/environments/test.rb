@@ -21,6 +21,9 @@ Rails.application.configure do
   # Show full error reports.
   config.consider_all_requests_local = true
   config.cache_store = :null_store
+  config.assets.configure do |environment|
+    environment.cache = Sprockets::Cache::FileStore.new(Rails.root.join('tmp/orbital-assets-cache'))
+  end
 
   # Render exception templates for rescuable exceptions and raise for other exceptions.
   config.action_dispatch.show_exceptions = :rescuable

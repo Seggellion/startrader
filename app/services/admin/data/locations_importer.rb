@@ -49,7 +49,7 @@ module Admin
           classification = determine_classification(location_data)
           parent_name = determine_parent_name(location_data, classification)
 
-          location = Location.find_or_initialize_by(api_id: location_data['id'])
+          location = Location.find_or_initialize_by(api_id: location_data['id'], classification: classification)
           location.assign_attributes(
             name: location_data['name'],
             nickname: location_data['nickname'],
@@ -157,52 +157,17 @@ module Admin
     
   
         def self.determine_classification(data)
-            # Star System: has an id_star_system but no other parent references
-            if data['id_star_system'].to_i.zero? &&
-               data['id_planet'].to_i.zero? &&
-               data['id_moon'].to_i.zero? &&
-               data['id_space_station'].to_i.zero? &&
-               data['id_outpost'].to_i.zero? &&
-               data['id_poi'].to_i.zero? &&
-               data['id_city'].to_i.zero?
-              return "star_system"
-            end
-          
-            # Planet: has an id_star_system and no id_planet (i.e., it is not a moon or satellite)
-            if data['id_star_system'].to_i > 0 &&
-               data['id_planet'].to_i.zero? &&
-               data['id_moon'].to_i.zero?
-              return "planet"
-            end
-          
-            # Moon: has an id_star_system, an id_planet, but no id_moon
-            if data['id_star_system'].to_i > 0 &&
-               data['id_planet'].to_i > 0 &&
-               data['id_moon'].to_i.zero?
-              return "moon"
-            end
-          
-            # Space Station: has an id_star_system, an id_planet, but an id_moon of 0
-            if data['id_star_system'].to_i > 0 &&
-               data['id_planet'].to_i > 0 &&
-               data['id_moon'].to_i.zero? &&
-               data['id_space_station'].to_i > 0
-              return "space_station"
-            end
-          
-            # Outpost: identified by an id_outpost
-            return "outpost" if data['id_outpost'].to_i > 0
-          
-            # City: identified by an id_city
-            return "city" if data['id_city'].to_i > 0
-          
-            # Point of Interest (POI): identified by an id_poi
-            return "poi" if data['id_poi'].to_i > 0
-          
-            # Fallback: Unknown classification
-            "unknown"
-          end
-          
+          explicit = data['type'].to_s.downcase
+          return explicit if %w[star_system planet moon space_station outpost city poi].include?(explicit)
+          # Specific destinations precede the parent references they also carry.
+          return 'city' if data['id_city'].to_i.positive?
+          return 'outpost' if data['id_outpost'].to_i.positive?
+          return 'poi' if data['id_poi'].to_i.positive?
+          return 'space_station' if data['id_space_station'].to_i.positive?
+          return 'moon' if data['id_planet'].to_i.positive?
+          return 'planet' if data['id_star_system'].to_i.positive?
+          'star_system'
+        end
 
           def self.determine_parent_name(data, classification)
             case classification
@@ -215,9 +180,9 @@ module Admin
               return ensure_parent_exists(data['id_planet'], "planet") if data['id_planet'].to_i > 0
           
             when "space_station"
-              # Space Station's parent can be a Moon or a Planet
               return ensure_parent_exists(data['id_moon'], "moon") if data['id_moon'].to_i > 0
               return ensure_parent_exists(data['id_planet'], "planet") if data['id_planet'].to_i > 0
+              return ensure_parent_exists(data['id_star_system'], "star_system") if data['id_star_system'].to_i > 0
           
             when "outpost", "city", "poi"
               # Outposts, Cities, POIs can belong to Moon, Planet, or Star System
@@ -234,8 +199,8 @@ module Admin
             return nil if api_id.to_i.zero?
           
             # Check if the parent location already exists
-            parent = Location.find_by(api_id: api_id)
-            return parent.id if parent
+            parent = Location.find_by(api_id: api_id, classification: classification)
+            return parent.name if parent
           
             # Create a placeholder parent if not found
             placeholder = Location.create!(
@@ -247,7 +212,7 @@ module Admin
             )
             
             Rails.logger.info "Created placeholder for missing parent: #{placeholder.name} with ID #{placeholder.id}"
-            placeholder.id
+            placeholder.name
           end
           
 

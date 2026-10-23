@@ -1,0 +1,9 @@
+<% if (entry = OrbitalState.catalog.entry_for(location.attributes)) %>
+  <p class="mb-4 p-3 bg-blue-50 text-gray-800" role="note">
+    Orbital calibration <%= OrbitalState.catalog.version %> controls this record's effective
+    <% if entry['mass_kg'] %>stellar mass: <%= entry['mass_kg'] %> kg.<% else %>
+      <% if entry['target_distance_gm'] %>star distance: <%= entry['target_distance_gm'] %> Gm.<% else %>position at its host's center.<% end %>
+    <% end %>
+    Imported orbital fields below remain reference data. Identity and parent changes are protected.
+  </p>
+<% end %>

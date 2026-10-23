@@ -56,18 +56,23 @@ module Api
     end
 
     def legacy_attributes(loc)
+      effective = OrbitalState.effective_attributes(loc)
       {
         "name"               => loc.name,
         "location-type"      => legacy_location_type(loc),
-        "parent"             => loc.parent_name,
+        "parent"             => effective[:parent],
         "ammenities-fuel"    => bool_or_null(loc.is_refuel),
         "ammenities-repair"  => bool_or_null(loc.is_repair),
         "ammenities-rearm"   => bool_or_null(loc.is_repair),
         "trade-terminal"     => bool_or_null(loc.has_trade_terminal),
         "system"             => loc.star_system_name,
-        "mass"               => loc.mass,
-        "apoapsis"           => loc.apoapsis,
-        "periapsis"          => loc.periapsis
+        "mass"               => effective[:mass],
+        "apoapsis"           => effective[:apoapsis],
+        "periapsis"          => effective[:periapsis],
+        "orbital-source"     => effective[:orbital_source],
+        "catalog-version"    => effective[:catalog_version],
+        "distance-unit"      => "Gm",
+        "mass-unit"          => "kg"
       }
     end
 

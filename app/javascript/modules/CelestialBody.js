@@ -1,241 +1,54 @@
-import * as THREE from "three";
-import { createOrbit } from "OrbitCreator";
+import * as THREE from 'three';
 
 export class CelestialBody {
-   constructor(scene, animationController, camera) {
-    this.scene = scene;
-    this.animationController = animationController;
-    this.camera = camera;
-    this.bodies = [];
-    this.labels = [];
-
-    this.SCALE_POS  = 5;   // Mkm → scene units (positions)
-    this.SCALE_SIZE = 100;  // visual size shrink factor
-
-    this.animationController.unitScale    = this.SCALE_POS;
-    this.animationController.orbitPadding = 1;
-
-    this.minPeriapsisScene = Infinity;
-    this.starMesh = null;
-    this.baseStarRadius = 10;
+  constructor(scene, animationController, camera) {
+    this.scene = scene; this.animationController = animationController; this.camera = camera;
+    this.objects = []; this.displayScale = 1; // scene units per physical Gm
   }
-
-  addCelestialBody(data, size, color, name, starMassInput) {
-
-
-  const SOLAR_MASS_KG = 1.98847e30;
-   let rawMass = starMassInput ?? data.starMass ?? data.starmass ?? data.mass ?? 0;
-   // Heuristic: values << 1e20 aren’t kg; assume “solar masses” and convert.
-   const centralMass = rawMass > 1e20 ? rawMass : rawMass * SOLAR_MASS_KG;
-
-    const geometry = new THREE.SphereGeometry(size, 32, 32);
-    const material = new THREE.MeshBasicMaterial({ color });
-    const body = new THREE.Mesh(geometry, material);
-
-if (data["classification"] === "star_system") {
-  const starVisualScale = 1 / this.SCALE_SIZE;
-  body.scale.set(starVisualScale, starVisualScale, starVisualScale);
-
-  this.starMesh = body;
-  this.animationController.setStar({ mesh: body, name, mass: centralMass });
-
-  // ⭐ label + expose to controller so it can update every frame
-  this.starLabel = this.addLabel(name, body, this.camera);
-  this.animationController.starLabel = this.starLabel;
-
-  this.scene.add(body);
-  this.bodies.push(body);
-
-  // 👇 ensure it’s visible even before any planets set periapsis
-  const minStarRadiusScene = 3.0;
-  const currentRadiusScene = this.baseStarRadius * (1 / this.SCALE_SIZE);
-  if (currentRadiusScene < minStarRadiusScene) {
-    const needed = minStarRadiusScene / currentRadiusScene;
-    body.scale.multiplyScalar(needed);
+  addCelestialBody(data) {
+    if (!data.available || !data.position_gm) return;
+    const p = data.position_gm;
+    if (![p.x,p.y,p.z].every(Number.isFinite)) return;
+    const star = ['star','star_system'].includes(data.classification);
+    const city = ['city','outpost'].includes(data.classification);
+    const radius = star ? 2 : city ? 0.45 : 1;
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(radius, 20, 16),
+      new THREE.MeshBasicMaterial({color: star ? 0xfbbf24 : city ? 0x38bdf8 : 0x86efac}));
+    mesh.position.set(p.x*this.displayScale,p.y*this.displayScale,p.z*this.displayScale);
+    mesh.userData = {locationId: data.location_id, physicalPositionGm: {...p}};
+    this.scene.add(mesh); this.objects.push(mesh);
+    if (data.classification === 'planet' && data.periapsis === data.apoapsis) {
+      const r = data.periapsis*this.displayScale;
+      const points = new THREE.EllipseCurve(0,0,r,r,0,2*Math.PI,false,0).getPoints(160);
+      const ring = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(points),
+        new THREE.LineBasicMaterial({color: 0x234150, transparent: true, opacity: 0.55}));
+      ring.position.z=-0.1; this.scene.add(ring); this.objects.push(ring);
+    }
+    const canvas = document.createElement('canvas');
+    const ctx=canvas.getContext('2d');
+    const label=star ? data.name : `${data.name} · ${Math.hypot(p.x,p.y,p.z).toFixed(1)} Gm`;
+    ctx.font='24px Arial'; canvas.width=Math.ceil(ctx.measureText(label).width)+20; canvas.height=40;
+    ctx.font='24px Arial'; ctx.fillStyle='#e4e4e7'; ctx.fillText(label,10,28);
+    const texture=new THREE.CanvasTexture(canvas);
+    const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,depthTest:false}));
+    sprite.userData.label={anchor:mesh.position.clone(),width:canvas.width,height:canvas.height,below:city || star};
+    this.scene.add(sprite); this.objects.push(sprite);
   }
-
-  this.resizeStarIfNeeded?.();
-  return;
-}
-
-
-    if (["planet", "moon", "space_station", "outpost", "city"].includes(data["classification"]) && data.apoapsis && data.periapsis) {
-const aReal  = (data.apoapsis + data.periapsis) / 2;      // Mkm (real units for physics)
-const aScene = aReal / this.SCALE_POS;                     // scene units (for rendering)
-const e      = (data.apoapsis - data.periapsis) / (data.apoapsis + data.periapsis);
-
-      const periapsisScene = (data.periapsis) / this.SCALE_POS;
-      this.minPeriapsisScene = Math.min(this.minPeriapsisScene ?? Infinity, periapsisScene);
-
-      // ✅ keep planets visible: don’t let them get microscopic
-      const baseScale = 1 / this.SCALE_SIZE;
-      const minScale  = 0.35;                  // <-- tune: guaranteed visual size
-      const bodyScale = Math.max(baseScale, minScale);
-      body.scale.set(bodyScale, bodyScale, bodyScale);
-
-      const orbitalSpeed = this.calculateOrbitalSpeed(aScene, centralMass);
-
-      const planet = {
-        mesh: body,
-        semiMajorAxis: aScene,         // for drawing
-        semiMajorAxisReal: aReal,      // for physics
-        eccentricity: e,
-        orbitalSpeed,
-        name,
-        starMass: centralMass,
-        size,
-        // ✅ pass the mesh so the label can compute real radius
-        label: this.addLabel(name, body, this.camera)
-      };
-
-      this.animationController.addPlanet(planet);
-      this.scene.add(body);
-      this.bodies.push(body);
-      this.resizeStarIfNeeded?.();
+  updateLabels() {
+    const height=this.animationController.renderer.domElement.clientHeight || 520;
+    for (const object of this.objects) {
+      const label=object.userData.label;
+      if (!label) continue;
+      const worldPerPixel=2*Math.tan(this.camera.fov*Math.PI/360)*this.camera.position.distanceTo(label.anchor)/height;
+      object.position.copy(label.anchor).add(new THREE.Vector3(0,(label.below ? -15 : 15)*worldPerPixel,0));
+      object.scale.set(label.width*0.5*worldPerPixel,label.height*0.5*worldPerPixel,1);
     }
   }
-
-calculateOrbitalSpeed(semiMajorAxis, starMass) {
-  const G = this.animationController?.G ?? 6.67430e-38; // ✅
-  return Math.sqrt((G * starMass) / semiMajorAxis);
-}
-
-// helper: world radius (scene units) from a mesh
-getWorldRadius(mesh) {
-  const geomR =
-    mesh.geometry?.parameters?.radius ??
-    mesh.geometry?.boundingSphere?.radius ??
-    1;
-  return geomR * mesh.scale.x;
-}
-
-// helper: set world radius (scene units) on a mesh
-setWorldRadius(mesh, targetR) {
-  const geomR =
-    mesh.geometry?.parameters?.radius ??
-    mesh.geometry?.boundingSphere?.radius ??
-    1;
-  const targetScale = targetR / geomR;
-  mesh.scale.setScalar(targetScale); // absolute set, not multiply
-}
-
-resizeStarIfNeeded() {
-  if (!this.starMesh) return;
-
-  // If we don't have a valid periapsis yet, make the star reasonably visible and bail.
-  if (!Number.isFinite(this.minPeriapsisScene) || this.minPeriapsisScene <= 0 || this.minPeriapsisScene === Infinity) {
-    const fallbackR = 3.0; // always-visible size
-    this.setWorldRadius(this.starMesh, fallbackR);
-    this.animationController.orbitPadding = 1;
-
-    // keep camera out of the shell
-    this.ensureCameraOutsideStar?.(this.camera, this.starMesh);
-    if (this.animationController?.controls) {
-      this.animationController.controls.minDistance = this.getWorldRadius(this.starMesh) * 1.2;
-      this.animationController.controls.update?.();
-    }
-    return;
-  }
-
-  // Normal path once we have a valid periapsis
-  const minR = 2.0;
-  const maxR = this.minPeriapsisScene * 0.2;
-  const targetStarRadiusScene = THREE.MathUtils.clamp(this.minPeriapsisScene * 0.15, minR, maxR);
-
-  this.setWorldRadius(this.starMesh, targetStarRadiusScene);
-
-  const requiredPadding = (targetStarRadiusScene * 1.1) / this.minPeriapsisScene;
-  this.animationController.orbitPadding = Number.isFinite(requiredPadding) ? Math.max(1, requiredPadding) : 1;
-
-  // keep camera out of the star after resizing
-  this.ensureCameraOutsideStar?.(this.camera, this.starMesh);
-  if (this.animationController?.controls) {
-    this.animationController.controls.minDistance = this.getWorldRadius(this.starMesh) * 1.2;
-    this.animationController.controls.update?.();
-  }
-}
-
-
-
-  // ✅ compute label offset/scale from the *actual* mesh radius
-addLabel(name, mesh, camera) {
-  const renderer = this.animationController?.renderer;
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const pad = 10;          // px padding
-  const fontPx = 16;       // base CSS pixels (tweak for taste)
-
-  // 1) measure text at DPR
-  const meas = document.createElement('canvas').getContext('2d');
-  meas.font = `${fontPx * dpr}px Arial`;
-  const textW = Math.ceil(meas.measureText(name).width);
-  const textH = Math.ceil(fontPx * dpr);
-
-  // 2) paint to a DPR canvas
-  const canvas = document.createElement('canvas');
-  canvas.width  = textW + pad * dpr * 2;
-  canvas.height = textH + pad * dpr * 2;
-  const ctx = canvas.getContext('2d');
-  ctx.font = `${fontPx * dpr}px Arial`;
-  ctx.fillStyle = 'rgba(255,255,255,1)';
-  ctx.textBaseline = 'top';
-  ctx.fillText(name, pad * dpr, pad * dpr);
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.needsUpdate = true;
-  texture.minFilter = THREE.LinearFilter;
-  texture.magFilter = THREE.LinearFilter;
-  texture.generateMipmaps = false;
-  if (THREE.SRGBColorSpace) texture.colorSpace = THREE.SRGBColorSpace;
-
-  const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
-  const sprite = new THREE.Sprite(material);
-  sprite.renderOrder = 999;
-
-  // anchor just above the mesh
-  const radius = (mesh.geometry?.parameters?.radius || 1) * mesh.scale.x;
-  sprite.position.copy(mesh.position).add(new THREE.Vector3(0, radius * 1.5, 0));
-
-  // 3) pixel-perfect world size from camera FOV
-  const dist = camera.position.distanceTo(sprite.position);
-  const viewportH = (renderer?.domElement?.clientHeight || window.innerHeight || 800);
-  const vFOV = THREE.MathUtils.degToRad(camera.fov);
-  const worldPerPixel = 2 * Math.tan(vFOV / 2) * dist / viewportH;
-
-  let worldW = (canvas.width  / dpr) * worldPerPixel;
-  let worldH = (canvas.height / dpr) * worldPerPixel;
-
-  // 4) never let it be tiny
-  const minWorldH = 1.2; // ≈ readable minimum; tweak if you want larger
-  if (worldH < minWorldH) {
-    const mul = minWorldH / worldH;
-    worldH *= mul;
-    worldW *= mul;
-  }
-
-  sprite.scale.set(worldW, worldH, 1);
-
-  this.scene.add(sprite);
-  sprite.lookAt(camera.position);
-
-  this.labels.push(sprite);
-  return sprite;
-}
-
   clearCelestialBodies() {
-    this.bodies.forEach(body => {
-      this.scene.remove(body);
-      body.geometry.dispose();
-      body.material.dispose();
-    });
-    this.bodies = [];
-
-    this.labels.forEach(label => {
-      this.scene.remove(label);
-      label.material.dispose();
-      label.texture?.dispose();
-    });
-    this.labels = [];
-
-    this.animationController.clearPlanets();
+    for (const object of this.objects) {
+      this.scene.remove(object); object.geometry?.dispose();
+      object.material?.map?.dispose(); object.material?.dispose();
+    }
+    this.objects=[];
   }
 }

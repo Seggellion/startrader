@@ -1,0 +1,222 @@
+{
+  "source": "celestial-only production read-only export, ArcCorp api_id repair planned",
+  "baseline_commit": "fecb49f619bf69eeeef9beb50a037dc7a95469a7",
+  "tick": 10,
+  "simulated_seconds_per_tick": 604800,
+  "speed_numeric": 2,
+  "baseline_speed_unit": "legacy scene units/tick",
+  "new_speed_unit": "Gm/tick",
+  "catalog_version": "orbital-v1:fefc269b0e50f896",
+  "routes": [
+    {
+      "route": "Pyro I → Monox",
+      "ids": [
+        1015,
+        1016
+      ],
+      "before": {
+        "positions_scene": [
+          {
+            "x": 29.4,
+            "y": -0.00000009416065021696228
+          },
+          {
+            "x": 29.4,
+            "y": -0.00000009416065021696228
+          }
+        ],
+        "distance_scene": 0.0,
+        "duration_ticks": 2
+      },
+      "after": {
+        "positions_gm": [
+          {
+            "x": -6.153384450692752,
+            "y": 5.41995016600454,
+            "z": 0.0
+          },
+          {
+            "x": -3.9316404299477092,
+            "y": 9.843891686198125,
+            "z": 0.0
+          }
+        ],
+        "distance_gm": 4.9504954366011775,
+        "duration_ticks": 3
+      }
+    },
+    {
+      "route": "Nyx I → Nyx II",
+      "ids": [
+        979,
+        980
+      ],
+      "before": {
+        "positions_scene": [
+          {
+            "x": 29.4,
+            "y": -0.00000009416065021696228
+          },
+          {
+            "x": 29.4,
+            "y": -0.00000009416065021696228
+          }
+        ],
+        "distance_scene": 0.0,
+        "duration_ticks": 2
+      },
+      "after": {
+        "positions_gm": [
+          {
+            "x": -4.283050243848815,
+            "y": 2.5798218172320753,
+            "z": 0.0
+          },
+          {
+            "x": -17.268447099045947,
+            "y": -18.077630784686683,
+            "z": 0.0
+          }
+        ],
+        "distance_gm": 24.39981310353593,
+        "duration_ticks": 13
+      }
+    },
+    {
+      "route": "Hurston → Crusader",
+      "ids": [
+        891,
+        834
+      ],
+      "before": {
+        "positions_scene": [
+          {
+            "x": 11.999999999999998,
+            "y": -0.0000001461676142870439
+          },
+          {
+            "x": 20.0,
+            "y": -0.00000011322093974836533
+          }
+        ],
+        "distance_scene": 8.000000000000002,
+        "duration_ticks": 5
+      },
+      "after": {
+        "positions_gm": [
+          {
+            "x": -12.910731649579393,
+            "y": 1.5208577423773049,
+            "z": 0.0
+          },
+          {
+            "x": 13.791001031171632,
+            "y": 14.484760631719912,
+            "z": 0.0
+          }
+        ],
+        "distance_gm": 29.682407353154375,
+        "duration_ticks": 15
+      }
+    },
+    {
+      "route": "Levski → Delamar",
+      "ids": [
+        1190,
+        1099
+      ],
+      "before": {
+        "positions_scene": [
+          {
+            "x": 29.4,
+            "y": -0.00000009416065021696228
+          },
+          {
+            "x": 29.4,
+            "y": -0.00000009416065021696228
+          }
+        ],
+        "distance_scene": 0.0,
+        "duration_ticks": 2
+      },
+      "after": {
+        "positions_gm": [
+          {
+            "x": 13.042842929562301,
+            "y": -7.408390399726966,
+            "z": 0.0
+          },
+          {
+            "x": 13.042842929562301,
+            "y": -7.408390399726966,
+            "z": 0.0
+          }
+        ],
+        "distance_gm": 0.0,
+        "duration_ticks": 2
+      }
+    },
+    {
+      "route": "Pyro IV → Pyro V",
+      "ids": [
+        338,
+        1018
+      ],
+      "before": {
+        "positions_scene": [
+          {
+            "x": 29.4,
+            "y": -0.00000009416065021696228
+          },
+          {
+            "x": 29.4,
+            "y": -0.00000009416065021696228
+          }
+        ],
+        "distance_scene": 0.0,
+        "duration_ticks": 2
+      },
+      "after": {
+        "positions_gm": [
+          {
+            "x": 45.055099308513476,
+            "y": 15.355716404648422,
+            "z": 0.0
+          },
+          {
+            "x": -45.05509930851349,
+            "y": -15.355716404648378,
+            "z": 0.0
+          }
+        ],
+        "distance_gm": 95.2,
+        "duration_ticks": 48
+      }
+    },
+    {
+      "route": "Hurston → Arial",
+      "ids": [
+        891,
+        423
+      ],
+      "before": {
+        "positions_scene": [
+          {
+            "x": 11.999999999999998,
+            "y": -0.0000001461676142870439
+          },
+          {
+            "x": 2.0594946735482083,
+            "y": -1.0891988676062714
+          }
+        ],
+        "distance_scene": 10.0,
+        "duration_ticks": 5
+      },
+      "after": {
+        "available": false,
+        "reason": "Unmeasured orbital position for Arial"
+      }
+    }
+  ]
+}

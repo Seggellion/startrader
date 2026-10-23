@@ -1,6 +1,13 @@
 require "test_helper"
 
 class TravelServiceTest < ActiveSupport::TestCase
+  # These tests exercise identity/lifecycle/broker policy. Physical geometry
+  # has its own real request/service fixtures in OrbitalIntegrationTest.
+  def run
+    calculator = Struct.new(:calculate).new(2)
+    TravelTimeCalculator.stub(:new, calculator) { super }
+  end
+
   setup do
     StarBitizenRun.delete_all
     ShipTravel.delete_all
