@@ -1,8 +1,8 @@
 # StarTrader orbital calibration project playbook
 
-Date: 23 October 2026  
-Owner: Dustin Hill  
-Starting evidence: supplied StarTrader orbital calibration discovery, inspected at `fecb49f619bf69eeeef9beb50a037dc7a95469a7`  
+Date: 23 October 2026
+Owner: Dustin Hill
+Starting evidence: supplied StarTrader orbital calibration discovery, inspected at `fecb49f619bf69eeeef9beb50a037dc7a95469a7`
 Status: M0–M5 complete; M6 qualification passed and integration is in progress. M7/M8 pending. Actual decisions and evidence are in STARTRADER_ORBITAL_CALIBRATION_RELEASE.md.
 
 ## Project outcome and execution authority
