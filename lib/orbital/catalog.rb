@@ -6,7 +6,7 @@ require_relative 'geometry'
 module Orbital
   # Effective authority is the immutable catalog, not importer-owned numbers.
   class Catalog
-    DEFAULT_PATH = File.expand_path('../../config/orbital_calibrations/v1.yml', __dir__)
+    DEFAULT_PATH = File.expand_path('../../config/orbital_calibrations/v2.yml', __dir__)
     attr_reader :data, :version
 
     def initialize(path: DEFAULT_PATH, data: nil)
@@ -51,8 +51,14 @@ module Orbital
       end
       raise Unavailable, 'Simulation clock step must be positive' unless Geometry.number(clock['simulated_seconds_per_tick'], 'clock step').positive?
       entries.each do |entry|
+        Geometry.period_seconds(1, entry['mass_kg']) if entry.key?('mass_kg')
         if %w[star star_system].include?(entry['classification'])
           Geometry.period_seconds(1, entry['mass_kg'])
+        elsif entry['coorbital']
+          model = entry.fetch('coorbital')
+          factor = Geometry.number(model['radial_factor'], 'coorbital radial factor')
+          raise Unavailable, 'Coorbital radial factor must be positive' unless factor.positive?
+          Geometry.number(model['phase_offset_deg'], 'coorbital angle')
         elsif entry['local_offset_gm']
           %w[x y z].each { |axis| Geometry.number(entry['local_offset_gm'][axis], "offset #{axis}") }
         else

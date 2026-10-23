@@ -178,9 +178,9 @@ module Admin
       end
 
       def self.determine_parent_name(data)
-        data['moon_name'] ||
-        data['planet_name'] ||
-        data['star_system_name'] # Defaults to Star System if all else is nil
+          data['moon_name'].presence ||
+          data['planet_name'].presence ||
+          data['star_system_name'].presence # Defaults to Star System if all else is nil
       end
       
       def self.ensure_parent_exists(api_id, classification)

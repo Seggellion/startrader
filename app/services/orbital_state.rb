@@ -19,6 +19,8 @@ class OrbitalState
     { parent: entry ? entry['parent'] : location.parent_name,
       periapsis: entry && entry['periapsis_gm'], apoapsis: entry && entry['apoapsis_gm'],
       mass: entry && entry['mass_kg'], orbital_source: entry ? 'calibrated_simulation' : 'unmeasured',
+      orbital_model: entry && (entry['coorbital'] ? 'coorbital' : entry['local_offset_gm'] ? 'host_center' : entry['parent'] ? 'kepler' : 'system_origin'),
+      local_orbit_radius_gm: entry && entry['local_orbit_radius_gm'], coorbital: entry && entry['coorbital'],
       catalog_version: catalog.version }
   end
 

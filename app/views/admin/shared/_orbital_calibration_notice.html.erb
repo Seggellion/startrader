@@ -1,9 +1,11 @@
 <% if (entry = OrbitalState.catalog.entry_for(location.attributes)) %>
   <p class="mb-4 p-3 bg-blue-50 text-gray-800" role="note">
     Orbital calibration <%= OrbitalState.catalog.version %> controls this record's effective
-    <% if entry['mass_kg'] %>stellar mass: <%= entry['mass_kg'] %> kg.<% else %>
-      <% if entry['target_distance_gm'] %>star distance: <%= entry['target_distance_gm'] %> Gm.<% else %>position at its host's center.<% end %>
-    <% end %>
+    orbit and gravitational mass.
+    <% if entry['mass_kg'] %>Effective mass: <%= entry['mass_kg'] %> kg.<% end %>
+    <% if entry['target_distance_gm'] %>Star distance: <%= entry['target_distance_gm'] %> Gm.<% end %>
+    <% if entry['local_orbit_radius_gm'] %>Host-relative radius: <%= entry['local_orbit_radius_gm'] %> Gm.<% end %>
+    <% if entry['coorbital'] %>This station follows its planet using the catalog's coorbital placement.<% end %>
     Imported orbital fields below remain reference data. Identity and parent changes are protected.
   </p>
 <% end %>

@@ -20,7 +20,7 @@ class PlanetPositionCalculatorTest < ActiveSupport::TestCase
     refute_equal before, PlanetPositionCalculator.calculate_position(@planet, 11)
   end
   test "unmeasured nested bodies are unavailable instead of invented orbits" do
-    moon = Location.create!(name: "Arial", classification: "moon", parent_name: "Hurston", star_system_name: "Stanton", periapsis: 50, apoapsis: 50)
+    moon = Location.create!(name: "Unmeasured moon", classification: "moon", parent_name: "Hurston", star_system_name: "Stanton", periapsis: 50, apoapsis: 50)
     assert_raises(Orbital::Unavailable) { PlanetPositionCalculator.calculate_position(moon, 0) }
   end
 end
