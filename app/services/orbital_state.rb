@@ -9,6 +9,10 @@ class OrbitalState
     Tick.order(:id).pick(:current_tick) || raise(Orbital::Unavailable, 'Simulation tick is unavailable')
   end
 
+  def self.clock_metadata(tick)
+    { catalog_version: catalog.version }.merge(Orbital::Clock.new(catalog.data.fetch('clock')).metadata(tick))
+  end
+
   def self.snapshot(tick:, systems: nil)
     scope = systems ? Location.where(star_system_name: systems) : Location.all
     Orbital::Snapshot.new(rows: scope.map(&:attributes), tick: tick, catalog: catalog)

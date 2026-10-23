@@ -305,3 +305,7 @@ Required route evidence: Pyro I–Monox; Nyx I–Nyx II; Hurston–Crusader; Lev
 Execution evidence: STARTRADER_ORBITAL_CALIBRATION_RELEASE.md records D01–D09, approved simulation parameters, authenticated production identity, test isolation, regression limitations, fixed-clock comparisons, Chrome qualification and guarded SQL repair/inverse. Starting M0 access limitations above remain historical observations. Production calibration is active; operational identifiers and trip fingerprints are retained in the local operator record.
 
 Closeout: M0–M8 achieved. STARTRADER_ORBITAL_CALIBRATION_RELEASE.md contains public qualification evidence and retained limitations; exact operational identifiers, backup, timestamps and aggregate fingerprints are kept in the local operator record. Closeout documentation does not change the deployed application source.
+
+## Orbital rate follow-up, 23 October 2026
+
+Status: qualified candidate; production activation/observation pending. See `STARTRADER_ORBITAL_RATE_CORRECTION.md` for the v166 revalidation, single orbital multiplier, durable activation schedule, unchanged travel/global clock contracts, tests and Chrome evidence. Deploy before the future activation tick, verify actual progression across that boundary, then observe at least 15 minutes. After activation, rate reversal must retain the schedule and append a future continuous rate change; the historical plain source-rollback recipes are superseded for this clock.

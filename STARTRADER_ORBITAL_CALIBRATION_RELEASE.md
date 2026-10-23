@@ -84,3 +84,7 @@ Retained limits: simulation masses/phases are documented design choices, not mea
 Live Google Chrome verification exposed clustered inner Pyro labels. Labels now occupy nonoverlapping screen rectangles with leader lines, without changing mesh positions, physical data, clock or travel calculations. Qualified in the celestial-only preview at fixed tick 696350 across all three systems, with no console errors. The terminating asset build passed. The completed production observation followed this presentation refinement.
 
 Updated CelestialBody digest `0922e02a952a90ab71dcdf1d478871e66f5dd3099ee8a77544cfc4176fba0cfc`; CSS `0926b72b94edd0e07e8daa67d6c4ccae8de704d16b7a6d44e3c10c0db6c3684f`. No further data step or schema change.
+
+### Orbital progression follow-up
+
+The subsequent nested-orbit release is recorded in `STARTRADER_NESTED_ORBITS.md`. The 0.01 orbital-rate correction is documented in `STARTRADER_ORBITAL_RATE_CORRECTION.md`; production activation and observation are pending. It preserves calibrated geometry and the global clock while integrating orbital time through a versioned activation anchor. After that anchor activates, use its phase-safe append-only rate reversal procedure; earlier plain source-rollback recipes would discard the slow-time history.

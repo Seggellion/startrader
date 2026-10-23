@@ -131,6 +131,24 @@ class ShipTravelTest < ActiveSupport::TestCase
     assert_equal "dev", travel.reload.rabbitmq_environment
   end
 
+  test 'orbital activation leaves saved journeys and interdiction lifecycle unchanged' do
+    activation=OrbitalState.catalog.data.fetch('clock').fetch('orbital_progression').first.fetch('activation_tick')
+    active=create_travel(arrival_tick:activation+10)
+    paused=create_travel(arrival_tick:0,is_paused:true)
+    before=[active,paused].map(&:attributes)
+    [activation-1,activation,activation+1].each { |tick| OrbitalState.snapshot(tick:tick) }
+    assert_equal before,[active,paused].map { |trip| trip.reload.attributes }
+    assert_equal 0,ShipTravel.cleanup_stale_after_arrival!(activation+1)
+    active.interdict!(activation+2)
+    assert_equal 8,active.reload.remaining_ticks_from_arrival
+    assert_equal 0,active.arrival_tick
+    active.resume!(activation+4)
+    assert_equal activation+12,active.reload.arrival_tick
+    assert_equal 8,active.total_duration_ticks # Existing resume contract stores remaining duration.
+    assert paused.reload.is_paused
+    assert_equal 0,paused.arrival_tick
+  end
+
   private
 
   def create_user_ship(status: "docked")

@@ -2,11 +2,12 @@ require 'yaml'
 require 'digest'
 require 'time'
 require_relative 'geometry'
+require_relative 'clock'
 
 module Orbital
   # Effective authority is the immutable catalog, not importer-owned numbers.
   class Catalog
-    DEFAULT_PATH = File.expand_path('../../config/orbital_calibrations/v2.yml', __dir__)
+    DEFAULT_PATH = File.expand_path('../../config/orbital_calibrations/v3.yml', __dir__)
     attr_reader :data, :version
 
     def initialize(path: DEFAULT_PATH, data: nil)
@@ -50,6 +51,7 @@ module Orbital
         Geometry.number(clock[key], key)
       end
       raise Unavailable, 'Simulation clock step must be positive' unless Geometry.number(clock['simulated_seconds_per_tick'], 'clock step').positive?
+      Clock.new(clock)
       entries.each do |entry|
         Geometry.period_seconds(1, entry['mass_kg']) if entry.key?('mass_kg')
         if %w[star star_system].include?(entry['classification'])
