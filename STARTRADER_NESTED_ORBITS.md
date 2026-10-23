@@ -58,3 +58,6 @@ The required observation lasted **15 minutes 21 seconds**, with **61 ticks** of 
 Detailed operational identifiers, exact observation timestamps, aggregate fingerprints and rollback commands remain in the ignored local operator record `tmp/orbital-nested-operator-record.md`, with machine evidence in `tmp/orbital-nested-closeout.json`, `tmp/orbital-nested-live-results.json` and `tmp/orbital-nested-health.jsonl`. They are not public repository artifacts. This final closeout changes documentation only; the verified running application source remains the implementation SHA above.
 
 Retained approximation: local orbital elements/masses/phases are documented simulation choices, Lagrange placement is a coorbital approximation, and surface sites use host centers. The broader legacy failures documented above remain unresolved by this scoped calibration.
+
+
+Subsequent orbital-rate correction: see `STARTRADER_ORBITAL_RATE_CORRECTION.md`. All nested body definitions are preserved. After its activation anchor, use the phase-safe rate reversal described there; the earlier plain source rollback would discard slow-progression history.
