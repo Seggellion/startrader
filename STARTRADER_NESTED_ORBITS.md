@@ -1,6 +1,6 @@
 # Moon and station calibration
 
-23 October 2026. Follow-up to the primary orbital calibration. Candidate qualification complete; production activation and observation are recorded after execution below.
+23 October 2026. Follow-up to the primary orbital calibration. Implementation, production activation and observation complete; see the completion record below.
 
 ## Model and coverage
 
@@ -35,7 +35,7 @@ The map adds an **Orbital view** selector for each calibrated planet, moon and s
 ## Qualification
 
 - Relevant isolated suite: **161 tests / 1778 assertions**, zero failures/errors/skips. Includes all 78 new bodies at multiple ticks, independent nested offsets, coorbital geometry, unchanged primaries/clock, mass validation, missing parents, actual moon/station reimports, quotes and an actual new moon-to-station travel request with the ordinary minimum and dev broker routing.
-- Broader suite: **446 runs / 2834 assertions, 35 failures / 30 errors**. Same 65 failing test identities as the previous qualified source; no newly failing identities. These existing legacy failures are not claimed as passing.
+- Broader suite: **447 runs / 2841 assertions, 35 failures / 30 errors**. Same 65 failing test identities as the previous qualified source; no newly failing identities. These existing legacy failures are not claimed as passing.
 - Terminating Rails/Tailwind asset precompile passed. Google Chrome **155.0.8059.41**, verified installed Google Chrome binary, used exclusively. Checked Hurston moons, moon-hosted GrimHEX, dense Pyro V moons/stations, Nyx star-orbiting stations, system switching, stopped preview clock and console errors. A tiny-orbit camera near-plane clipping issue found during inspection was fixed before activation.
 - Read-only full production celestial inventory validates 96 catalog identities and all 216 positions at a fixed tick. No production travel mutation is a verification probe.
 
@@ -47,4 +47,14 @@ Operational app/database/release identifiers and saved-journey fingerprints are 
 
 ## Completion record
 
-Integration, live checks and the required observation are pending at candidate preparation.
+PR #25 integrated the qualified implementation as `782b2fe3b5faa3f8432f17b7f241163ed6f69da3`. The exact deployed source/catalog and both running processes were verified through authenticated release metadata. No database changes were made.
+
+Final live verification independently reproduced all **216 positions** at fixed tick 700000 using a separate Python implementation, including all **18 moons and 60 stations**. Nine safe live quotes, expected cross-system/unknown/version errors, effective units and fresh page-referenced source assets passed. The pure deployed diagnostic independently validated all 96 identities and zero unavailable positions; Yela–GrimHEX measured .001 Gm and retained the two-tick ordinary minimum.
+
+Google Chrome verified all three systems, Hurston's moons, Pyro V's moons/stations, a moon-hosted station, Nyx star stations, local host tracking across live ticks, a fresh page/reconnection, and zoom-independent distances. Console checks were empty. The new Orbital view selector exposes close views without changing physical coordinates. A live screenshot is retained locally; the temporary preview server is stopped.
+
+The required observation lasted **15 minutes 21 seconds**, with **61 ticks** of progress and **six bounded infrastructure health samples**. No server HTTP5xx or process crashes appeared in those samples. One H27 client-interrupted `/locations` request was recorded during view switching; its replacement snapshot loaded normally. This is consistent with the renderer aborting a superseded fetch; [Heroku describes H27 as client interruption](https://help.heroku.com/VX2J01DE/why-do-h27-errors-happen). This bounded evidence is not a claim of indefinite monitoring or complete application-log coverage. Existing saved-journey state remained unchanged throughout.
+
+Detailed operational identifiers, exact observation timestamps, aggregate fingerprints and rollback commands remain in the ignored local operator record `tmp/orbital-nested-operator-record.md`, with machine evidence in `tmp/orbital-nested-closeout.json`, `tmp/orbital-nested-live-results.json` and `tmp/orbital-nested-health.jsonl`. They are not public repository artifacts. This final closeout changes documentation only; the verified running application source remains the implementation SHA above.
+
+Retained approximation: local orbital elements/masses/phases are documented simulation choices, Lagrange placement is a coorbital approximation, and surface sites use host centers. The broader legacy failures documented above remain unresolved by this scoped calibration.
