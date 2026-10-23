@@ -34,6 +34,9 @@ module Api
 
       process_due_arrival_for(user_ship)
       user_ship.reload
+      # Arrival processing may update a different AR instance of this player.
+      # Validate the next departure against the persisted arrival location.
+      shard_user.reload
 
       initialize_unknown_locations_from_request!(
         shard_user: shard_user,
@@ -599,6 +602,9 @@ end
 
 
 def resolve_location_by_name(name, star_system_name: nil)
+  if OrbitalState.catalog.resolve_alias(name, system: star_system_name)
+    return OrbitalState.resolve(name, system: star_system_name)
+  end
   LocationResolver.resolve(name, star_system_name: star_system_name)
 end
 
@@ -653,6 +659,9 @@ end
 end
 
 def resolve_from_location_for_travel(from_location_name:, to_location_name:, server_location:)
+  if OrbitalState.catalog.resolve_alias(from_location_name, system: server_location&.star_system_name)
+    return OrbitalState.resolve(from_location_name, system: server_location&.star_system_name)
+  end
   exact_location = LocationResolver.resolve_exact(from_location_name)
   return exact_location if exact_location
 

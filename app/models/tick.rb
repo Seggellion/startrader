@@ -120,6 +120,8 @@ class Tick < ApplicationRecord
       ActionCable.server.broadcast("tick", {
         type: "tick",
         tick: current_tick,
+        catalog_version: OrbitalState.catalog.version,
+        simulated_seconds_per_tick: OrbitalState.catalog.data.fetch('clock').fetch('simulated_seconds_per_tick'),
         seconds_per_tick: Tick.seconds_per_tick
       })
     end

@@ -14,10 +14,9 @@ class StarBitizenRun < ApplicationRecord
   validates :profit, :scu, numericality: { greater_than_or_equal_to: 0 }
 
   # Calculate distance dynamically based on orbital mechanics
-  def distance
+  def distance(tick = nil)
     return nil unless buy_location && sell_location
 
-    # Placeholder for orbital distance calculation logic
-    Math.sqrt((buy_location.periapsis - sell_location.periapsis)**2)
+    buy_location.distance_to(sell_location, tick || OrbitalState.current_tick!)
   end
 end

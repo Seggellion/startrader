@@ -44,16 +44,13 @@ has_many :departing_ship_travels,
     has_many :star_bitizen_runs, foreign_key: :sell_location_id
   
     validates :name, presence: true
+    validate :preserve_calibrated_identity, on: :update
+    before_destroy :protect_calibration_record, prepend: true
   
-    def distance_to(other_location, tick = Tick.current)
-      # Calculate the current position using the advanced orbital mechanics
-      
-      position1 = PlanetPositionCalculator.calculate_position(self, tick)      
-      position2 = PlanetPositionCalculator.calculate_position(other_location, tick)
-      
-    
-      # Calculate the distance between the two points
-      Math.sqrt((position2[:x] - position1[:x])**2 + (position2[:y] - position1[:y])**2)
+    def distance_to(other_location, tick = nil)
+      raise Orbital::Unavailable, 'Direct distance requires one system frame' unless
+        star_system_name.present? && star_system_name == other_location.star_system_name
+      OrbitalState.snapshot(tick: tick || OrbitalState.current_tick!, systems: [star_system_name]).distance(id, other_location.id)
     end
       
     def self.planets
@@ -87,6 +84,28 @@ has_many :departing_ship_travels,
     # Example method to get available commodities at this location
     def available_commodities
       production_facilities.includes(:commodity).map(&:commodity)
+    end
+
+    private
+
+    def protect_calibration_record
+      return unless OrbitalState.catalog.entry_for(attributes)
+      errors.add(:base, 'Calibrated orbital records cannot be deleted')
+      throw :abort
+    rescue Orbital::Unavailable => error
+      errors.add(:base, error.message)
+      throw :abort
+    end
+
+    def preserve_calibrated_identity
+      previous = attributes.merge(attributes_in_database)
+      entry = OrbitalState.catalog.entry_for(previous)
+      return unless entry
+      unless OrbitalState.catalog.entry_for(attributes) == entry
+        errors.add(:base, 'Calibrated orbital identity cannot be changed by an importer or admin edit')
+      end
+    rescue Orbital::Unavailable => error
+      errors.add(:base, error.message)
     end
   end
   

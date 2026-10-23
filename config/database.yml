@@ -35,6 +35,9 @@ test:
 <% end %>
   cable:
     <<: *default
+    # The test Action Cable adapter is in-memory. Both connections point to
+    # one scratch database, so loading it twice also duplicates the schema.
+    database_tasks: false
 <% if ENV["DATABASE_URL"] %>
     url: <%= ENV["DATABASE_URL"] %>
 <% else %>

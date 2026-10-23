@@ -1,6 +1,8 @@
 require "test_helper"
+require_relative "../../support/orbital_fixtures"
 
 class Api::GateTravelControllerTest < ActionDispatch::IntegrationTest
+  include OrbitalFixtures
   setup do
     StarBitizenRun.delete_all
     ShipTravel.delete_all
@@ -252,7 +254,7 @@ class Api::GateTravelControllerTest < ActionDispatch::IntegrationTest
 
   test "ambiguous destination gateway data returns a useful JSON error" do
     Location.create!(
-      name: "Stanton Gateway (Pyro)",
+      name: "STANTON GATEWAY (PYRO)",
       classification: "space_station",
       star_system_name: "Pyro"
     )
@@ -346,7 +348,9 @@ class Api::GateTravelControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "normal travel service still creates calculated travel records" do
-    normal_destination = Location.create!(name: "Area18", classification: "city", star_system_name: "Stanton")
+    seed_orbital_catalog
+    @non_gateway.update!(parent_name: 'Crusader')
+    normal_destination = Location.create!(name: "Area18", classification: "city", star_system_name: "Stanton", parent_name: 'ArcCorp')
     normal_ship = create_user_ship(
       user: @user,
       ship: @ship,

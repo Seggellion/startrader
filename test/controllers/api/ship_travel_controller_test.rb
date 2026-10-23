@@ -2,6 +2,13 @@ require "test_helper"
 require_relative "../../support/fake_rabbitmq"
 
 class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
+  # These tests exercise identity/lifecycle/broker policy. Physical geometry
+  # has its own real request/service fixtures in OrbitalIntegrationTest.
+  def run
+    calculator = Struct.new(:calculate).new(2)
+    TravelTimeCalculator.stub(:new, calculator) { super }
+  end
+
   setup do
     StarBitizenRun.delete_all
     ShipTravel.delete_all
@@ -372,6 +379,8 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
         ship_travel: travel_payload(
           travel_guid: travel_guid,
           ship_guid: "333-333-333-#{travel_guid}",
+          player_guid: "player-#{travel_guid}",
+          player_name: "Pilot-#{travel_guid}",
           from_location: terra_gateway_stanton.name,
           to_location: destination_name
         )
@@ -451,7 +460,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     assert_equal terra_gateway_pyro.name, response_json["destination"]
   end
 
-  test "create reconciles stale stored location from valid request location" do
+  test "create rejects request location conflicting with stored location" do
     stanton_gateway_pyro, nyx_gateway_pyro, = create_gateway_locations
     terra_gateway_pyro = create_gateway("Terra Gateway (Pyro)", "Pyro")
     user_ship = create_existing_synced_ship_at(nyx_gateway_pyro, guid: "different-from-ship-guid")
@@ -467,13 +476,10 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
       )
     }, as: :json
 
-    assert_response :success
-    assert_equal terra_gateway_pyro.name, response_json["destination"]
-
-    travel = ShipTravel.find_by!(travel_guid: "client-travel-guid-different-from")
-    assert_equal stanton_gateway_pyro, travel.from_location
-    assert_equal terra_gateway_pyro, travel.to_location
-    assert_equal stanton_gateway_pyro.name, user_ship.reload.location_name
+    assert_response :unprocessable_entity
+    assert_equal "from_location does not match the player's current location.", response_json["error"]
+    assert_nil ShipTravel.find_by(travel_guid: "client-travel-guid-different-from")
+    assert_equal nyx_gateway_pyro.name, user_ship.reload.location_name
   end
 
   test "create rejects ambiguous unqualified from location when ship has no current location" do
@@ -523,7 +529,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
       ship_travel: travel_payload(
         travel_guid: "client-travel-guid-existing-location",
         ship_guid: user_ship.guid,
-        player_guid: user.uid,
+        player_guid: user.twitch_id,
         player_name: user.username,
         from_location: nil,
         to_location: "Nyx Gateway"
@@ -534,7 +540,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     assert_equal nyx_gateway_pyro.name, response_json["destination"]
   end
 
-  test "create uses full parenthetical from location as sync point even when stored location is stale" do
+  test "create rejects a stale full parenthetical source conflicting with stored location" do
     pyro_gateway_stanton = create_gateway("Pyro Gateway (Stanton)", "Stanton")
     everus = Location.create!(
       name: "Everus Harbor",
@@ -565,20 +571,17 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
       ship_travel: travel_payload(
         travel_guid: "client-travel-guid-location-mismatch",
         ship_guid: user_ship.guid,
-        player_guid: user.uid,
+        player_guid: user.twitch_id,
         player_name: user.username,
         from_location: "Pyro Gateway (Stanton)",
         to_location: "Everus Harbor"
       )
     }, as: :json
 
-    assert_response :success
-    assert_equal everus.name, response_json["destination"]
-
-    travel = ShipTravel.find_by!(travel_guid: "client-travel-guid-location-mismatch")
-    assert_equal pyro_gateway_stanton, travel.from_location
-    assert_equal everus, travel.to_location
-    assert_equal pyro_gateway_stanton.name, user_ship.reload.location_name
+    assert_response :unprocessable_entity
+    assert_equal "from_location does not match the player's current location.", response_json["error"]
+    assert_nil ShipTravel.find_by(travel_guid: "client-travel-guid-location-mismatch")
+    assert_equal @to_location.name, user_ship.reload.location_name
   end
 
   test "create infers from and to star system from paired unqualified gateway names" do
@@ -1116,8 +1119,8 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
       post "/api/status", params: status_payload(user, hull_user_ship, hull_e), as: :json
     end
 
-    assert_response :bad_request
-    assert_equal "Ship is at Pyro, but player is at Hurston.", response_json["message"]
+    # Status returns the inventory successfully; remote ships remain unusable.
+    assert_response :success
     assert_equal hurston.name, shard_user.reload.current_location_name
     assert_equal pyro.name, hull_user_ship.reload.location_name
 
@@ -1206,6 +1209,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     )
     new_destination = Location.create!(name: "Lorville", classification: "city", star_system_name: "Stanton")
 
+    RabbitmqSender.stub(:send_ship_report, nil) do
     post "/api/travel", params: {
       ship_travel: travel_payload(
         travel_guid: "after-stale-arrival-travel",
@@ -1216,6 +1220,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
         to_location: new_destination.name
       )
     }, as: :json
+    end
 
     assert_response :success
     refute ShipTravel.exists?(stale_travel.id)
@@ -1241,7 +1246,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :unprocessable_entity
-    assert_equal "Ship location is unknown, please use *status to update ship location.", response_json["error"]
+    assert_equal "Ship location is unknown; initialize the ship with *status before use.", response_json["error"]
     assert_equal @from_location.name, shard_user.reload.current_location_name
   end
 

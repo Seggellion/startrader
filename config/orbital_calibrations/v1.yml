@@ -1,0 +1,204 @@
+---
+version: orbital-v1
+status: approved
+units:
+  distance: Gm
+  mass: kg
+  time: seconds
+  phase: degrees
+provenance:
+  targets: Dustin Hill, 23 October 2026
+  identities: Read-only local and authenticated star-trader production database audits,
+    23 October 2026. ArcCorp source identity requires the guarded NULL-to-4 repair.
+  parameters: Dustin Hill authorized documented simulation parameters in this chat
+    on 23 October 2026. Explicit design choices, not game ephemerides.
+clock:
+  epoch: '2026-10-23T00:00:00Z'
+  origin_tick: 0
+  origin_simulation_seconds: 0
+  simulated_seconds_per_tick: 604800
+bodies:
+- name: Stanton
+  api_id: 68
+  classification: star_system
+  system: Stanton
+  parent:
+  mass_kg: 1.98847e+30
+- name: Pyro
+  api_id: 64
+  classification: star_system
+  system: Pyro
+  parent:
+  mass_kg: 1.590776e+30
+- name: Nyx
+  api_id: 55
+  classification: star_system
+  system: Nyx
+  parent:
+  mass_kg: 2.386164e+30
+- name: Pyro I
+  aliases:
+  - Pyro 1
+  api_id: 240
+  classification: planet
+  system: Pyro
+  parent: Pyro
+  target_distance_gm: 8.2
+  phase_deg: 10
+  apoapsis_gm: 8.2
+  periapsis_gm: 8.2
+- name: Monox
+  aliases:
+  - Pyro 2
+  - Pyro II
+  api_id: 241
+  classification: planet
+  system: Pyro
+  parent: Pyro
+  target_distance_gm: 10.6
+  phase_deg: 80
+  apoapsis_gm: 10.6
+  periapsis_gm: 10.6
+- name: Bloom
+  aliases:
+  - Pyro 3
+  - Pyro III
+  api_id: 242
+  classification: planet
+  system: Pyro
+  parent: Pyro
+  target_distance_gm: 17.8
+  phase_deg: 150
+  apoapsis_gm: 17.8
+  periapsis_gm: 17.8
+- name: Pyro IV
+  aliases:
+  - Pyro 4
+  - P4
+  api_id: 243
+  classification: planet
+  system: Pyro
+  parent: Pyro
+  target_distance_gm: 47.6
+  phase_deg: 35
+  apoapsis_gm: 47.6
+  periapsis_gm: 47.6
+- name: Pyro V
+  aliases:
+  - Pyro 5
+  - P5
+  api_id: 244
+  classification: planet
+  system: Pyro
+  parent: Pyro
+  target_distance_gm: 47.6
+  phase_deg: 215
+  apoapsis_gm: 47.6
+  periapsis_gm: 47.6
+- name: Terminus
+  aliases:
+  - Pyro 6
+  - Pyro VI
+  api_id: 245
+  classification: planet
+  system: Pyro
+  parent: Pyro
+  target_distance_gm: 68.0
+  phase_deg: 300
+  apoapsis_gm: 68.0
+  periapsis_gm: 68.0
+- name: Nyx I
+  aliases:
+  - Nyx 1
+  api_id: 204
+  classification: planet
+  system: Nyx
+  parent: Nyx
+  target_distance_gm: 5.0
+  phase_deg: 20
+  apoapsis_gm: 5.0
+  periapsis_gm: 5.0
+- name: Nyx II
+  aliases:
+  - Nyx 2
+  api_id: 205
+  classification: planet
+  system: Nyx
+  parent: Nyx
+  target_distance_gm: 25.0
+  phase_deg: 200
+  apoapsis_gm: 25.0
+  periapsis_gm: 25.0
+- name: Delamar
+  api_id: 325
+  classification: planet
+  system: Nyx
+  parent: Nyx
+  target_distance_gm: 15.0
+  phase_deg: 110
+  apoapsis_gm: 15.0
+  periapsis_gm: 15.0
+- name: Nyx III
+  aliases:
+  - Nyx 3
+  api_id: 206
+  classification: planet
+  system: Nyx
+  parent: Nyx
+  target_distance_gm: 48.0
+  phase_deg: 290
+  apoapsis_gm: 48.0
+  periapsis_gm: 48.0
+- name: Crusader
+  api_id: 59
+  classification: planet
+  system: Stanton
+  parent: Stanton
+  target_distance_gm: 20.0
+  phase_deg: 75
+  apoapsis_gm: 20.0
+  periapsis_gm: 20.0
+- name: Hurston
+  api_id: 116
+  classification: planet
+  system: Stanton
+  parent: Stanton
+  target_distance_gm: 13.0
+  phase_deg: 0
+  apoapsis_gm: 13.0
+  periapsis_gm: 13.0
+- name: MicroTech
+  aliases:
+  - microTech
+  api_id: 190
+  classification: planet
+  system: Stanton
+  parent: Stanton
+  target_distance_gm: 42.0
+  phase_deg: 250
+  apoapsis_gm: 42.0
+  periapsis_gm: 42.0
+- name: ArcCorp
+  api_id: 4
+  classification: planet
+  system: Stanton
+  parent: Stanton
+  target_distance_gm: 30.0
+  phase_deg: 160
+  apoapsis_gm: 30.0
+  periapsis_gm: 30.0
+- name: Levski
+  api_id: 2
+  classification: city
+  system: Nyx
+  parent: Delamar
+  accepted_raw_parents:
+  - Nyx
+  - Delamar
+  local_offset_gm:
+    x: 0.0
+    "y": 0.0
+    z: 0.0
+  provenance: User-required Delamar inheritance; known local importer parent defect;
+    public parent Delamar
+target_semantics: constant_circular_radius

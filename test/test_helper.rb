@@ -1,6 +1,8 @@
 ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require "rails/test_help"
+require_relative "support/read_only_foreign_key_check"
+require_relative "support/no_real_broker"
 
 module ActiveSupport
   class TestCase
