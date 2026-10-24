@@ -69,6 +69,27 @@ The post-activation read-only aggregate audit retained all five saved paused-sen
 
 Observation completed after **16 minutes 10 seconds**, from activation tick 696781 through tick 696844 (**63 tick advances**). Seven post-activation bounded health samples (nine total) contain no HTTP 5xx, infrastructure error codes or process crashes. Final authenticated release/app/domain/database verification confirms v167, exact source SHA and both processes up. Final independent positions, twelve corrected-position quotes, expected errors and assets pass again. All five saved paused-sentinel records remain unchanged. Production settings remain 15 real seconds and 168 global simulation hours per tick; the existing positive ship speeds remain 2 Gm/tick, with the same one invalid speed retained.
 
-Chrome's connection closed before an optional end-of-window recheck. The completed post-deployment multi-tick measurements, 300 server/mesh comparisons, reload/reconnect and subsequent live Hurston neighbourhood inspection remain valid; no end-of-window browser rerun is claimed. Final production checks use independent HTTP propagation/quotes and read-only infrastructure/database audits. No other browser was used. The temporary preview server was stopped.
+At the original observation closeout, Chrome's connection was unavailable for the optional last browser rerun; the completed earlier qualification and final HTTP/database checks were retained. The subsequent final production Chrome recheck below completes that deferred check. No other browser was used. The temporary preview server remains stopped.
 
 Exact operational identities, timestamps, aggregate fingerprints, safe health summaries and detailed measurements are retained in ignored local operator evidence (`tmp/orbital-rate-closeout.json` and related files); no credentials or player payload logs are published. This closeout changes documentation only and is not redeployed: the running application source remains `682cb21c78344b9ff9b4aba3a8160006207f6d2f`.
+
+
+## Final production Chrome recheck — 23 October 2026 (Pacific)
+
+The deferred final Chrome check is complete. A fresh authenticated app/domain/database/release audit still confirms **v167**, exact running source `682cb21c78344b9ff9b4aba3a8160006207f6d2f`, and both web/worker processes up. This is a documentation-only follow-up; no application deployment or production mutation was needed.
+
+The installed **Google Chrome 155.0.8059.41** binary was verified again and was the only browser used. A fresh live page followed actual tick broadcasts in Stanton, Pyro and Nyx, then reloaded/reconnected and revisited all three systems. Every snapshot retains catalog `orbital-v3:cfc59e789927b6af`, multiplier **0.01**, activation tick **696781**, inherited orbital seconds **421413148800**, and an effective advance of **6048 orbital seconds/tick**. The original anchor remains intact hundreds of ticks after activation.
+
+| System/body | Actual Chrome ticks measured | Measured degrees/tick | Ticks/orbit |
+| --- | --- | ---: | ---: |
+| Pyro / Pyro I | 697355, 697358, 697361 | 4.808626 | 74.865458 |
+| Nyx / Nyx I | 697355, 697358, 697362 | 12.368938 | 29.105166 |
+| Stanton / Hurston | 697355, 697358, 697361 | 2.693282 | 133.665932 |
+
+These angular measurements use actual rendered mesh coordinates and tick differences. Each measured interval is shorter than a complete corrected orbit, avoiding full-turn aliasing; chord lengths are not used. The rates reproduce the prior independently established 0.01 angular ratio and 100-fold periods.
+
+**170 actual rendered mesh positions across 12 snapshots and six distinct ticks** agree with server XYZ and orbital clock metadata at the same tick/version. This includes neighbourhood views at ticks 697366–697367: Arial remains 0.0300 Gm from Hurston, Everus Harbor 0.0014 Gm from Hurston, Vuur 0.3800 Gm from Pyro V, and People's Service Station Lambda 30.0000 Gm from Nyx. No Chrome console errors were observed. A viewport screenshot of the live Hurston neighbourhood was saved locally as `orbital-rate-final-production-recheck.png`.
+
+Independent safe HTTP checks pass again for all 216 locations around the activation boundary, twelve current-position quotes, expected error responses and the served asset. The five saved paused-sentinel journeys still match the original release audit. The bounded infrastructure sample contains no HTTP 5xx or process crashes. It does include one **H27 / Client Request Interrupted** on `GET /locations` with status 200; replacement snapshots loaded and passed comparison. This is consistent with the renderer cancelling a superseded request during navigation/reload. It is retained here rather than claiming that every router error code was absent.
+
+Detailed recheck data, measurements, identity verification and health/travel audit remain in ignored local `tmp/orbital-rate-chrome-recheck-*` evidence. The original test/build results and 16m10s observation above remain historical qualification evidence. The final Chrome limitation is resolved; the running release and phase-safe rollback procedure are unchanged.
