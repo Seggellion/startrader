@@ -322,3 +322,5 @@ Travel closeout: focused 210 tests / 4247 assertions and the required asset buil
 ## Full regression follow-up, 24 October 2026
 
 The 60 remaining legacy failures are resolved; the expanded full suite passes 485 tests / 5575 assertions with zero failures/errors/skips in the required helper and complete `test:all` run. See `STARTRADER_REGRESSION_REPAIR.md` for root causes, retained API/authentication contracts, isolated qualification and guarded cargo-price migration. Orbital and travel timing code is unchanged. This qualification does not deploy or migrate production; a later release must follow the existing identity/integration/migration gates.
+
+Regression closeout: independent trading-only tests pass 99/450; Chrome login, new-item creation, parent updates and reload persistence pass with a clean fresh console. The earlier browser disconnection is resolved. PR #32 contains the implementation and full evidence. No production migration or deployment is performed in this follow-up.
