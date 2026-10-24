@@ -5,7 +5,7 @@ class Tick < ApplicationRecord
 
   after_save :update_market_prices, if: :saved_change_to_current_tick?
 
-  DEFAULT_SECONDS_PER_TICK = 1
+  DEFAULT_SECONDS_PER_TICK = 15
   DEFAULT_HOURS_PER_TICK = 1
 
   def self.seconds_per_tick
@@ -138,7 +138,7 @@ class Tick < ApplicationRecord
   def self.positive_number_setting(key, fallback)
     raw_value = Setting.get(key)
     value = Float(raw_value)
-    return fallback if value <= 0
+    return fallback unless value.finite? && value.positive?
 
     value.to_i == value ? value.to_i : value
   rescue ArgumentError, TypeError
