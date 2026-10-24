@@ -4,10 +4,8 @@ module Admin
     before_action :set_menu_item, only: [:edit, :update, :destroy]
 
     def new
-      @menu = Menu.find(params[:menu_id])
-     # @menu_item = @menu.menu_items.new(parent_name: params[:parent_name])
-     @menu_item = @menu.menu_items.build
-
+      @menu_item = @menu.menu_items.build
+      load_items_for_select
     end
 
     def create
@@ -35,8 +33,8 @@ module Admin
 
     def update_parent
       
-      @menu_item = MenuItem.find(params[:menu_item_id])
-      if @menu_item.update(parent_name: params[:menu_item][:parent_name])
+      @menu_item = @menu.menu_items.find(params[:menu_item_id])
+      if @menu_item.update(parent_id: params[:menu_item][:parent_id])
         render json: { success: true }
       else
         render json: { success: false }
@@ -57,7 +55,7 @@ module Admin
     end
 
     def update_position
-      @menu_item = MenuItem.find(params[:id])
+      @menu_item = @menu.menu_items.find(params[:id])
       @menu_item.insert_at(params[:position].to_i)
       head :ok
     end
@@ -69,7 +67,7 @@ module Admin
     end
 
     def set_menu_item
-      @menu_item = MenuItem.find(params[:id])
+      @menu_item = @menu.menu_items.find(params[:id])
     end
 
     def set_menu
@@ -77,7 +75,7 @@ module Admin
     end
 
     def menu_item_params
-      params.require(:menu_item).permit(:title, :url, :parent_name, :position, :menu_id, :type, :type_id, :item_type, :item_id)
+      params.require(:menu_item).permit(:title, :url, :parent_id, :position, :menu_id, :type, :type_id, :item_type, :item_id)
     end
   end
 end

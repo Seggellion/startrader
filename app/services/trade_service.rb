@@ -729,7 +729,8 @@ class TradeService
 
       requested_shard_uuid = shard
       trade_debug('TradeService.buy before shard lookup', input_summary.merge(requested_shard_uuid: requested_shard_uuid))
-      shard = Shard.find_by(channel_uuid: shard)
+      shard = find_trade_shard(shard)
+      raise ActiveRecord::RecordNotFound, 'Shard not found' unless shard
       trade_debug(
         'TradeService.buy after shard lookup',
         input_summary.merge(
@@ -747,11 +748,11 @@ class TradeService
           user_id: user.id,
           shard_id: shard&.id,
           shard_name: shard_name,
-          lookup_condition: 'LOWER(shard_name) = shard_name.downcase',
+          lookup_condition: 'shard_id = resolved shard id',
           available_shard_users: trade_debug_shard_users_for(user)
         )
       )
-      shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard_name.downcase).first
+      shard_user = user.shard_users.find_by(shard_id: shard.id)
       trade_debug('TradeService.buy after shard_user lookup', input_summary.merge(trade_debug_shard_user_summary(shard_user)))
       raise ShipNotFoundError, "No ship found for user '#{username}'." if shard_user.nil?
 
@@ -966,11 +967,13 @@ class TradeService
     def self.sell(username:, wallet_balance:, commodity_name: nil, scu: nil, shard:)
       user = User.where("LOWER(username) = ?", username.downcase).first!
       
-      shard = Shard.find_by(channel_uuid: shard)
+      shard = find_trade_shard(shard)
+      raise ActiveRecord::RecordNotFound, 'Shard not found' unless shard
       
       shard_name = shard.name  
-      shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard_name.downcase).first
+      shard_user = user.shard_users.find_by(shard_id: shard.id)
     
+      raise ShipNotFoundError, "No ship found for user '#{username}'." unless shard_user
       user_ship = shard_user.user_ships.order(updated_at: :desc).first
       raise ShipNotFoundError, "No ship found for user '#{username}'." unless user_ship
     
@@ -1048,9 +1051,10 @@ class TradeService
 
     def self.list_sellable_commodities(username:, shard:)
       user = User.where("LOWER(username) = ?", username.downcase).first!
-      shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard.downcase).first
-      raise ShipNotFoundError, "No ship found for user '#{username}'." if shard_user.nil?
-
+      shard_record = find_trade_shard(shard)
+      raise ActiveRecord::RecordNotFound, 'Shard not found' unless shard_record
+      shard_user = user.shard_users.find_by(shard_id: shard_record.id)
+      raise ShipNotFoundError, "No ship found for user '#{username}'." unless shard_user
       user_ship = shard_user.user_ships.order(updated_at: :desc).first
       raise ShipNotFoundError, "No ship found for user '#{username}'." unless user_ship
 
@@ -1154,11 +1158,11 @@ class TradeService
             user_id: user.id,
             shard_id: shard&.id,
             shard_name: shard_name,
-            lookup_condition: 'LOWER(shard_name) = shard_name.downcase',
+            lookup_condition: 'shard_id = resolved shard id',
             available_shard_users: trade_debug_shard_users_for(user)
           )
         )
-        shard_user = user.shard_users.where("LOWER(shard_name) = ?", shard_name.downcase).first
+        shard_user = user.shard_users.find_by(shard_id: shard.id)
         trade_debug('TradeService.list_available_commodities after shard_user lookup', input_summary.merge(trade_debug_shard_user_summary(shard_user)))
 
         trade_debug(

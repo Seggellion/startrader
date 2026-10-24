@@ -128,6 +128,19 @@ class ShardUserTest < ActiveSupport::TestCase
     add_unique_index(connection, index_name)
   end
 
+  test "JSON stores read and preserve both native and legacy string representations" do
+    fields = { inventory: { "Agricium" => 3 }, currency: { "UEC" => 50 },
+               stats: { "rank" => "hauler" }, last_location: { "name" => "Area18" } }
+    [fields, fields.transform_values(&:to_json)].each do |stored|
+      EnforceUniqueShardUsersPerUserAndShard::ShardUserRecord.where(id: @shard_user.id).update_all(stored)
+      @shard_user.reload
+      fields.each { |key, value| assert_equal value, @shard_user.public_send(key) }
+      @shard_user.update!(wallet_balance: 100)
+      @shard_user.reload
+      fields.each { |key, value| assert_equal value, @shard_user.public_send(key) }
+    end
+  end
+
   private
 
   def create_user_ship(shard_user, guid:)
@@ -181,7 +194,7 @@ class ShardUserTest < ActiveSupport::TestCase
   end
 
   def remove_unique_index(connection, index_name)
-    connection.remove_index(:shard_users, name: index_name) if connection.index_exists?(:shard_users, name: index_name)
+    connection.remove_index(:shard_users, name: index_name) if connection.index_exists?(:shard_users, [:user_id, :shard_id], name: index_name)
   end
 
   def add_unique_index(connection, index_name)

@@ -1,6 +1,8 @@
 require "test_helper"
 
 class Admin::CitiesControllerTest < ActionDispatch::IntegrationTest
+  setup { sign_in_admin }
+
   test "raw json import redirects with success flash when records import" do
     Admin::Data::CitiesImporter.stub :import_raw_json!, 2 do
       post import_raw_json_admin_cities_url, params: { raw_json: "[]" }

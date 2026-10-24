@@ -278,8 +278,8 @@ class TradeServiceTest < ActiveSupport::TestCase
     assert_equal(
       [
         :arrival_tick,
-        :available_cargo_space,
         :available_at_player_location,
+        :available_cargo_space,
         :current_tick,
         :from_location,
         :location,
@@ -446,19 +446,19 @@ class TradeServiceTest < ActiveSupport::TestCase
     assert_equal shard_user, user_ship.shard_user
   end
 
-  test "status treats same player name with different player guid as different user" do
-    result = TradeService.status(
-      **status_payload(
-        ship_guid: "same-name-new-player-ship-guid",
-        player_guid: "different-player-guid",
-        player_name: @user.username
-      )
-    )
-
-    new_user = User.find_by!(twitch_id: "different-player-guid")
-    assert_equal "success", result[:status]
-    refute_equal @user.id, new_user.id
-    assert_equal @user.username, new_user.username
+  test "status rejects a conflicting name without reassigning the original player" do
+    original_user = @user.attributes
+    original_ship = @user_ship.attributes
+    assert_no_difference ["User.count", "ShardUser.count", "UserShip.count"] do
+      error = assert_raises(ActiveRecord::RecordInvalid) do
+        TradeService.status(**status_payload(ship_guid: "conflicting-player-ship-guid",
+                                            player_guid: "different-player-guid",
+                                            player_name: @user.username.swapcase))
+      end
+      assert_includes error.record.errors[:username], "has already been taken"
+    end
+    assert_equal original_user, @user.reload.attributes
+    assert_equal original_ship, @user_ship.reload.attributes
   end
 
   test "repeated status calls for same new ship guid do not create duplicates" do
@@ -790,6 +790,24 @@ class TradeServiceTest < ActiveSupport::TestCase
     end
 
     assert_equal "No matching facility found for Orison and Agricium.", error.message
+  end
+
+  test "shard UUID and legacy name resolve to the same sell listing after a rename" do
+    @shard.update!(name: "Renamed shard")
+    expected = TradeService.list_sellable_commodities(username: @user.username, shard: @shard.channel_uuid)
+    assert_equal "success", expected[:status]
+    assert_equal expected, TradeService.list_sellable_commodities(username: @user.username, shard: "renamed SHARD")
+  end
+
+  test "buy rejects an unknown shard without changing wallet or cargo" do
+    before = @shard_user.wallet_balance
+    assert_no_difference "UserShipCargo.count" do
+      assert_raises(ActiveRecord::RecordNotFound) do
+        TradeService.buy(username: @user.username, wallet_balance: 1, commodity_name: @terminal_buy_commodity.name,
+                         scu: 1, shard: "missing-shard", ship_guid: @user_ship.guid, ship_slug: @ship.slug)
+      end
+    end
+    assert_equal before, @shard_user.reload.wallet_balance
   end
 
   private

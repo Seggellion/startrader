@@ -89,3 +89,7 @@ Before any candidate push, the old v167 worker crashed on startup with **PG::Con
 Recorded source rollback is `heroku rollback v167 --app star-trader`, after reconfirming the persisted 15-second real setting. v167 reads the same orbital catalog and anchored schedule, so this travel-only rollback preserves coherent celestial phase without rebasing. It restores the old future-departure travel calculator; it must not recalculate saved journeys. Revalidate actual rollback slug, processes, same-tick positions, schedule anchor and unfinished travel fingerprint. No rollback or database reversal was needed during this release.
 
 Detailed operational identities, aggregate journey fingerprints, baseline diagnostics, Chrome snapshots and test/audit logs remain in ignored operator evidence. The local viewport proof is `travel-timing-production.png`. No credentials, database identity or journey fingerprint are published here.
+
+### Full regression follow-up, 24 October 2026
+
+The previously reported 60 failing identities are resolved in the subsequent test-repair work documented in `STARTRADER_REGRESSION_REPAIR.md`: the expanded suite passes 485 tests / 5575 assertions, with zero failures, errors or skips, including a complete `test:all` run under a different randomized order. Calibrated orbital and ordinary-travel timing source remain unchanged. These are later local qualification results; the historical v168 release results above are preserved. No production deployment is claimed for the follow-up.

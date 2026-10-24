@@ -1,6 +1,8 @@
 require "test_helper"
 
 class Admin::ProductionFacilitiesControllerTest < ActionDispatch::IntegrationTest
+  setup { sign_in_admin }
+
   test "raw json import redirects with success flash when records import" do
     Admin::Data::FacilitiesPopulator.stub :import_raw_json!, 2 do
       post import_raw_json_admin_production_facilities_url, params: { raw_json: "[]" }

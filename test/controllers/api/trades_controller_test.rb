@@ -273,7 +273,7 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
       TradeService.stub(:list_sellable_commodities, ->(username:, shard:) {
         called = true
         assert_equal @user.username, username
-        assert_equal @shard.name, shard
+        assert_equal @shard.channel_uuid, shard
         {
           status: "success",
           message: "Commodities available to sell at #{@location.name}.",
@@ -450,8 +450,8 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     assert_equal(
       [
         "arrival_tick",
-        "available_cargo_space",
         "available_at_player_location",
+        "available_cargo_space",
         "current_tick",
         "from_location",
         "location",
