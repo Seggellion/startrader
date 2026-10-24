@@ -23,6 +23,10 @@ class Api::OrbitalIntegrationTest < ActionDispatch::IntegrationTest
     assert_equal OrbitalState.catalog.version, body['catalog_version']
     expected = Math.sqrt(569 - 520 * Math.cos(75 * Math::PI / 180))
     assert_in_delta expected, body['distance'], 1e-9
+    assert_equal 1.0,body['travel_speed_gm_per_tick']
+    assert_equal [expected.ceil,2].max,body['travel_duration_ticks']
+    assert_equal 15,body['seconds_per_tick']
+    assert_equal body['travel_duration_ticks']*15,body['nominal_travel_seconds']
     assert_in_delta 13, body['from_position_gm']['x'], 1e-9
   end
 
@@ -81,7 +85,7 @@ class Api::OrbitalIntegrationTest < ActionDispatch::IntegrationTest
       assert_equal quote[key],row[key]
     end
     assert_equal quote['from_position_gm'],row['position_gm']
-    assert_equal [(quote['distance']/2).ceil,2].max,
+    assert_equal [quote['distance'].ceil,2].max,
       TravelTimeCalculator.new(ship:Ship.new(speed:2),from_location:from,to_location:to,start_tick:tick).calculate
     broadcasts=[]; server=Object.new
     server.define_singleton_method(:broadcast) { |channel,payload| broadcasts << payload if channel=='tick' }
@@ -95,12 +99,10 @@ class Api::OrbitalIntegrationTest < ActionDispatch::IntegrationTest
     assert_equal tick,Tick.order(:id).pick(:current_tick)
   end
 
-  test 'duration consumes physical distance and validates speed without a fivefold rewrite' do
+  test 'duration consumes physical distance at one Gm per tick despite raw ship speed' do
     from = Location.find_by!(name: 'Pyro IV'); to = Location.find_by!(name: 'Pyro V')
-    assert_equal 48, TravelTimeCalculator.new(ship: Ship.new(speed: 2), from_location: from, to_location: to, start_tick: 0).calculate
-    assert_raises(ArgumentError) do
-      TravelTimeCalculator.new(ship: Ship.new(speed: 0), from_location: from, to_location: to, start_tick: 0).calculate
-    end
+    assert_equal 96, TravelTimeCalculator.new(ship: Ship.new(speed: 2), from_location: from, to_location: to, start_tick: 0).calculate
+    assert_equal 96, TravelTimeCalculator.new(ship: Ship.new(speed: 0), from_location: from, to_location: to, start_tick: 0).calculate
   end
 
   test 'nested quotes compose planet moon and station positions using one tick' do
@@ -123,7 +125,7 @@ class Api::OrbitalIntegrationTest < ActionDispatch::IntegrationTest
     assert_equal 'coorbital',station['orbital-model']
     assert_equal 0.98,station['coorbital']['radial_factor']
     ship=Struct.new(:speed).new(0.001)
-    assert_equal 30,TravelTimeCalculator.new(ship:ship,from_location:Location.find_by!(name:'Hurston'),to_location:Location.find_by!(name:'Arial'),start_tick:0).calculate
+    assert_equal 2,TravelTimeCalculator.new(ship:ship,from_location:Location.find_by!(name:'Hurston'),to_location:Location.find_by!(name:'Arial'),start_tick:0).calculate
   end
 
   test 'new travel uses canonical aliases and physical distance without changing saved journeys' do
@@ -140,8 +142,13 @@ class Api::OrbitalIntegrationTest < ActionDispatch::IntegrationTest
       shard_uuid:shard.channel_uuid, from_location:'P4', to_location:'P5', travel_guid:'orbital-journey'}}, as: :json
     assert_response :success
     journey = ShipTravel.find_by!(travel_guid:'orbital-journey')
-    assert_equal 48, journey.total_duration_ticks
-    assert_equal 48, journey.arrival_tick
+    assert_equal 96, journey.total_duration_ticks
+    assert_equal 96, journey.arrival_tick
+    response_data=response.parsed_body
+    assert_equal 1.0,response_data['travel_speed_gm_per_tick']
+    assert_equal journey.departure_tick,response_data['departure_tick']
+    assert_equal 96,response_data['travel_duration_ticks']
+    assert_equal 1440,response_data['nominal_travel_seconds']
     assert_equal 'dev', journey.rabbitmq_environment
     assert_equal from.id, journey.from_location_id
     assert_equal to.id, journey.to_location_id

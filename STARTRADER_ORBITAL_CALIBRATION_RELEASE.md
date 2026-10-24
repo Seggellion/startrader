@@ -91,3 +91,5 @@ The subsequent nested-orbit release is recorded in `STARTRADER_NESTED_ORBITS.md`
 
 
 Final production Chrome recheck completed on 23 October 2026 (Pacific): all three systems across actual ticks, reload/reconnect, moon/station neighbourhoods and 170 same-tick rendered-mesh/server comparisons pass. Multiplier 0.01 and the original anchor are retained, with no Chrome console errors. Twelve live quotes and unchanged saved journeys were revalidated. The earlier deferred browser check is resolved; detailed rates and the bounded client-interruption exception are recorded in `STARTRADER_ORBITAL_RATE_CORRECTION.md`. Production remains v167 at source `682cb21c78344b9ff9b4aba3a8160006207f6d2f`; this evidence update is not redeployed.
+
+Travel timing follow-up, 24 October 2026: see `STARTRADER_TRAVEL_TIMING_RELEASE.md` for the requested uniform 1 Gm/tick ordinary policy and 15-second real cadence, deterministic actual-Tick arrival tests, route samples and release/rollback evidence. This supersedes the historical use of each ship's numeric reference speed for new ordinary journeys; it preserves saved journey timing and all orbital calibration/slowdown parameters.

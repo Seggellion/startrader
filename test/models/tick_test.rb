@@ -26,16 +26,19 @@ class TickTest < ActiveSupport::TestCase
   end
 
   test "seconds_per_tick falls back safely for missing blank zero and invalid settings" do
-    assert_equal 1, Tick.seconds_per_tick
+    assert_equal 15, Tick.seconds_per_tick
 
     Setting.create!(key: "seconds_per_tick", value: "", setting_type: "text")
-    assert_equal 1, Tick.seconds_per_tick
+    assert_equal 15, Tick.seconds_per_tick
 
     Setting.find_by!(key: "seconds_per_tick").update!(value: "0")
-    assert_equal 1, Tick.seconds_per_tick
+    assert_equal 15, Tick.seconds_per_tick
 
     Setting.find_by!(key: "seconds_per_tick").update!(value: "not-a-number")
-    assert_equal 1, Tick.seconds_per_tick
+    assert_equal 15, Tick.seconds_per_tick
+
+    Setting.find_by!(key: "seconds_per_tick").update!(value: "1e1000")
+    assert_equal 15, Tick.seconds_per_tick
   end
 
   test "simulated seconds per tick is separate from real seconds per tick" do

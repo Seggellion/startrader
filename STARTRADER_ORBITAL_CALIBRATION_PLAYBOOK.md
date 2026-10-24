@@ -312,3 +312,7 @@ Status: complete. Production v167, source `682cb21c78344b9ff9b4aba3a8160006207f6
 
 
 Final Chrome follow-up: complete, 23 October 2026 (Pacific). Fresh production identity still confirms v167 and the same source/catalog. Actual tick movement in all three systems, reload/reconnect, moon/station views and 170 server/mesh comparisons pass; the deferred final browser check is resolved. See `STARTRADER_ORBITAL_RATE_CORRECTION.md` for rates and the retained client-request interruption detail. Documentation only; no new deployment or production mutation.
+
+## Travel timing follow-up, 24 October 2026
+
+Status: candidate qualified; integration/deployment pending. `STARTRADER_TRAVEL_TIMING_RELEASE.md` records the uniform 1 physical Gm/tick policy, retained 15-second real setting, corrected fallback, actual TickJob/arrival simulation, fixed-tick routes and source-only rollback. The old numeric ship-speed compatibility decision is superseded for new ordinary travel; raw speeds are reference metadata. Saved journeys and the orbital 0.01 schedule remain unchanged. Per the explicit current request, prove arrival with controlled time and queued work, then use bounded non-mutating production checks; do not wait for 7–10 minute trips or accelerate production ticks.

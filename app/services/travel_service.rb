@@ -18,7 +18,8 @@ class TravelService
 
   def call
     raise ArgumentError, "travel_guid is required." if travel_guid.blank?
-    raise "Already in transit" if ShipAvailability.new(shard_user: user_ship.shard_user, user_ship: user_ship).in_transit?
+    start_tick = @start_tick || OrbitalState.current_tick!
+    raise "Already in transit" if ShipAvailability.new(shard_user: user_ship.shard_user, user_ship: user_ship, current_tick: start_tick).in_transit?
     raise "Current location not found for ship." if @from_location.nil?
     raise "Ship is already at that location." if @from_location&.id == to_location.id
 
@@ -27,22 +28,18 @@ class TravelService
       raise "Ship is at #{stored_location.name}, not #{@from_location.name}."
     end
 
-    start_tick = @start_tick || Tick.current
-    
-    # 1. Get the raw calculated duration
-    calculated_duration = TravelTimeCalculator.new(
+    # Physical separation and validation use this one captured departure tick.
+    # The calculator owns the 1 Gm/tick, ceiling and minimum-duration policy.
+    duration = TravelTimeCalculator.new(
       ship: user_ship.ship,
       from_location: @from_location,
       to_location: to_location,
       start_tick: start_tick
     ).calculate
 
-    # 2. Enforce the minimum 2-tick travel time constraint
-    duration = [calculated_duration, 2].max
-
     arrival_tick = start_tick + duration
 
-    # 3. Create the travel record with the validated duration
+    # Saved journeys retain these values independently of later rates.
     travel = ShipTravel.create!(
       user_ship: user_ship,
       from_location: @from_location,

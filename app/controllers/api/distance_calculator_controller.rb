@@ -1,3 +1,5 @@
+require_relative '../../../lib/travel_timing'
+
 module Api
   class DistanceCalculatorController < ApplicationController
     skip_before_action :verify_authenticity_token
@@ -9,7 +11,8 @@ module Api
       tick = OrbitalState.current_tick!
       state = OrbitalState.snapshot(tick: tick, systems: [from.star_system_name, to.star_system_name])
       distance = state.distance(from.id, to.id)
-      render json: state.metadata.merge(from: from.name, to: to.name, from_id: from.id, to_id: to.id,
+      timing = TravelTiming.metadata(duration_ticks: TravelTiming.duration_ticks(distance), seconds_per_tick: Tick.seconds_per_tick)
+      render json: state.metadata.merge(timing).merge(from: from.name, to: to.name, from_id: from.id, to_id: to.id,
         coordinate_frame: "star-centered:#{from.star_system_name}",
         from_point_reference: state.report(from.id)[:point_reference], to_point_reference: state.report(to.id)[:point_reference],
         system: from.star_system_name, from_position_gm: state.position(from.id),

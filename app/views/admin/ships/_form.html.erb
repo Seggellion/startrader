@@ -129,11 +129,12 @@
             <% end %>
             <% fuel_integer_fields.each do |field| %>
               <div>
-                <%= form.label field, field.to_s.humanize, class: label_class %>
+                <%= form.label field, field == :speed ? "Legacy reference speed" : field.to_s.humanize, class: label_class %>
                 <%= form.number_field field, step: 1, class: input_class %>
               </div>
             <% end %>
           </div>
+          <p class="mt-3 text-sm text-slate-400">Ordinary travel uses <%= TravelTiming::SPEED_GM_PER_TICK %> physical Gm per tick for every ship. Reference speed fields do not change travel duration.</p>
         </section>
 
         <section class="<%= section_class %>">

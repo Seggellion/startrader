@@ -17,11 +17,16 @@ class ShipArrivalJobTest < ActiveJob::TestCase
       user_type: "player"
     )
     @ship = Ship.create!(model: "Drake Cutter", slug: "drake-cutter", scu: 4, speed: 100)
+    @shard = Shard.create!(name:'Arrival Test',region:'us',channel_uuid:'arrival-test')
+    @shard_user = ShardUser.create!(user:@user,shard:@shard,shard_name:@shard.name)
     @from_location = Location.create!(name: "Orison", classification: "city", star_system_name: "Stanton")
     @to_location = Location.create!(name: "Area18", classification: "city", star_system_name: "Stanton")
     @user_ship = UserShip.create!(
       user: @user,
       ship: @ship,
+      shard: @shard,
+      shard_user: @shard_user,
+      shard_name: @shard.name,
       guid: "ship-guid",
       ship_slug: @ship.slug,
       location: @from_location,
@@ -155,6 +160,9 @@ class ShipArrivalJobTest < ActiveJob::TestCase
     UserShip.create!(
       user: @user,
       ship: @ship,
+      shard: @shard,
+      shard_user: @shard_user,
+      shard_name: @shard.name,
       guid: guid,
       ship_slug: @ship.slug,
       location: @from_location,

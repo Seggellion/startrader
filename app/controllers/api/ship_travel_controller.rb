@@ -1,3 +1,5 @@
+require_relative '../../../lib/travel_timing'
+
 # app/controllers/api/ship_travel_controller.rb
 module Api
   class ShipTravelController < ApplicationController
@@ -107,6 +109,8 @@ module Api
         travel_guid: permitted_params[:travel_guid],
         rabbitmq_environment: rabbitmq_environment
       ).call
+      response_tick = OrbitalState.current_tick!
+      timing = TravelTiming.metadata(duration_ticks: travel.total_duration_ticks, seconds_per_tick: Tick.seconds_per_tick)
       render json: {
         status:        "travel_started",
         rabbitmq:      travel.rabbitmq_environment,
@@ -114,11 +118,12 @@ module Api
         user_ship_id:  user_ship.id,
         travel_guid:   travel.travel_guid,
         destination:   destination.name,
-        current_tick:  Tick.current,
+        current_tick:  response_tick,
+        departure_tick: travel.departure_tick,
         arrival_tick:  travel.arrival_tick,
-        time_remaining: travel&.seconds_remaining(Tick.current),
+        time_remaining: travel.seconds_remaining(response_tick),
         player_location: availability.player_location&.name
-      }
+      }.merge(timing)
     rescue StandardError => e
       render json: { error: e.message }, status: :unprocessable_entity
     end
