@@ -1,6 +1,8 @@
 require "test_helper"
 
 class Admin::TerminalsControllerTest < ActionDispatch::IntegrationTest
+  setup { sign_in_admin }
+
   test "raw json import redirects with success flash when records import" do
     Admin::Data::TerminalsImporter.stub :import_raw_json!, 2 do
       post import_raw_json_admin_terminals_url, params: { raw_json: "[]" }

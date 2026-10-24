@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_18_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_10_24_170000) do
   create_schema "cable"
 
   # These are extensions that must be enabled in order to support this database
@@ -656,8 +656,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_18_120000) do
     t.bigint "user_ship_id", null: false
     t.bigint "commodity_id", null: false
     t.integer "scu", default: 0
-    t.decimal "buy_price", precision: 10, scale: 2
-    t.decimal "sell_price", precision: 10, scale: 2
+    t.decimal "buy_price", precision: 15, scale: 2
+    t.decimal "sell_price", precision: 15, scale: 2
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "commodity_name"

@@ -1,4 +1,5 @@
 require "test_helper"
+require Rails.root.join("db/migrate/20261024170000_widen_cargo_unit_prices").to_s
 
 class UserShipCargoTest < ActiveSupport::TestCase
   setup do
@@ -115,4 +116,26 @@ class UserShipCargoTest < ActiveSupport::TestCase
     assert_equal 0, @user_ship.reload.used_scu
     assert_equal 4, other_ship.reload.used_scu
   end
+  test "catalog-sized cargo prices retain cents and block unsafe schema narrowing" do
+    cargo = UserShipCargo.create!(user_ship: @user_ship, commodity: @commodity, scu: 1,
+                                 buy_price: 307_889_769.12, sell_price: 400_000_000.34)
+    assert_equal "307889769.12".to_d, cargo.reload.buy_price
+    assert_equal "400000000.34".to_d, cargo.sell_price
+    assert_raises(ActiveRecord::IrreversibleMigration) { WidenCargoUnitPrices.new.down }
+    assert_equal "400000000.34".to_d, cargo.reload.sell_price
+  end
+
+  test "cargo precision migration reverses when all prices fit" do
+    migration = WidenCargoUnitPrices.new
+    begin
+      migration.suppress_messages { migration.down }
+      UserShipCargo.reset_column_information
+      assert_equal 10, UserShipCargo.columns_hash.fetch("sell_price").precision
+    ensure
+      migration.suppress_messages { migration.up }
+      UserShipCargo.reset_column_information
+    end
+    assert_equal 15, UserShipCargo.columns_hash.fetch("sell_price").precision
+  end
+
 end

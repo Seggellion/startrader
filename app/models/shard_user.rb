@@ -2,11 +2,23 @@ class ShardUser < ApplicationRecord
   belongs_to :user
   belongs_to :shard, optional: true
 
+  # Old app writes are JSON strings inside JSON columns; cleanup writes native
+  # objects. Read both without changing existing records or their write format.
+  class JsonStoreCoder
+    def self.load(value)
+      value.is_a?(Hash) ? value : JSON.load(value)
+    end
+
+    def self.dump(value)
+      JSON.dump(value)
+    end
+  end
+
   # Store inventory and currency as JSON
-  store :inventory, coder: JSON
-  store :currency, coder: JSON # ✅ Add missing store declaration
-  store :stats, coder: JSON
-  store :last_location, coder: JSON
+  store :inventory, coder: JsonStoreCoder
+  store :currency, coder: JsonStoreCoder # ✅ Add missing store declaration
+  store :stats, coder: JsonStoreCoder
+  store :last_location, coder: JsonStoreCoder
 
   has_many :shard_user_skills, dependent: :delete_all
   has_many :user_ships, dependent: :destroy
