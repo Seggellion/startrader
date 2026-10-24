@@ -1,6 +1,6 @@
 # Travel timing calibration
 
-24 October 2026 (America/Vancouver). Candidate qualified; production integration and verification pending. This follows the completed orbital calibration, 0.01 orbital slowdown and final Chrome recheck.
+24 October 2026 (America/Vancouver). Complete. Production **v168**, source **`9bc1d17614e667b1226671e413d4e5591d9b3380`**, is deployed and verified. This follows the completed orbital calibration, 0.01 orbital slowdown and final Chrome recheck.
 
 ## Audit and correction
 
@@ -36,7 +36,7 @@ The terminating Rails/Tailwind asset build passes, retaining the existing Browse
 
 ## Actual route samples
 
-These are actual celestial routes at fixed tick **701104**, catalog **orbital-v3:cfc59e789927b6af**, using candidate ordinary rate **1 Gm/tick** and real step **15 seconds**. The pure audit's composed positions were independently compared with current production server snapshots at that same tick/version. They are not synthetic 30 Gm fixtures or historical live travel departures.
+These are actual celestial routes at fixed tick **701104**, catalog **orbital-v3:cfc59e789927b6af**, using the deployed ordinary rate **1 Gm/tick** and real step **15 seconds**. The pure audit ran in the deployed v168 process against a read-only database snapshot. All five distances, timing fields and clock metadata match the qualified candidate audit; composed positions were independently compared with production server snapshots at that same tick/version. They are not synthetic 30 Gm fixtures or historical live travel departures.
 
 | System / route | Physical Gm | Effective Gm/tick | Ticks | Nominal real time |
 | --- | ---: | ---: | ---: | --- |
@@ -54,4 +54,38 @@ Integrate a qualified exact SHA through the normal PR process, recheck app/domai
 
 Rollback is source-only to the recorded v167 release, after confirming the real persisted tick setting is still 15. Both source versions read the identical v3 orbital schedule, so phase and its activation anchor remain coherent. New journeys created under the correction retain their saved longer arrivals even if the old source is restored; resumed journeys retain saved remaining ticks. Do not recompute existing durations, clear queues, reset ticks, restore the database or apply the earlier orbital rate reversal. Rolling back ordinary travel restores the prior calculator for future departures only. Verify slug/process identity, same-tick orbital coordinates and saved journey state afterward.
 
-Production release/SHA and verification results will be appended after deployment. Detailed operational identities, aggregate journey fingerprints and local test/audit logs remain in ignored operator evidence.
+### Verified release
+
+Implementation [PR #30](https://github.com/Seggellion/startrader/pull/30) integrated as `9bc1d17614e667b1226671e413d4e5591d9b3380`. The exact integrated SHA passed the focused 210-test / 4247-assertion qualification and was pushed through the established Heroku Git deployment route. The build completed, and authenticated release/slug inspection confirmed **v168 at that exact SHA** on the verified production app/domain/database binding, with web and worker up. Final identity verification repeated successfully. This is runtime verification beyond a successful push. This documentation closeout is not redeployed.
+
+Live non-mutating checks on 24 October 2026 confirm:
+
+- Five current-position quotes expose **1 physical Gm/tick**, **15 real seconds/tick**, `max(ceil(distance), 2)` ticks and duration × 15 nominal seconds. Returned distance matches endpoint XYZ separation. Cross-system input returns 422 and stale catalog returns 409 as expected.
+- All **216 complete celestial snapshots** at tick 701104 match the pre-release v167 snapshots, including physical positions, source attributes, units, version and orbital schedule metadata. This travel correction introduces no positional jump or geometry change. The v3 catalog, 0.01 multiplier and activation anchor remain identical.
+- The deployed read-only audit reproduces every route in the table above. No production test journey, artificial tick, arrival-processing probe or manual clock acceleration was used.
+- The five unfinished paused journeys retain the same saved state and sentinel fields; there are zero active journeys in these audit snapshots. The unfinished-record aggregate fingerprint matches the predeploy baseline. Actual arrival proof therefore comes from the isolated Tick pipeline, not a claim that a live test trip completed.
+- Persisted real/simulation settings remain 15 seconds / 168 hours. Raw ship references remain 241 speeds of 2 and one NULL. One pending/future TickJob remains; its observed scheduled `run_at - created_at` is **14.999312 seconds**, consistent with the controlled-clock scheduling assertions and normal timestamp-writing latency. The actual worker tick advances normally.
+
+Three bounded infrastructure health samples captured normal tick progression from 701153 to 701167. The final retained post-identity sample contains 125 router events: 68 HTTP 200, 9 websocket 101, 46 HTTP 304, and the deliberately tested 422/409. No router infrastructure error code, HTTP 5xx, web/worker crash or restart appears in these bounded samples. This is a bounded verification window, not a claim of indefinite monitoring or a repeat of the historical 15-minute orbital observation.
+
+### Google Chrome recheck
+
+Google Chrome **155.0.8059.41** inspected all three production systems, two reloads, subsequent actual ticks and the Hurston moon/station neighbourhood. **106 rendered mesh positions across seven snapshots and four distinct ticks** match server XYZ and clock metadata at the identical tick/version. The console error check is empty. Arial remains 0.0300 Gm and Everus Harbor 0.0014 Gm from Hurston; the map labels retain physical Gm.
+
+| Representative body | Actual Chrome tick interval | Measured degrees/tick | Ticks/orbit |
+| --- | --- | ---: | ---: |
+| Pyro I | 701158–701163 | 4.808626 | 74.865458 |
+| Nyx I | 701158–701163 | 12.368938 | 29.105166 |
+| Hurston (Stanton) | 701156–701161 | 2.693282 | 133.665932 |
+
+Angles use successive rendered XYZ positions over intervals shorter than half an orbit; they do not infer angular speed from chord displacement. These reproduce the completed orbital slowdown release's rates: this release adds no second orbital slowdown. Reload and source deployment preserve the existing phase anchor.
+
+### Pre-release baseline incident
+
+Before any candidate push, the old v167 worker crashed on startup with **PG::ConnectionBad**, classified from bounded diagnostics as a refused database connection. Read-only SQL recovered; the failed worker alone was restarted, and v167 identity plus both processes were revalidated healthy before deploying v168. No database restart, setting change, queue clearing or travel mutation was performed. The cause beyond the observed connection refusal is unproven. This baseline incident is separate from the healthy post-v168 samples above.
+
+### Operational rollback
+
+Recorded source rollback is `heroku rollback v167 --app star-trader`, after reconfirming the persisted 15-second real setting. v167 reads the same orbital catalog and anchored schedule, so this travel-only rollback preserves coherent celestial phase without rebasing. It restores the old future-departure travel calculator; it must not recalculate saved journeys. Revalidate actual rollback slug, processes, same-tick positions, schedule anchor and unfinished travel fingerprint. No rollback or database reversal was needed during this release.
+
+Detailed operational identities, aggregate journey fingerprints, baseline diagnostics, Chrome snapshots and test/audit logs remain in ignored operator evidence. The local viewport proof is `travel-timing-production.png`. No credentials, database identity or journey fingerprint are published here.
