@@ -1,80 +1,101 @@
 # StarTrader terminal filter release evidence
 
-24 October 2026 (America/Vancouver). **v169 rolled back as v170; full-GET history replacement qualified locally and awaiting integration.** M0 discovery is retained at repository root. Implementation contract: [playbook](STARTRADER_TERMINAL_FILTER_PLAYBOOK.md).
+24 October 2026 (America/Vancouver). **M1–M7 complete: production v171 verified.** [Live market](https://startrader.altama.energy/market) · [playbook](STARTRADER_TERMINAL_FILTER_PLAYBOOK.md) · [live evidence](STARTRADER_TERMINAL_FILTER_LIVE.json).
 
-## Release boundary
+## Delivered behavior
 
-Production was freshly verified as Heroku `star-trader`, custom domain `startrader.altama.energy`, database add-on `postgresql-metric-14477`, successful **v168**, full slug commit **9bc1d17614e667b1226671e413d4e5591d9b3380**, with web and worker up. Exact operational identity is retained in ignored `tmp/terminal-preflight.json`. This is a starting baseline, not a claim that it cannot change before deployment.
+A bounded remote Terminal combobox below Star System stages selection until explicit Apply. Applied external terminal identity produces player-facing Buy then Sell groups, full filtered counts, overlap and independent 50-row pages. Missing quotes and optional Commodity associations remain visible; no selected terminal keeps the legacy feed. Scoped invalidation and explicit Refresh preserve drafts, focus and scroll. Paging uses normal Turbo Drive GET navigation, the playbook's history fallback; map/details reinitialize on page visits.
 
-The production release line starts at that deployed commit. Origin/main already contains separate regression repair and cargo-price widening; those application/schema changes must not enter this deployment. The feature is also forward-ported through a normal mainline PR so future integration retains it. Production deploys only the separately qualified release-branch merge SHA.
+## Actual release and integration
 
-Implementation commits: M1 `a7d1de0`; M2 `99b019b5b87056d0aaa0823028afcc99679e6e18`; M3 `d1d40dd9875e138d326e3c758c3dd2465d262dd4`; M4 `88470962872c5ede687a4ca65f577412a15261a6`. Exact PRs, integrated candidate and actual deployed SHA will be recorded below after integration.
+| Item | Verified value |
+| --- | --- |
+| Application | Heroku star-trader, UUID 6b362b75-1732-42a4-9888-669a393f7f82 |
+| Public domain | startrader.altama.energy |
+| Database add-on | postgresql-metric-14477; PostgreSQL 16.14 |
+| Release | **v171**, succeeded, created 2026-10-25T02:50:55Z |
+| Full deployed source | **4d2d7cb97bea19f629a8f71262eaabf10748ebb8** |
+| Production integration | [PR #33](https://github.com/Seggellion/startrader/pull/33), then history fix [PR #35](https://github.com/Seggellion/startrader/pull/35) |
+| Mainline integration | [PR #34](https://github.com/Seggellion/startrader/pull/34), then [PR #36](https://github.com/Seggellion/startrader/pull/36), merge 8eeee1e147f1a9220c151eb93323b8c45bcaa8b5 |
+| Fresh backup | **b004**, Completed at 2026-10-25T02:49:10Z; previous b003 retained |
+| Compatible prefeature source | v168 / v170 rollback slug, 9bc1d17614e667b1226671e413d4e5591d9b3380 |
+| Processes | web.1 and worker.1 up on v171 at all observation samples |
 
-## Qualified behavior
+The qualified production merge tree exactly matched f544f35da09086694d17659dd1c7a67b22199c23 and re-passed focused qualification after integration. The mainline merge tree matched its tested head 523e8318e008a35b36a42939e298b3f77e0766bb. Both fix PRs passed GitGuardian. User approval explicitly permitted publishing the operational details in these documents.
 
-- Strict external terminal identity: facilities.id_terminal = terminals.api_id; malformed/deleted/ambiguous identities never broaden.
-- Remote contextual search: <=20 returned options and <=20 KiB, no catalog preload; one responsive staged form, explicit Apply.
-- Player-facing Buy then Sell, both headings retained, current predicates/missing quotes preserved; complete counts and independent 50-row pages.
-- Canonical URL/history/control state; clearing/system changes; scoped invalidation with one active/one pending refresh, no ungrouped partial injection, preserved drafts/focus/scroll, explicit bulk Refresh.
-- Optional Commodity joins retained. Public commodity API, trade execution, import identity code, orbital-v3 schedule, travel timing, tick code/cadence and saved journeys are unchanged by feature source.
+Production starts from the deployed v168 source. Mainline already contained separate regression repairs and cargo-price widening; those application/schema changes were excluded from production. The final documentation closeout commits are separate from the immutable running source above and do not require another runtime deployment.
+
+## Index and asset verification
+
+The standalone pg-only process applied exactly 20261025010000 and 20261025010100 during v169. Both survived rollback and were audited read-only on v171:
+
+- index_terminals_on_unique_api_id: unique btree(api_id), predicate api_id IS NOT NULL, ready and valid.
+- index_production_facilities_on_id_terminal: nonunique btree(id_terminal), ready and valid.
+
+No unrestricted db:migrate, deduplication or catalog repair ran. The unrelated cargo migration 20261024170000 remains absent in production, with both cargo price columns still numeric precision 10. The explicit database-name gate and duplicate audit were verified. Local rehearsal covered concurrent down/up, duplicate refusal, wrong database refusal, exact two-version application and idempotent verification.
+
+Heroku ran rake assets:precompile successfully in 5.19 seconds. Three served digested feature controller modules were fetched and compared to the deployed source; four application stylesheet responses returned nonempty HTTP 200. The [live evidence](STARTRADER_TERMINAL_FILTER_LIVE.json) records asset URLs and SHA-256 values. No digested file was hand edited.
 
 ## Executed local qualification
 
-Dedicated loopback databases: star_trader_terminal_test, star_trader_terminal_preview and star_trader_terminal_scale, created empty under a non-superuser local role before preparation. Credentials remain in ignored profiles. Preview data is synthetic, including 830 terminals / 2590 offers; no production import was used.
+Dedicated loopback test/preview/scale databases were created under a non-superuser local role before db:prepare or synthetic seeding. Credentials remain ignored. Preview fixtures contained 830 terminals and 2,590 offers; production data was not imported.
 
-**Focused:** 44 tests / 302 assertions, zero failures/errors/skips via `CODEX_ENV_FILE=.env.terminal-test bin/codex_test` with query, lookup/group controller, legacy controller, model and importer paths recorded in the playbook. The efficiency test reads associations on both in-memory copies of overlapping rows.
+| Check | Actual result |
+| --- | --- |
+| Final focused production integration | **44 tests / 304 assertions**, no failures/errors/skips |
+| Mainline full suite with history fix | **499 / 5716**, no failures/errors/skips |
+| Broader production-line qualification before the two-link history fix | 482 / 5394; 33 failures and 25 errors |
+| Fresh v168 comparison | 468 / 5247; 34 failures and 26 errors |
+| Failure identity comparison | **Zero new failing identities**, 58 retained baseline cases |
+| Official Chrome isolated acceptance | **26 checks**, zero page/console errors |
+| Terminating isolated asset build | Passed |
 
-**Broader production-line suite:** 482 tests / 5394 assertions, 33 failures and 25 errors. A fresh archive of deployed v168 reproduced 468 / 5247, 34 failures and 26 errors. **Zero new failing identities.** Only the two relevant importer fixture defects were corrected. The production-line suite is **not green**; the 58 retained baseline cases are explicitly listed in [regression comparison](STARTRADER_TERMINAL_FILTER_REGRESSIONS.json). The unrelated application repairs are not silently deployed to make this report green.
+The production-line broader suite is **not green**. The two removed baseline cases were relevant importer fixture defects; unrelated repairs were not deployed to conceal failures. See [exact regression comparison](STARTRADER_TERMINAL_FILTER_REGRESSIONS.json). The history fix changed only two paging link targets at runtime; final focused and Chrome tests cover the added regression.
 
-**Indexes:** concurrent migration down/up, duplicate refusal, wrong-database refusal, exact standalone two-version application, ready/valid checks and idempotent rerun passed locally. `script/apply_terminal_indexes.rb` loads pg directly, not Rails or tick/broker initializers. It records only versions `20261025010000` and `20261025010100`, refuses duplicate external IDs and incompatible/invalid indexes, and performs no deduplication.
+Official executable: C:\Program Files\Google\Chrome\Application\chrome.exe, version **155.0.8059.41**, valid Google LLC Authenticode signature. Bundled Playwright drove that explicit binary. No other browser was launched.
 
-**Assets:** terminating `RAILS_ENV=test bin/codex_exec bundle exec rails assets:precompile` passed on the dedicated profile. Existing Browserslist freshness notice remains. No source digests were hand edited.
+[Chrome acceptance](STARTRADER_TERMINAL_FILTER_CHROME.json) covers keyboard/IME, delayed response/JSON races, clear/system/selection races, error/retry, staged Apply/reset, long labels at 320 px, actual direct/Back/Forward row state, independent pages, overlap/missing quotes, stream injection prevention, one-active/one-pending throttle, explicit bulk Refresh, stale navigation rejection, draft/focus/scroll and legacy/map/details. Separate [touch evidence](STARTRADER_TERMINAL_FILTER_TOUCH.json) is Chrome emulation, not a physical-device claim. Roles/labels/state/announcements were checked; no physical screen-reader session is claimed.
 
-## Google Chrome evidence
+## Performance and limits
 
-Official executable `C:\Program Files\Google\Chrome\Application\chrome.exe`, version **155.0.8059.41**, valid Google LLC Authenticode signature. Bundled Playwright drives this explicit binary; no other browser was launched.
+[Standalone HTTP benchmark](STARTRADER_TERMINAL_FILTER_HTTP.json): 30 warm requests per endpoint on the recorded preview. Lookup server p95 **17.130 ms**, grouped **174.710 ms**; wall p95 **33.295 / 178.654 ms**. Maximum bodies **3700 / 174436 bytes**. Lookup <=20 options/20 KiB, rendered offers <=100.
 
-[Chrome acceptance](STARTRADER_TERMINAL_FILTER_CHROME.json) contains the completed keyboard/IME, request/JSON/clear/system/selection races, responsive state, Apply/reset/clear, direct/back/forward URLs and actual rows, overlap, full paging, invalid selection, scoped streams, one-active/one-pending throttle, bulk Refresh, disappearing pages, stale frame after Apply, long-label and map/details checks. It has zero page/console errors. Additional touch emulation and final count are appended below.
+[Separate Chrome timings](STARTRADER_TERMINAL_FILTER_BROWSER_TIMING.json): 30 warm full navigations; p95 TTFB **341.6 ms**, download **1.7 ms**, response-end to DOMContentLoaded **486.2 ms**, controls/two animation frames **879.0 ms**. Server p95 during this rapid map/browser workload was **302.355 ms**, slightly above the standalone target. Earlier competing-load HTTP measured 333.798 ms. Idle HTTP budgets passed; no SLA under all workloads is claimed.
 
-Screenshots were visually inspected at desktop, 375 px and a wrapping long selected terminal in the 320 px Filters panel. Touch emulation is not a physical-device or cross-browser support claim. Screen-reader support was checked through roles, labels, state and announcements; no physical assistive-device session is claimed.
+[Scale evidence](STARTRADER_TERMINAL_FILTER_SCALE.json): 830/2590, 8300/25900 and 83000/259000 terminals/offers. Bounds held at <=20 options, <=20 KiB, <=100 rows and **8 data statements**, including association access on both overlapping in-memory row copies; BEGIN/SET/COMMIT are separate. At 100x the final broad lookup median was **277.13 ms**, max **311.65 ms**; an earlier run reached about 750 ms. Revisit normalized/trigram search when growth/observed p95 warrants it. No extension was added.
 
-A separate [map readiness check](STARTRADER_TERMINAL_FILTER_MAP.json) confirms valid canvas, tick 701104 and `orbital-v3:cfc59e789927b6af`. A loading screenshot alone was not accepted as map readiness.
+## Safe live verification
 
-Reproducible browser scripts live in `test/browser/`. Actual commands use the bundled Windows Node/Playwright paths, GOOGLE_CHROME_BIN or its verified official default, and this task's visualization folder for evidence. Driver-module and binary paths are prerequisites, not bundled app frontend dependencies.
+Sixteen SQL/HTTP checks passed against v171, comparing representative full scopes and rendered rows at the recorded snapshot:
 
-## Performance
+| External terminal | Buy | Sell |
+| --- | ---: | ---: |
+| 27, Admin - GrimHEX | 14 | 89 |
+| 29, HDMS-Bezdek | 5 | 9 |
+| 52, known nonmarket Levski | 0 | 0 |
+| 262, Platinum Bay - Port Tressler | 1 | 1 |
+| 778, market Levski | 16 | 77 |
 
-[HTTP benchmark](STARTRADER_TERMINAL_FILTER_HTTP.json): 30 warm requests per endpoint on the recorded preview. Lookup server p95 **17.130 ms**, grouped server p95 **174.710 ms**; wall p95 **33.295 / 178.654 ms**. Maximum bodies **3700 / 174436 bytes**, respectively. Lookup <=20 KiB and rendered offer DOM <=100.
+Independent Sell page 2 on terminal 27 contained 39 rows. Strict invalid IDs and incompatible systems failed closed. Lookup JSON was bounded, malformed shape returned 400 and overlength query 422. Sadaryx survived the missing Commodity association. Missing-quote memberships and decimal player Buy/Sell prices were checked directly against read-only SQL. Legacy mode stayed ungrouped.
 
-[Separate Chrome navigation timings](STARTRADER_TERMINAL_FILTER_BROWSER_TIMING.json): 30 warm full navigations at 1500x1000, max 100 offer rows; p95 TTFB **341.6 ms**, download **1.7 ms**, response-end to DOMContentLoaded **486.2 ms**, controls/two animation frames **879.0 ms**. Server p95 during this rapid browser/map workload was **302.355 ms**, slightly above the standalone HTTP target; it is retained rather than hidden by the lower idle result. An earlier CPU-contending HTTP run measured 333.798 ms; standard idle HTTP samples satisfy the specified server budgets. These conditions do not establish an SLA under all loads.
+Live official Chrome passed **8 selector/layout checks**, **6 state checks** and **2 touch widths (320/375)**. The exact direct page 1 -> page 2 -> Back -> Forward -> reload regression passed with 50/39 actual Sell rows. Both produced equal row IDs on each side, unique DOM identities, Refresh kept drafts, known nonmarket context remained, invalid selection cleared safely, and staged incompatible system changes restored the legacy Pyro map on Apply. Desktop and mobile selected controls were visually inspected.
 
-[Scale qualification](STARTRADER_TERMINAL_FILTER_SCALE.json): 830/2590, 8300/25900 and 83000/259000 terminals/offers. <=20 options, <=20 KiB, <=100 loaded rows and **8 data statements** held, including both overlap instances. Snapshot BEGIN/SET/COMMIT controls are separate. At 100x, final warm broad lookup median **277.13 ms**, max **311.65 ms**; an earlier run reached about 750 ms. Do not claim the 150 ms lookup target at 100x. Revisit normalized/trigram search when growth/observed p95 warrants it; no extension was added for today's small catalog.
+Map readiness confirmed a valid canvas and orbital-v3:cfc59e789927b6af at tick 703684. The earlier loading screenshot was not used as readiness proof. Protected trade, public API, import, travel, tick and orbital source is unchanged from v168. No production imports, seeds, test trades, new journeys, fabricated streams or artificial ticks were issued.
 
-## Planned production process and rollback
+## Observation and rollback readiness
 
-1. Revalidate app/domain/add-on/full slug SHA, process health, pending versions and duplicate external IDs immediately before release. Confirm no intervening ownership/source change.
-2. Capture a recoverable Heroku PostgreSQL backup through the established operator path and record its ID/status.
-3. Integrate and requalify the exact production-line merge SHA. Deploy that immutable SHA to the verified Heroku remote without force.
-4. Run only the audited standalone feature-index process, with the freshly verified expected database name. Never unrestricted db:migrate. Verify ready/valid/unique/predicate/column identity and the two recorded versions.
-5. Verify actual release/full slug SHA, assets, processes, read-only aggregate/HTTP results and official Chrome at desktop/320/375 px. No test trades, travel creation, imports, seeding or artificial ticks.
-6. Observe bounded health/latency for 10–15 minutes with recorded samples and actual elapsed time. If no natural row message arrives, record the live stream gap and retain deterministic isolated stream proof.
+Fresh Chrome observation: **2026-10-25T02:52:15.331Z to 2026-10-25T03:02:15.340Z**, **600.009 seconds**. Zero page/console errors. Natural market-row messages: **0** (applicable: 0). If zero, this is a live stream coverage gap; deterministic isolated stream/race proof supplies that coverage.
 
-Rollback target is the immediate compatible prefeature release, currently v168, revalidated at deployment. Leave additive indexes in place. Preserve current orbital-v3 anchored progression, travel timing, tick settings, saved journeys and any schema already deployed independently. Do not restore the database, reimport, reset ticks, recalculate journeys or apply a historical orbital-rate rollback to reverse this UI feature.
+Platform/HTTP samples: **2026-10-25T02:51:43Z through 2026-10-25T03:02:25Z**, elapsed **642 seconds**, 6 bounded samples. All three safe endpoints returned 200; every sample retained exact v171 and healthy web/worker. No sampled 5xx responses or crashes. Some bounded samples included H27 client-interrupted requests during navigation qualification; causation is not established, per-sample tallies are retained and not summed as unique events. Logs are bounded, not continuous coverage.
 
-Rollback triggers: terminal leakage/broadening, direction/price reversal, major missing groups/counts, broken Chrome selection/history, stream injection, nonfunctional assets, new feature 5xx or unacceptable query/load behavior. No rollback has been performed during candidate qualification.
+Sampled server time ranges: lookup **13.051–81.637 ms**, grouped terminal 29 **63.069–160.707 ms**. These few live samples are not p95 benchmarks. Tick advanced naturally **703677 -> 703719**, the worker heartbeat stayed active, and the aggregate of six unfinished journeys matched the predeployment snapshot throughout. No tick schedule/config was changed.
 
-## Production execution and closeout
+Rollback remains the compatible prefeature v170/v168 slug, full source 9bc1d17614e667b1226671e413d4e5591d9b3380, with the additive indexes retained. Recheck current release ownership before rollback; use the established Heroku rollback path, verify both processes/source, then recheck market/map. Do not restore the database, remove compatible indexes, reimport, reset ticks or recompute journeys for a UI rollback. This project made no config-var changes.
 
-Pending M6/M7. This section will record exact PR/merge/deployment source, backup, feature index results, live counts/browser results, actual observation window, health and rollback readiness. Candidate qualification is not production completion.
+## v169 incident and corrected release
 
-## v169 live history failure and rollback
+v169 deployed production merge 6636ff5af84ccc289c0bfc55f78a12bda312418e after backup b003. The first ten-minute infrastructure/Chrome observation was healthy, but an additional first-pagination Back case exposed URL/row divergence: page-1 URL restored while 39 page-two Sell rows remained. That functional failure triggered rollback to v168 as **v170**, preserving both additive indexes and business data.
 
-The qualified production PR #33 merged as 6636ff5af84ccc289c0bfc55f78a12bda312418e; mainline PR #34 merged as 87cc7bae0cff61ef547410905694b45ba7efc3af. Mainline passed 499 tests / 5714 assertions. The production merge tree matched the candidate exactly and re-passed the 44-test focused suite.
+The missed first-navigation case was added explicitly. The permitted full-GET fallback now passes isolated and live tests on v171, followed by the fresh observation above. See [incident evidence](STARTRADER_TERMINAL_FILTER_HISTORY.md). The failed v169 window is not substituted for replacement qualification.
 
-v169 deployed that exact SHA. Backup b003 completed. Both feature indexes were applied with the standalone process, valid/ready, and only their two migration versions were recorded; cargo precision remained 10. Sixteen live SQL/HTTP checks and official Chrome selection/touch/map checks passed. The ten-minute observation had no page/console errors or natural market-row messages; bounded server samples had no 5xx/crashes, and the six unfinished-journey aggregate matched predeployment.
-
-An additional first-pagination Back test failed: direct terminal 27 Sell page 1 showed 50 rows; page 2 showed 39; Back restored the page-1 URL but retained page-two data. This was a functional release failure despite healthy infrastructure. The required rollback restored v168 slug/config as v170. The project had made no config-var changes. Both additive indexes and business data remained; rollback source and both healthy processes were verified.
-
-The explicitly permitted fallback is now selected: full Turbo Drive GET paging (_top), retaining independent parameters/counts and all refresh behavior. Each explicit page visit reinitializes map/details. See STARTRADER_TERMINAL_FILTER_HISTORY.md.
-
-Replacement qualification: 44 tests / 304 assertions passed; 26 official Chrome checks with zero page/console errors passed, now including the exact first-pagination regression and legacy Back row restoration. Terminating assets passed. Runtime change is limited to the two paging link targets. Replacement integration/deployment/new observation are pending; the failed v169 attempt is not claimed complete.
+Deferred data issues: orphan nonmarket terminals, stale upstream catalog data, unmatched Commodity records and unrelated commodity/cargo repairs remain separate work. Search eligibility and missing-quote policies intentionally avoid age cutoffs or data repair.
