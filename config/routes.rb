@@ -12,6 +12,7 @@ Rails.application.routes.draw do
 
   # Public Routes
   root 'star_trader#index'
+  get 'market/terminals', to: 'market_terminals#index', as: :market_terminals
   get 'market', to: 'star_trader#market', as: :star_trader_market
   get 'news', to: 'home#news'
   get 'economy', to: 'economy#index'
