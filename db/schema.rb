@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_18_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_10_25_010100) do
   create_schema "cable"
 
   # These are extensions that must be enabled in order to support this database
@@ -368,6 +368,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_18_120000) do
     t.datetime "updated_at", null: false
     t.string "location_name"
     t.index ["api_id"], name: "index_production_facilities_on_api_id", unique: true
+    t.index ["id_terminal"], name: "index_production_facilities_on_id_terminal"
     t.index ["location_name"], name: "index_production_facilities_on_location_name"
   end
 
@@ -615,6 +616,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_18_120000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "location_name"
+    t.index ["api_id"], name: "index_terminals_on_unique_api_id", unique: true, where: "(api_id IS NOT NULL)"
     t.index ["location_name"], name: "index_terminals_on_location_name"
   end
 
