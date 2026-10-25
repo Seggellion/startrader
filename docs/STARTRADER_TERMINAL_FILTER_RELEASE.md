@@ -1,6 +1,6 @@
 # StarTrader terminal filter release evidence
 
-24 October 2026 (America/Vancouver). **Candidate qualification; production deployment pending.** M0 discovery is retained at repository root. Implementation contract: [playbook](STARTRADER_TERMINAL_FILTER_PLAYBOOK.md).
+24 October 2026 (America/Vancouver). **v169 rolled back as v170; full-GET history replacement qualified locally and awaiting integration.** M0 discovery is retained at repository root. Implementation contract: [playbook](STARTRADER_TERMINAL_FILTER_PLAYBOOK.md).
 
 ## Release boundary
 
@@ -66,3 +66,15 @@ Rollback triggers: terminal leakage/broadening, direction/price reversal, major 
 ## Production execution and closeout
 
 Pending M6/M7. This section will record exact PR/merge/deployment source, backup, feature index results, live counts/browser results, actual observation window, health and rollback readiness. Candidate qualification is not production completion.
+
+## v169 live history failure and rollback
+
+The qualified production PR #33 merged as 6636ff5af84ccc289c0bfc55f78a12bda312418e; mainline PR #34 merged as 87cc7bae0cff61ef547410905694b45ba7efc3af. Mainline passed 499 tests / 5714 assertions. The production merge tree matched the candidate exactly and re-passed the 44-test focused suite.
+
+v169 deployed that exact SHA. Backup b003 completed. Both feature indexes were applied with the standalone process, valid/ready, and only their two migration versions were recorded; cargo precision remained 10. Sixteen live SQL/HTTP checks and official Chrome selection/touch/map checks passed. The ten-minute observation had no page/console errors or natural market-row messages; bounded server samples had no 5xx/crashes, and the six unfinished-journey aggregate matched predeployment.
+
+An additional first-pagination Back test failed: direct terminal 27 Sell page 1 showed 50 rows; page 2 showed 39; Back restored the page-1 URL but retained page-two data. This was a functional release failure despite healthy infrastructure. The required rollback restored v168 slug/config as v170. The project had made no config-var changes. Both additive indexes and business data remained; rollback source and both healthy processes were verified.
+
+The explicitly permitted fallback is now selected: full Turbo Drive GET paging (_top), retaining independent parameters/counts and all refresh behavior. Each explicit page visit reinitializes map/details. See STARTRADER_TERMINAL_FILTER_HISTORY.md.
+
+Replacement qualification: 44 tests / 304 assertions passed; 26 official Chrome checks with zero page/console errors passed, now including the exact first-pagination regression and legacy Back row restoration. Terminating assets passed. Runtime change is limited to the two paging link targets. Replacement integration/deployment/new observation are pending; the failed v169 attempt is not claimed complete.

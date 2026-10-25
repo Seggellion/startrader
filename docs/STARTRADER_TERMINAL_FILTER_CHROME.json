@@ -17,6 +17,9 @@
       "name": "explicit Apply, canonical identity and Buy/Sell order"
     },
     {
+      "name": "first pagination from a direct URL restores actual rows on Back/Forward"
+    },
+    {
       "name": "full counts, overlap IDs, missing quotes, independent 50-row pages"
     },
     {
@@ -42,6 +45,9 @@
     },
     {
       "name": "Reset restores legacy mode"
+    },
+    {
+      "name": "legacy first pagination Back restores the original rows"
     },
     {
       "name": "stale response response rejected"
@@ -82,5 +88,5 @@
   ],
   "errors": [],
   "consoleErrors": [],
-  "timestamp": "2026-10-25T01:54:11.017Z"
+  "timestamp": "2026-10-25T02:43:06.605Z"
 }
