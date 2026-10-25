@@ -1,0 +1,13 @@
+const {chromium}=require(process.env.TERMINAL_PLAYWRIGHT_MODULE);const fs=require("node:fs");const path=require("node:path");
+(async()=>{const b=await chromium.launch({executablePath:"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",headless:true,args:["--use-angle=swiftshader","--enable-unsafe-swiftshader"]});const p=await b.newPage({viewport:{width:1500,height:1000}});
+await p.goto((process.env.TERMINAL_BASE_URL||"http://localhost:8037")+"/market?terminal_api_id="+(process.env.TERMINAL_MAP_ID||"900029"));
+await p.waitForFunction(()=>window.Stimulus?.getControllerForElementAndIdentifier(document.querySelector('[data-controller~="star-system"]'),"star-system"));
+const response=await p.evaluate(async()=>{const r=await fetch("/locations?star=Stanton");return {status:r.status,body:(await r.text()).slice(0,500)}});
+console.log("Snapshot response",JSON.stringify(response));
+await p.waitForFunction(()=>Boolean(document.querySelector('[data-controller~="star-system"]')?.dataset.catalogVersion),undefined,{timeout:20000});
+await p.locator('[data-market-group="buy"] button').first().click();
+await p.waitForFunction(()=>!document.querySelector('[data-controller~="star-system"]').textContent.includes("Loading orbital"));
+const state=await p.locator('[data-controller~="star-system"]').evaluate(e=>({version:e.dataset.catalogVersion,tick:e.dataset.orbitalTick,canvas:!!e.querySelector("canvas"),text:e.textContent}));
+await p.screenshot({path:path.join(process.env.TERMINAL_EVIDENCE_DIR,"terminal-map-verified.png")});console.log(JSON.stringify(state));
+fs.writeFileSync(path.join(process.env.TERMINAL_EVIDENCE_DIR,"terminal-map-verified.json"),JSON.stringify(state,null,2));await b.close();
+})().catch(e=>{console.error(e);process.exitCode=1});

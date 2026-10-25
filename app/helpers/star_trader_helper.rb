@@ -37,4 +37,10 @@ module StarTraderHelper
   def market_spread(facility)
     player_sell_price_for(facility) - player_buy_price_for(facility)
   end
+  def terminal_selection_context(terminal)
+    location = terminal.location
+    [terminal.location_name, location&.star_system_name, location&.planet_name,
+      location&.moon_name, location&.parent_name, terminal.code, "ID #{terminal.api_id}"].compact_blank.uniq.join(" / ")
+  end
+
 end

@@ -1,0 +1,24 @@
+{
+  "machine": {
+    "platform": "win32",
+    "arch": "x64",
+    "node": "v24.19.0"
+  },
+  "base": "http://localhost:8037",
+  "samples": [
+    {
+      "name": "lookup",
+      "sample_count": 30,
+      "server_p95_ms": 17.13,
+      "wall_p95_ms": 33.294799999999896,
+      "max_bytes": 3700
+    },
+    {
+      "name": "grouped",
+      "sample_count": 30,
+      "server_p95_ms": 174.71,
+      "wall_p95_ms": 178.6536000000001,
+      "max_bytes": 174436
+    }
+  ]
+}

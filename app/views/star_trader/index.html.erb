@@ -18,15 +18,11 @@
     </div>
 
     <div class="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_380px] xl:grid-cols-[320px_minmax(0,1fr)_430px]">
-      <aside class="hidden lg:block">
+      <aside data-mobile-tabs-target="panel" data-mobile-tabs-name-value="filters" class="hidden lg:block">
         <div class="sticky top-4">
           <%= render "filters" %>
         </div>
       </aside>
-
-      <div data-mobile-tabs-target="panel" data-mobile-tabs-name-value="filters" class="hidden lg:hidden">
-        <%= render "filters" %>
-      </div>
 
       <section data-mobile-tabs-target="panel" data-mobile-tabs-name-value="market" class="min-w-0">
         <%= render "market_results" %>

@@ -1,0 +1,45 @@
+<section aria-labelledby="market_<%= side %>_heading" data-market-group="<%= side %>" class="border-b border-zinc-800">
+  <div class="border-b border-zinc-800 bg-zinc-950/80 p-4">
+    <h3 id="market_<%= side %>_heading" class="text-lg font-semibold text-white"><%= side.capitalize %></h3>
+    <p class="text-sm text-cyan-100"><%= side == "buy" ? "Buy from this terminal" : "Sell to this terminal" %></p>
+    <p class="mt-1 text-xs text-zinc-400"><span data-group-count="<%= side %>"><%= group.total_count %></span> matching offers; showing <%= group.rows.empty? ? 0 : (group.page - 1) * MarketQuery::PER_PAGE + 1 %>–<%= (group.page - 1) * MarketQuery::PER_PAGE + group.rows.size %>. Up to 50 per page.</p>
+  </div>
+  <div class="divide-y divide-zinc-800">
+    <% group.rows.each do |facility| %>
+      <article id="market_<%= side %>_row_<%= facility.id %>" data-facility-id="<%= facility.id %>" data-terminal-api-id="<%= facility.id_terminal %>"
+        class="grid gap-3 break-words p-4 lg:grid-cols-3 lg:items-center"
+        data-market-board-location-name-param="<%= facility.location_name %>"
+        data-market-board-facility-name-param="<%= facility.facility_name %>"
+        data-market-board-commodity-name-param="<%= facility.commodity_name %>"
+        data-market-board-system-name-param="<%= facility.location&.star_system_name %>"
+        data-market-board-context-param="<%= market_location_context(facility.location) %>"
+        data-market-board-player-buy-price-param="<%= facility.player_buy_price %>"
+        data-market-board-player-sell-price-param="<%= facility.player_sell_price %>"
+        data-action="click->market-board#selectRow">
+        <div class="min-w-0">
+          <h4 class="font-semibold text-cyan-100"><%= facility.commodity_name %></h4>
+          <p class="text-xs text-zinc-400"><%= facility.facility_name %></p>
+          <p class="text-xs text-zinc-500">Offer <%= facility.api_id.presence || facility.id %><%= facility.container_sizes.present? ? " · Container sizes: #{facility.container_sizes}" : "" %></p>
+        </div>
+        <div>
+          <% price = side == "buy" ? facility.player_buy_price : facility.player_sell_price %>
+          <p class="text-xs text-zinc-400"><%= side == "buy" ? "Player buy price" : "Player sell price" %></p>
+          <p class="font-mono text-sm text-cyan-100"><%= price.positive? ? market_price(price) : "No current quote" %></p>
+          <% if side == "buy" %>
+            <p class="text-xs text-zinc-400">Simulated stock: <%= market_quantity(facility.inventory) %> SCU<%= facility.inventory.to_i <= 0 ? " · Out of stock" : "" %></p>
+          <% else %>
+            <% capacity = [facility.max_inventory.to_i - facility.inventory.to_i, 0].max %>
+            <p class="text-xs text-zinc-400">Simulated receiving capacity: <%= facility.max_inventory.to_i.positive? ? "#{market_quantity(capacity)} SCU" : "Unknown" %><%= facility.max_inventory.to_i.positive? && capacity.zero? ? " · No receiving capacity" : "" %></p>
+          <% end %>
+        </div>
+        <div class="flex justify-end">
+          <button type="button" class="rounded border border-cyan-400/40 px-3 py-2 text-xs text-cyan-100" data-action="click->market-board#focusLocation">Map</button>
+        </div>
+      </article>
+    <% end %>
+    <% if group.rows.empty? %>
+      <p class="p-6 text-sm text-zinc-400">No matching <%= side == "buy" ? "Buy" : "Sell" %> offers for this terminal and these filters.</p>
+    <% end %>
+  </div>
+  <%= render "market_pagination", group: group, page_key: "#{side}_page".to_sym, result: result, label: side.capitalize %>
+</section>
