@@ -59,6 +59,15 @@ const record = (name, detail={}) => { checks.push({name, ...detail}); console.lo
       assert.equal(await page.locator('[data-market-group="buy"] article').count(),50);
       const allIds=await page.locator("[id]").evaluateAll(nodes=>nodes.map(n=>n.id));
       assert.equal(allIds.length,new Set(allIds).size);
+      await visit("/market?terminal_api_id=900029&buy_page=1&sell_page=1");
+      await page.getByRole("link",{name:"Next Sell page",exact:true}).click();
+      await page.waitForFunction(()=>document.querySelectorAll('[data-market-group="sell"] article').length===12);
+      await page.goBack();
+      await page.waitForFunction(()=>new URL(location.href).searchParams.get("sell_page")==="1"&&document.querySelectorAll('[data-market-group="sell"] article').length===50);
+      await page.goForward();
+      await page.waitForFunction(()=>new URL(location.href).searchParams.get("sell_page")==="2"&&document.querySelectorAll('[data-market-group="sell"] article').length===12);
+      await visit("/market?terminal_api_id=900029&buy_page=1&sell_page=1");
+      record("first pagination from a direct URL restores actual rows on Back/Forward");
       await page.getByRole("link",{name:"Next Buy page",exact:true}).click();
       await page.waitForURL(/buy_page=2/);
       await page.waitForFunction(()=>document.querySelectorAll('[data-market-group="buy"] article').length===13);
@@ -186,6 +195,17 @@ const record = (name, detail={}) => { checks.push({name, ...detail}); console.lo
     assert.equal(await selected().inputValue(),"");
     assert.equal(await page.locator("[data-market-group]").count(),0);
     record("Reset restores legacy mode");
+    if(!live) {
+      await visit("/market?page=1");
+      const firstLegacy=await page.locator('article[id^="market_row_production_facility_"]').first().getAttribute("id");
+      await page.getByRole("link",{name:"Next Market page",exact:true}).click();
+      await page.waitForURL(/page=2/);
+      await page.waitForFunction(id=>document.querySelector('article[id^="market_row_production_facility_"]')?.id!==id,firstLegacy);
+      await page.goBack();
+      await page.waitForFunction(id=>new URL(location.href).searchParams.get("page")==="1"&&document.querySelector('article[id^="market_row_production_facility_"]')?.id===id,firstLegacy);
+      record("legacy first pagination Back restores the original rows");
+    }
+
 
     if(!live) {
       for (const phase of ["response","json","clear","system","selection"]) {

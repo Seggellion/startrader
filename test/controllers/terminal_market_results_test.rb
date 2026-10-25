@@ -54,6 +54,8 @@ class TerminalMarketResultsTest < ActionDispatch::IntegrationTest
       assert_equal "Ore", query["q"]
       assert_equal @terminal.api_id.to_s, query["terminal_api_id"]
     end
+    assert_select 'a[aria-label="Next Sell page"][data-turbo-frame="_top"]', count: 1
+    assert_select 'a[data-turbo-action="advance"]', count: 0
     assert_select 'form[data-controller="market-filters"]', count: 1
     assert_select '#market_terminal_search', count: 1
     assert_select 'form[data-controller="market-filters"][data-turbo-frame]', count: 0

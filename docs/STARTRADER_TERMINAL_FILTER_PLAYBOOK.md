@@ -4,7 +4,7 @@ Date: 24 October 2026
 Owner: Dustin Hill
 Executor: Codex in the StarTrader repository
 Discovery source: `STARTRADER_TERMINAL_FILTER_DISCOVERY.md`, inspected at `59ff510fab6d09a14e10518bac5f931ccde98f44`
-Document status: M1–M4 implemented and qualified locally. M5 integration is in progress; production has not yet been deployed.
+Document status: v169 was deployed, then rolled back as v170 after a live first-pagination history defect. The permitted full-GET pagination fallback is being qualified before replacement deployment.
 
 ## 1 Outcome and scope
 
@@ -48,7 +48,7 @@ This playbook adopts the discovery's primary recommendations as working product 
 | Player Action | Restrict the common offer relation first, preserving existing Any/Buy/Sell/Both semantics; then derive both groups. Always keep both headings. |
 | Apply | All changes are drafts until explicit Apply. Terminal search, selecting an option, and changing another field must not silently apply results. Remove existing implicit autosubmit behavior for this form. |
 | No terminal | Retain the legacy ungrouped feed, its existing action semantics, and 50-row paging. |
-| Navigation | Normal GET with Turbo Drive for Apply/Reset; results-frame paging with explicit history promotion and canonical-control restoration. Prove it in M4. |
+| Navigation | Normal GET with Turbo Drive for Apply/Reset and paging, using the permitted history fallback; the result frame remains for snapshot refresh. |
 | Refresh | Applicable row-stream messages invalidate terminal results; coalesce requery using applied filters. Include explicit Refresh. No new tick polling or importer broadcast system. |
 | Layout | One responsive form if the current layout permits; otherwise uniquely identified desktop/mobile forms sharing draft state and restored canonical applied state. |
 
@@ -316,9 +316,9 @@ Finish the release evidence and playbook status with actual release/SHA, schema/
 | M1 Foundations | Complete | Revalidated baseline, query/identity tests, safe index plan. |
 | M2 Selector | Complete | Endpoint/transport/accessibility and Chrome results. |
 | M3 Grouped results | Complete | Complete counts/pages/semantics/legacy coverage. |
-| M4 State and updates | Complete | Canonical history and stream correctness. |
-| M5 Qualification | Integration in progress | Exact integrated SHA, tests/build/benchmarks/release manifest. |
-| M6 Deployment | Pending | Actual release/full SHA and valid feature indexes. |
+| M4 State and updates | Complete with full-GET fallback | Canonical history and stream correctness. |
+| M5 Qualification | Replacement integration in progress | Exact integrated SHA, tests/build/benchmarks/release manifest. |
+| M6 Deployment | v169 rolled back; replacement pending | Actual release/full SHA and valid feature indexes. |
 | M7 Closeout | Pending | Live checks, observation, rollback readiness and final evidence. |
 
 ## Execution record — M1 (24 October 2026 Pacific)
@@ -358,3 +358,17 @@ Implementation commits:
 - At 100x, broad substring search takes 277 ms median / 312 ms maximum in the final warm samples (an earlier run reached about 750 ms); no claim of a 150 ms 100x lookup. Revisit normalized/trigram search as growth or p95 warrants. Current catalog budgets pass without new extensions.
 - Browser findings corrected before qualification: Stimulus context-property collision, late initial restoration, Turbo retaining the outer frame on paging, explicit Refresh losing force intent through throttling, and preloading only one in-memory copy of overlapping rows.
 - Integration: normal forward-port PR to origin/main, plus feature-only PR into codex/terminal-filter-production from v168. Only the independently qualified production line is deployed. Unrelated main cargo widening/regression application changes remain excluded.
+
+## Live history regression and authorized fallback
+
+Production-line PR #33 merged as 6636ff5af84ccc289c0bfc55f78a12bda312418e; mainline PR #34 merged as 87cc7bae0cff61ef547410905694b45ba7efc3af. The production merge re-passed 44 tests / 302 assertions and had an identical tree to the qualified candidate. Mainline separately passed 499 / 5714 with no failures/errors/skips.
+
+Backup b003 completed. v169 deployed the exact production merge and the two standalone feature index versions were applied and verified ready/valid. Live SQL/HTTP checks and the first ten-minute Chrome observation were healthy, but the additional first-pagination Back test found URL/page divergence: initial terminal 27 Sell page 1 had 50 rows; page 2 had 39; Back restored the page-1 URL while retaining 39 rows and canonical sell_page=2.
+
+The required rollback trigger was followed: Heroku rollback to v168 created v170, restoring its compatible slug/config. This project made no config-var changes between those releases. Both additive indexes and business data remain in place; no DB restore, migration down, import, test trade, manufactured production stream, travel or artificial tick was issued.
+
+Use the section-5 permitted simplification: result pagination now targets _top for normal Turbo Drive GET navigation. Group parameters/counts/limits remain independent. Each page visit reinitializes map/details, matching Apply's documented tradeoff. The market_results frame remains for scoped automatic/explicit refresh, which still preserves drafts and rejects stale responses.
+
+Added the exact first-navigation direct-URL -> Sell page 2 -> Back/Forward row regression plus a request assertion requiring _top paging. Requalification and replacement release evidence follow.
+
+Replacement local qualification: 44 tests / 304 assertions, no failures/errors/skips; 26 official Chrome checks pass with zero page/console errors, including the exact first-pagination direct-link Back/Forward regression and legacy original-row restoration. Terminating assets passed. Only the two pagination data targets change at runtime; no query, price, filter predicate, schema or data change is part of the fix.
