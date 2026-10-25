@@ -15,3 +15,9 @@ The confirmed result violated the playbook. v169 was rolled back to the compatib
 The contract explicitly permits normal GET pagination when frame history is unreliable. The fix changes only paging targets to _top and adds this exact regression. Query scope, grouping, counts, player semantics, independent page parameters and automatic/explicit refresh are retained. Map/details reinitialize on page visits, the documented simplification tradeoff.
 
 The first v169 observation had zero page/console errors or natural market-row messages over 600 seconds; bounded infrastructure samples had no 5xx/crashes. Those facts do not erase the functional history failure. The replacement source must pass the regression and a new postrelease observation before completion.
+
+## Verified replacement
+
+Production fix PR #35 merged as 4d2d7cb97bea19f629a8f71262eaabf10748ebb8, deployed as v171. Its tree matched the qualified fix and passed 44 tests / 304 assertions. Mainline PR #36 retained the fix and passed the full 499-test / 5716-assertion suite. Isolated Chrome now passes 26 checks.
+
+Live official Chrome verified terminal 27: direct Sell page 1 = 50 rows; page 2 = 39; Back = 50; Forward/reload = 39. The other five live state checks passed. Fresh observation 2026-10-25T02:52:15.331Z through 2026-10-25T03:02:15.340Z completed 600.009 seconds without page/console errors. [Release evidence](STARTRADER_TERMINAL_FILTER_RELEASE.md) records the bounded server samples and stream coverage limit. The incident is resolved in the running source; the v169 failure remains documented.
