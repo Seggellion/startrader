@@ -96,7 +96,7 @@ class MarketQueryTest < ActiveSupport::TestCase
     ActiveRecord::Base.uncached do
       ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record") do
         r = MarketQuery.new(terminal_api_id: @terminal.api_id).call
-        r.rows.each { |row| row.commodity; row.location }
+        (r.buy.rows + r.sell.rows).each { |row| row.commodity; row.location }
       end
     end
     assert_operator statements.size, :<=, 8, statements.join("\n")
