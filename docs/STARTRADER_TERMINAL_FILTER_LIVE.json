@@ -1,0 +1,816 @@
+{
+  "recorded_at": "2026-10-25T03:02:33.239852+00:00",
+  "release": {
+    "id": "b5fb6bfb-0f27-4c27-9146-f508b27b125e",
+    "version": 171,
+    "status": "succeeded",
+    "description": "Deploy 4d2d7cb9",
+    "created_at": "2026-10-25T02:50:55Z"
+  },
+  "source": "4d2d7cb97bea19f629a8f71262eaabf10748ebb8",
+  "production_pr": "https://github.com/Seggellion/startrader/pull/35",
+  "mainline_pr": "https://github.com/Seggellion/startrader/pull/36",
+  "mainline_merge": "8eeee1e147f1a9220c151eb93323b8c45bcaa8b5",
+  "backup": {
+    "id": "b004",
+    "status": "Completed",
+    "finished_at": "2026-10-25T02:49:10Z",
+    "addon": "postgresql-metric-14477"
+  },
+  "index_audit": {
+    "mode": "audit",
+    "indexes": [
+      {
+        "version": "20261025010000",
+        "name": "index_terminals_on_unique_api_id",
+        "state": {
+          "valid": "true",
+          "ready": "true",
+          "is_unique": "true",
+          "table_name": "terminals",
+          "definition": "CREATE UNIQUE INDEX index_terminals_on_unique_api_id ON public.terminals USING btree (api_id) WHERE (api_id IS NOT NULL)",
+          "columns": "api_id",
+          "predicate": "(api_id IS NOT NULL)"
+        }
+      },
+      {
+        "version": "20261025010100",
+        "name": "index_production_facilities_on_id_terminal",
+        "state": {
+          "valid": "true",
+          "ready": "true",
+          "is_unique": "false",
+          "table_name": "production_facilities",
+          "definition": "CREATE INDEX index_production_facilities_on_id_terminal ON public.production_facilities USING btree (id_terminal)",
+          "columns": "id_terminal",
+          "predicate": null
+        }
+      }
+    ]
+  },
+  "live_sql_http": {
+    "sampled_at": "2026-10-25T02:51:56Z",
+    "release": {
+      "version": 171,
+      "id": "b5fb6bfb-0f27-4c27-9146-f508b27b125e",
+      "status": "succeeded"
+    },
+    "source": "4d2d7cb97bea19f629a8f71262eaabf10748ebb8",
+    "checks": [
+      {
+        "name": "terminal groups and identity",
+        "terminal": {
+          "id": "1380",
+          "api_id": "27",
+          "name": "Admin - GrimHEX",
+          "location_name": "Green Imperial Housing Exchange",
+          "star_system_name": "Stanton",
+          "rows": "101",
+          "buy": "14",
+          "sell": "89"
+        },
+        "elapsed_ms": 1006.74
+      },
+      {
+        "name": "large-terminal independent pagination",
+        "sell_page": 2,
+        "loaded": 39
+      },
+      {
+        "name": "terminal groups and identity",
+        "terminal": {
+          "id": "1382",
+          "api_id": "29",
+          "name": "HDMS-Bezdek",
+          "location_name": "HDMS-Bezdek",
+          "star_system_name": "Stanton",
+          "rows": "14",
+          "buy": "5",
+          "sell": "9"
+        },
+        "elapsed_ms": 544.37
+      },
+      {
+        "name": "terminal groups and identity",
+        "terminal": {
+          "id": "1405",
+          "api_id": "52",
+          "name": "Levski",
+          "location_name": "Levski",
+          "star_system_name": "Nyx",
+          "rows": "0",
+          "buy": "0",
+          "sell": "0"
+        },
+        "elapsed_ms": 1707.67
+      },
+      {
+        "name": "terminal groups and identity",
+        "terminal": {
+          "id": "1599",
+          "api_id": "262",
+          "name": "Platinum Bay - Port Tressler",
+          "location_name": "Port Tressler",
+          "star_system_name": "Stanton",
+          "rows": "1",
+          "buy": "1",
+          "sell": "1"
+        },
+        "elapsed_ms": 1894.34
+      },
+      {
+        "name": "terminal groups and identity",
+        "terminal": {
+          "id": "2115",
+          "api_id": "778",
+          "name": "Levski",
+          "location_name": "Levski",
+          "star_system_name": "Nyx",
+          "rows": "93",
+          "buy": "16",
+          "sell": "77"
+        },
+        "elapsed_ms": 2082.82
+      },
+      {
+        "name": "bounded lookup/input handling",
+        "path": "/market/terminals?q=Admin",
+        "status": 200,
+        "options": 20,
+        "bytes": 4305,
+        "elapsed_ms": 325.7
+      },
+      {
+        "name": "bounded lookup/input handling",
+        "path": "/market/terminals?q%5B%5D=Admin",
+        "status": 400,
+        "options": 0,
+        "bytes": 61,
+        "elapsed_ms": 292.71
+      },
+      {
+        "name": "bounded lookup/input handling",
+        "path": "/market/terminals?q=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": 422,
+        "options": 0,
+        "bytes": 90,
+        "elapsed_ms": 1333.07
+      },
+      {
+        "name": "invalid and incompatible selections fail closed"
+      },
+      {
+        "name": "optional Commodity remains visible",
+        "commodity": "Sadaryx"
+      },
+      {
+        "name": "missing quote membership retained",
+        "side": "buy",
+        "offer_id": "16909"
+      },
+      {
+        "name": "missing quote membership retained",
+        "side": "sell",
+        "offer_id": "16957"
+      },
+      {
+        "name": "decimal player quote verified",
+        "side": "buy",
+        "terminal_api_id": 29,
+        "quote": "6024.91"
+      },
+      {
+        "name": "decimal player quote verified",
+        "side": "sell",
+        "terminal_api_id": 19,
+        "quote": "9863.52"
+      },
+      {
+        "name": "legacy ungrouped mode preserved"
+      }
+    ],
+    "indexes": [
+      {
+        "relname": "index_production_facilities_on_id_terminal",
+        "valid": "true",
+        "ready": "true",
+        "is_unique": "false"
+      },
+      {
+        "relname": "index_terminals_on_unique_api_id",
+        "valid": "true",
+        "ready": "true",
+        "is_unique": "true"
+      }
+    ],
+    "migration_versions": [
+      "20261025010000",
+      "20261025010100"
+    ],
+    "cargo_precision": [
+      {
+        "column_name": "buy_price",
+        "numeric_precision": "10"
+      },
+      {
+        "column_name": "sell_price",
+        "numeric_precision": "10"
+      }
+    ],
+    "tick": [
+      {
+        "current_tick": "703679",
+        "processed_at": "2026-10-25 02:52:08.076652"
+      }
+    ],
+    "tick_control": [
+      {
+        "running": "t",
+        "last_heartbeat_at": "2026-10-25 02:52:08.094237"
+      }
+    ],
+    "saved_journeys": [
+      {
+        "count": "6"
+      }
+    ]
+  },
+  "assets": {
+    "sampled_at": "2026-10-25T02:53:04Z",
+    "assets": [
+      {
+        "module": "controllers/terminal_selector_controller",
+        "url": "/assets/controllers/terminal_selector_controller-84bc327b9ae1afdc742809f26ac89e0ddf0f0ebbc9ca2ca0313f286b8d61a4c7.js",
+        "sha256": "8076fa27705a589cd3fbbc230f4453bcf7485c5d29fedfa87429e8fc1035f51c",
+        "bytes": 7759,
+        "source_verified": true
+      },
+      {
+        "module": "controllers/market_filters_controller",
+        "url": "/assets/controllers/market_filters_controller-011ec166b71a87c0970bf9c304f7931151d22c38208e09dcbf4b1cdd59866ac5.js",
+        "sha256": "87febf3d5446314e0eab2505958718342b6788933174d8d10324144407769437",
+        "bytes": 1006,
+        "source_verified": true
+      },
+      {
+        "module": "controllers/market_results_controller",
+        "url": "/assets/controllers/market_results_controller-c0aa553346a7bf449094357a7583f59bf104616d4ab18ba197b47d7f73e86a67.js",
+        "sha256": "5955049323cb50b06eab3bc63d1fbe8a3c58a6462d5a2ac170af2abf5005885f",
+        "bytes": 4973,
+        "source_verified": true
+      },
+      {
+        "stylesheet": "/assets/tailwind-2fb9aecaebfaa146e461f03a08b6f715c5f2f35337dd62a8c8ff6db9547098e4.css",
+        "sha256": "a3cb5e52e958167162088a9ab9709a9067951451a343c03de5d755095bebbf8e",
+        "bytes": 44988
+      },
+      {
+        "stylesheet": "/assets/inter-font-8c3e82affb176f4bca9616b838d906343d1251adc8408efe02cf2b1e4fcf2bc4.css",
+        "sha256": "d57186c9caf6817c10dc5e1d1a48acd510cb96404d21957f17419c6ace4d552f",
+        "bytes": 9237
+      },
+      {
+        "stylesheet": "/assets/Dusk-6ad3ab38d55cc9435ba3920c724dff40145e2a9f3544c1bbab70a852b535a49b.css",
+        "sha256": "d095eb8f8fcfb1204aac1a0f3998d9f9334a02101c381524123077a5a64e524c",
+        "bytes": 486
+      },
+      {
+        "stylesheet": "/assets/application.tailwind-f718b6cd972c6c8f4ba8ab9f1104ea3ff32bfe384c81b11dda2e8fac45022aae.css",
+        "sha256": "8f4325c0a62763d4d127fb220acc3331c197af6d772ac53939b55c4cf3c36293",
+        "bytes": 199
+      }
+    ]
+  },
+  "chrome": {
+    "browser": "Google Chrome",
+    "binary": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "version": "155.0.8059.41",
+    "base": "https://startrader.altama.energy",
+    "live": true,
+    "checks": [
+      {
+        "name": "single responsive form; legacy feed; no selector preload",
+        "browser": "155.0.8059.41"
+      },
+      {
+        "name": "bounded contextual search and keyboard selection are drafts",
+        "terminalId": "29"
+      },
+      {
+        "name": "explicit Apply, canonical identity and Buy/Sell order"
+      },
+      {
+        "name": "editing/clear invalidate hidden identity; controls remain staged"
+      },
+      {
+        "name": "Reset restores legacy mode"
+      },
+      {
+        "name": "mobile 320 px selection/Apply and no overflow"
+      },
+      {
+        "name": "mobile 375 px selection/Apply and no overflow"
+      },
+      {
+        "name": "map/details selection survives grouped rendering"
+      }
+    ],
+    "errors": [],
+    "consoleErrors": [],
+    "timestamp": "2026-10-25T02:52:47.065Z"
+  },
+  "touch": {
+    "browser": "Google Chrome",
+    "binary": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "version": "155.0.8059.41",
+    "emulation": "Chrome mobile/touch emulation; not a physical device test",
+    "live": true,
+    "checks": [
+      {
+        "width": 320,
+        "touch": true,
+        "isMobile": true,
+        "terminal_api_id": "29"
+      },
+      {
+        "width": 375,
+        "touch": true,
+        "isMobile": true,
+        "terminal_api_id": "29"
+      }
+    ]
+  },
+  "live_state": {
+    "browser": "Google Chrome",
+    "binary": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "version": "155.0.8059.41",
+    "checks": [
+      {
+        "name": "live independent pagination/direct/back/forward",
+        "terminal_api_id": 27,
+        "full_sell_count": 89,
+        "page_two": 39
+      },
+      {
+        "name": "live same-row Both and unique group IDs",
+        "memberships_per_side": 2
+      },
+      {
+        "name": "live explicit Refresh keeps drafts and applied URL"
+      },
+      {
+        "name": "known no-market terminal retains canonical context",
+        "terminal_api_id": 52
+      },
+      {
+        "name": "live incompatible system is staged, Apply restores legacy and Pyro map remains functional"
+      },
+      {
+        "name": "live invalid selection safely clears to legacy"
+      }
+    ],
+    "errors": []
+  },
+  "map": {
+    "version": "orbital-v3:cfc59e789927b6af",
+    "tick": "703684",
+    "canvas": true
+  },
+  "chrome_observation": {
+    "browser": "Google Chrome",
+    "binary": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "version": "155.0.8059.41",
+    "started_at": "2026-10-25T02:52:10.803Z",
+    "market_messages": 0,
+    "applicable_messages": 0,
+    "page_errors": [],
+    "console_errors": [],
+    "ready_at": "2026-10-25T02:52:15.331Z",
+    "finished_at": "2026-10-25T03:02:15.340Z",
+    "elapsed_seconds": 600.009,
+    "final_url": "https://startrader.altama.energy/market?terminal_api_id=27",
+    "group_counts": [
+      {
+        "side": "buy",
+        "count": "14"
+      },
+      {
+        "side": "sell",
+        "count": "89"
+      }
+    ]
+  },
+  "health_samples": [
+    {
+      "sampled_at": "2026-10-25T02:51:43Z",
+      "elapsed_seconds": 1,
+      "release": 171,
+      "source": "4d2d7cb97bea19f629a8f71262eaabf10748ebb8",
+      "dynos": [
+        {
+          "name": "web.1",
+          "state": "up",
+          "release": {
+            "id": "b5fb6bfb-0f27-4c27-9146-f508b27b125e",
+            "version": 171
+          }
+        },
+        {
+          "name": "worker.1",
+          "state": "up",
+          "release": {
+            "id": "b5fb6bfb-0f27-4c27-9146-f508b27b125e",
+            "version": 171
+          }
+        }
+      ],
+      "requests": [
+        {
+          "path": "/up",
+          "status": 200,
+          "wall_ms": 368.89,
+          "server_ms": 3.285
+        },
+        {
+          "path": "/market/terminals?q=Admin",
+          "status": 200,
+          "wall_ms": 356.62,
+          "server_ms": 81.637
+        },
+        {
+          "path": "/market?terminal_api_id=29",
+          "status": 200,
+          "wall_ms": 852.09,
+          "server_ms": 160.707
+        }
+      ],
+      "tick": [
+        {
+          "current_tick": "703677",
+          "processed_at": "2026-10-25 02:51:37.712633"
+        }
+      ],
+      "tick_control": [
+        {
+          "running": "t",
+          "last_heartbeat_at": "2026-10-25 02:51:37.731558"
+        }
+      ],
+      "saved_journeys": [
+        {
+          "count": "6"
+        }
+      ],
+      "infrastructure": {
+        "sampled_lines": 0,
+        "http_5xx": 0,
+        "crashes": 0,
+        "router_codes": {}
+      }
+    },
+    {
+      "sampled_at": "2026-10-25T02:53:38Z",
+      "elapsed_seconds": 116,
+      "release": 171,
+      "source": "4d2d7cb97bea19f629a8f71262eaabf10748ebb8",
+      "dynos": [
+        {
+          "name": "web.1",
+          "state": "up",
+          "release": {
+            "id": "b5fb6bfb-0f27-4c27-9146-f508b27b125e",
+            "version": 171
+          }
+        },
+        {
+          "name": "worker.1",
+          "state": "up",
+          "release": {
+            "id": "b5fb6bfb-0f27-4c27-9146-f508b27b125e",
+            "version": 171
+          }
+        }
+      ],
+      "requests": [
+        {
+          "path": "/up",
+          "status": 200,
+          "wall_ms": 493.06,
+          "server_ms": 1.361
+        },
+        {
+          "path": "/market/terminals?q=Admin",
+          "status": 200,
+          "wall_ms": 411.11,
+          "server_ms": 13.153
+        },
+        {
+          "path": "/market?terminal_api_id=29",
+          "status": 200,
+          "wall_ms": 507.85,
+          "server_ms": 65.47
+        }
+      ],
+      "tick": [
+        {
+          "current_tick": "703684",
+          "processed_at": "2026-10-25 02:53:24.033798"
+        }
+      ],
+      "tick_control": [
+        {
+          "running": "t",
+          "last_heartbeat_at": "2026-10-25 02:53:24.053084"
+        }
+      ],
+      "saved_journeys": [
+        {
+          "count": "6"
+        }
+      ],
+      "infrastructure": {
+        "sampled_lines": 89,
+        "http_5xx": 0,
+        "crashes": 0,
+        "router_codes": {
+          "H27": 3
+        }
+      }
+    },
+    {
+      "sampled_at": "2026-10-25T02:55:02Z",
+      "elapsed_seconds": 200,
+      "release": 171,
+      "source": "4d2d7cb97bea19f629a8f71262eaabf10748ebb8",
+      "dynos": [
+        {
+          "name": "web.1",
+          "state": "up",
+          "release": {
+            "id": "b5fb6bfb-0f27-4c27-9146-f508b27b125e",
+            "version": 171
+          }
+        },
+        {
+          "name": "worker.1",
+          "state": "up",
+          "release": {
+            "id": "b5fb6bfb-0f27-4c27-9146-f508b27b125e",
+            "version": 171
+          }
+        }
+      ],
+      "requests": [
+        {
+          "path": "/up",
+          "status": 200,
+          "wall_ms": 527.7,
+          "server_ms": 1.393
+        },
+        {
+          "path": "/market/terminals?q=Admin",
+          "status": 200,
+          "wall_ms": 288.91,
+          "server_ms": 14.28
+        },
+        {
+          "path": "/market?terminal_api_id=29",
+          "status": 200,
+          "wall_ms": 478.29,
+          "server_ms": 70.122
+        }
+      ],
+      "tick": [
+        {
+          "current_tick": "703690",
+          "processed_at": "2026-10-25 02:54:55.126971"
+        }
+      ],
+      "tick_control": [
+        {
+          "running": "t",
+          "last_heartbeat_at": "2026-10-25 02:54:55.147009"
+        }
+      ],
+      "saved_journeys": [
+        {
+          "count": "6"
+        }
+      ],
+      "infrastructure": {
+        "sampled_lines": 86,
+        "http_5xx": 0,
+        "crashes": 0,
+        "router_codes": {
+          "H27": 1
+        }
+      }
+    },
+    {
+      "sampled_at": "2026-10-25T02:58:00Z",
+      "elapsed_seconds": 377,
+      "release": 171,
+      "source": "4d2d7cb97bea19f629a8f71262eaabf10748ebb8",
+      "dynos": [
+        {
+          "name": "web.1",
+          "state": "up",
+          "release": {
+            "id": "b5fb6bfb-0f27-4c27-9146-f508b27b125e",
+            "version": 171
+          }
+        },
+        {
+          "name": "worker.1",
+          "state": "up",
+          "release": {
+            "id": "b5fb6bfb-0f27-4c27-9146-f508b27b125e",
+            "version": 171
+          }
+        }
+      ],
+      "requests": [
+        {
+          "path": "/up",
+          "status": 200,
+          "wall_ms": 343.38,
+          "server_ms": 1.321
+        },
+        {
+          "path": "/market/terminals?q=Admin",
+          "status": 200,
+          "wall_ms": 302.89,
+          "server_ms": 13.051
+        },
+        {
+          "path": "/market?terminal_api_id=29",
+          "status": 200,
+          "wall_ms": 464.23,
+          "server_ms": 63.069
+        }
+      ],
+      "tick": [
+        {
+          "current_tick": "703702",
+          "processed_at": "2026-10-25 02:57:57.596124"
+        }
+      ],
+      "tick_control": [
+        {
+          "running": "t",
+          "last_heartbeat_at": "2026-10-25 02:57:57.618379"
+        }
+      ],
+      "saved_journeys": [
+        {
+          "count": "6"
+        }
+      ],
+      "infrastructure": {
+        "sampled_lines": 15,
+        "http_5xx": 0,
+        "crashes": 0,
+        "router_codes": {}
+      }
+    },
+    {
+      "sampled_at": "2026-10-25T02:59:56Z",
+      "elapsed_seconds": 494,
+      "release": 171,
+      "source": "4d2d7cb97bea19f629a8f71262eaabf10748ebb8",
+      "dynos": [
+        {
+          "name": "web.1",
+          "state": "up",
+          "release": {
+            "id": "b5fb6bfb-0f27-4c27-9146-f508b27b125e",
+            "version": 171
+          }
+        },
+        {
+          "name": "worker.1",
+          "state": "up",
+          "release": {
+            "id": "b5fb6bfb-0f27-4c27-9146-f508b27b125e",
+            "version": 171
+          }
+        }
+      ],
+      "requests": [
+        {
+          "path": "/up",
+          "status": 200,
+          "wall_ms": 336.82,
+          "server_ms": 1.3079999999999998
+        },
+        {
+          "path": "/market/terminals?q=Admin",
+          "status": 200,
+          "wall_ms": 332.51,
+          "server_ms": 13.867
+        },
+        {
+          "path": "/market?terminal_api_id=29",
+          "status": 200,
+          "wall_ms": 1724.44,
+          "server_ms": 63.760999999999996
+        }
+      ],
+      "tick": [
+        {
+          "current_tick": "703709",
+          "processed_at": "2026-10-25 02:59:43.846815"
+        }
+      ],
+      "tick_control": [
+        {
+          "running": "t",
+          "last_heartbeat_at": "2026-10-25 02:59:43.863727"
+        }
+      ],
+      "saved_journeys": [
+        {
+          "count": "6"
+        }
+      ],
+      "infrastructure": {
+        "sampled_lines": 15,
+        "http_5xx": 0,
+        "crashes": 0,
+        "router_codes": {}
+      }
+    },
+    {
+      "sampled_at": "2026-10-25T03:02:25Z",
+      "elapsed_seconds": 642,
+      "release": 171,
+      "source": "4d2d7cb97bea19f629a8f71262eaabf10748ebb8",
+      "dynos": [
+        {
+          "name": "web.1",
+          "state": "up",
+          "release": {
+            "id": "b5fb6bfb-0f27-4c27-9146-f508b27b125e",
+            "version": 171
+          }
+        },
+        {
+          "name": "worker.1",
+          "state": "up",
+          "release": {
+            "id": "b5fb6bfb-0f27-4c27-9146-f508b27b125e",
+            "version": 171
+          }
+        }
+      ],
+      "requests": [
+        {
+          "path": "/up",
+          "status": 200,
+          "wall_ms": 324.56,
+          "server_ms": 1.668
+        },
+        {
+          "path": "/market/terminals?q=Admin",
+          "status": 200,
+          "wall_ms": 295.15,
+          "server_ms": 13.642
+        },
+        {
+          "path": "/market?terminal_api_id=29",
+          "status": 200,
+          "wall_ms": 710.44,
+          "server_ms": 67.638
+        }
+      ],
+      "tick": [
+        {
+          "current_tick": "703719",
+          "processed_at": "2026-10-25 03:02:15.775229"
+        }
+      ],
+      "tick_control": [
+        {
+          "running": "t",
+          "last_heartbeat_at": "2026-10-25 03:02:15.790643"
+        }
+      ],
+      "saved_journeys": [
+        {
+          "count": "6"
+        }
+      ],
+      "infrastructure": {
+        "sampled_lines": 17,
+        "http_5xx": 0,
+        "crashes": 0,
+        "router_codes": {}
+      }
+    }
+  ],
+  "limits": [
+    "Bounded platform log samples; not continuous log coverage.",
+    "No manufactured production streams, trades, imports, journeys or ticks.",
+    "Touch is Chrome emulation, not physical-device coverage."
+  ]
+}

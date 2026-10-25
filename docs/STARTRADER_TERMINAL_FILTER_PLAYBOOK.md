@@ -4,7 +4,7 @@ Date: 24 October 2026
 Owner: Dustin Hill
 Executor: Codex in the StarTrader repository
 Discovery source: `STARTRADER_TERMINAL_FILTER_DISCOVERY.md`, inspected at `59ff510fab6d09a14e10518bac5f931ccde98f44`
-Document status: v169 was deployed, then rolled back as v170 after a live first-pagination history defect. The permitted full-GET pagination fallback is being qualified before replacement deployment.
+Document status: M1–M7 complete. Replacement v171 is verified in production at 4d2d7cb97bea19f629a8f71262eaabf10748ebb8. The v169 first-pagination defect, rollback as v170 and full-GET fallback are documented in the release and incident evidence.
 
 ## 1 Outcome and scope
 
@@ -317,9 +317,9 @@ Finish the release evidence and playbook status with actual release/SHA, schema/
 | M2 Selector | Complete | Endpoint/transport/accessibility and Chrome results. |
 | M3 Grouped results | Complete | Complete counts/pages/semantics/legacy coverage. |
 | M4 State and updates | Complete with full-GET fallback | Canonical history and stream correctness. |
-| M5 Qualification | Replacement integration in progress | Exact integrated SHA, tests/build/benchmarks/release manifest. |
-| M6 Deployment | v169 rolled back; replacement pending | Actual release/full SHA and valid feature indexes. |
-| M7 Closeout | Pending | Live checks, observation, rollback readiness and final evidence. |
+| M5 Qualification | Complete | 44/304 focused, 499/5716 mainline; 26 isolated Chrome checks; retained baseline failures disclosed. |
+| M6 Deployment | Complete: v171 | 4d2d7cb97bea19f629a8f71262eaabf10748ebb8; b004; valid retained indexes and verified assets. |
+| M7 Closeout | Complete | Live SQL/HTTP + Chrome + fresh ten-minute observation; rollback ready. |
 
 ## Execution record — M1 (24 October 2026 Pacific)
 
@@ -372,3 +372,16 @@ Use the section-5 permitted simplification: result pagination now targets _top f
 Added the exact first-navigation direct-URL -> Sell page 2 -> Back/Forward row regression plus a request assertion requiring _top paging. Requalification and replacement release evidence follow.
 
 Replacement local qualification: 44 tests / 304 assertions, no failures/errors/skips; 26 official Chrome checks pass with zero page/console errors, including the exact first-pagination direct-link Back/Forward regression and legacy original-row restoration. Terminating assets passed. Only the two pagination data targets change at runtime; no query, price, filter predicate, schema or data change is part of the fix.
+
+## Execution record — replacement M5–M7 complete
+
+- Production fix f544f35da09086694d17659dd1c7a67b22199c23 merged through [PR #35](https://github.com/Seggellion/startrader/pull/35) as 4d2d7cb97bea19f629a8f71262eaabf10748ebb8. Mainline forward-port 523e8318e008a35b36a42939e298b3f77e0766bb merged through [PR #36](https://github.com/Seggellion/startrader/pull/36) as 8eeee1e147f1a9220c151eb93323b8c45bcaa8b5. Both security checks succeeded; merge trees matched qualified heads.
+- Exact production merge: the seven-path focused command above passed **44 tests / 304 assertions**. Mainline CODEX_ENV_FILE=.env.terminal-main-test bin/codex_test passed **499 / 5716**, zero failures/errors/skips. One mistyped nonexistent query-test path stopped before tests; it was corrected to the actual seven-path set and the complete command passed.
+- Fresh read-only preflight confirmed compatible v170 / 9bc1d17614e667b1226671e413d4e5591d9b3380, the expected app/domain/add-on, healthy processes, no duplicate identities and retained feature versions. Backup **b004** completed at 02:49:10Z.
+- Deployed only git push heroku 4d2d7cb97bea19f629a8f71262eaabf10748ebb8:refs/heads/main through the guarded local deployment script. No force or unrestricted migration. Heroku produced **v171**, full slug source verified, with assets:precompile successful in 5.19 seconds.
+- Audited retained indexes using the pg-only script without --apply; both ready/valid with exact expected columns/uniqueness/predicate. Only the two feature versions are recorded; cargo widening absent, price precision remains 10.
+- Sixteen safe live SQL/HTTP checks passed. Official Chrome passed 8 selector/layout checks, 6 state checks (including the first Back/Forward regression), 2 touch widths and valid map/catalog readiness. Served feature JS matched source; application stylesheet responses passed. A sandboxed Chrome attempt could not resolve DNS; the authorized network-enabled Chrome run passed.
+- Fresh Chrome observation 2026-10-25T02:52:15.331Z -> 2026-10-25T03:02:15.340Z, 600.009 seconds, zero page/console errors. Natural row messages 0; applicable 0. Zero messages means a recorded live stream gap, not a claim of live event coverage.
+- 6 bounded platform/HTTP samples through 2026-10-25T03:02:25Z (642 seconds): exact source, both processes up, safe endpoint HTTP 200, no sampled 5xx/crashes. Per-sample H27 client-interruption tallies are retained without summing overlap or asserting causation. Natural tick 703677->703719; all six unfinished journeys' aggregate unchanged.
+- Public operational detail publication was explicitly approved by the user after automatic review initially blocked it. GitHub connector writes lacked permission; authenticated Linux gh supplied normal PR creation/merges.
+- [Final release report](STARTRADER_TERMINAL_FILTER_RELEASE.md) and [live evidence](STARTRADER_TERMINAL_FILTER_LIVE.json) contain actual identities, counts, asset hashes, health and rollback readiness. Documentation closeout commits do not change the immutable deployed source. Original supplied root playbook, unrelated artifacts and existing worktree remain preserved.
