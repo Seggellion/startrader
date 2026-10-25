@@ -1,0 +1,21 @@
+{
+  "browser": "Google Chrome",
+  "binary": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "version": "155.0.8059.41",
+  "emulation": "Chrome mobile/touch emulation; not a physical device test",
+  "live": false,
+  "checks": [
+    {
+      "width": 320,
+      "touch": true,
+      "isMobile": true,
+      "terminal_api_id": "900029"
+    },
+    {
+      "width": 375,
+      "touch": true,
+      "isMobile": true,
+      "terminal_api_id": "900029"
+    }
+  ]
+}

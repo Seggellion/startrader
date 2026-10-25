@@ -4,7 +4,7 @@ Date: 24 October 2026
 Owner: Dustin Hill
 Executor: Codex in the StarTrader repository
 Discovery source: `STARTRADER_TERMINAL_FILTER_DISCOVERY.md`, inspected at `59ff510fab6d09a14e10518bac5f931ccde98f44`
-Document status: Implementation plan. No feature implementation, tests, migration, or deployment is claimed by this document.
+Document status: M1–M4 implemented and qualified locally. M5 integration is in progress; production has not yet been deployed.
 
 ## 1 Outcome and scope
 
@@ -308,16 +308,16 @@ Finish the release evidence and playbook status with actual release/SHA, schema/
 | Release | Exact qualified deployed SHA, feature-only migration plan, valid indexes/assets, Chrome/live checks and compatible rollback. |
 | Regressions | No trade/API/import direction change; no orbital, tick, travel-rate or journey mutation. |
 
-## 8 Initial project status
+## 8 Project status
 
 | Milestone | Status | Evidence to record |
 | --- | --- | --- |
 | M0 Discovery | Complete | Supplied discovery; recorded source/SQL limits. |
 | M1 Foundations | Complete | Revalidated baseline, query/identity tests, safe index plan. |
-| M2 Selector | Pending | Endpoint/transport/accessibility and Chrome results. |
-| M3 Grouped results | Pending | Complete counts/pages/semantics/legacy coverage. |
-| M4 State and updates | Pending | Canonical history and stream correctness. |
-| M5 Qualification | Pending | Exact integrated SHA, tests/build/benchmarks/release manifest. |
+| M2 Selector | Complete | Endpoint/transport/accessibility and Chrome results. |
+| M3 Grouped results | Complete | Complete counts/pages/semantics/legacy coverage. |
+| M4 State and updates | Complete | Canonical history and stream correctness. |
+| M5 Qualification | Integration in progress | Exact integrated SHA, tests/build/benchmarks/release manifest. |
 | M6 Deployment | Pending | Actual release/full SHA and valid feature indexes. |
 | M7 Closeout | Pending | Live checks, observation, rollback readiness and final evidence. |
 
@@ -335,3 +335,26 @@ Finish the release evidence and playbook status with actual release/SHA, schema/
 
 
 M1 final verification: 37 tests / 231 assertions, zero failures/errors/skips; concurrent migration rehearsal and duplicate-audit rejection passed. Commands: CODEX_ENV_FILE=.env.terminal-test bin/codex_test test/queries/market_query_test.rb test/controllers/star_trader_controller_test.rb test/models/production_facility_test.rb test/services/admin/data/terminals_importer_test.rb test/services/admin/data/facilities_populator_test.rb; isolated profile + bin/codex_exec bundle exec ruby script/verify_terminal_indexes.rb. Logs: tmp/terminal-m1-final.log and tmp/terminal-m1-indexes.log. Transaction control adds BEGIN/SET/COMMIT outside the <=8 data-query budget.
+
+## Execution record — M2–M5
+
+Implementation commits:
+- M1: `a7d1de0`.
+- M2: `99b019b5b87056d0aaa0823028afcc99679e6e18`.
+- M3: `d1d40dd9875e138d326e3c758c3dd2465d262dd4`.
+- M4: `88470962872c5ede687a4ca65f577412a15261a6`.
+
+- M2 implements the strict bounded lookup, contextual accessible selector and one responsive form. M3 implements full-scope Buy/Sell groups, decimal/missing-quote states and independent pagination. M4 implements canonical frame-load restoration and scoped invalidation, with one active/one pending refresh and explicit-refresh intent retained through throttling.
+- Actual focused command: `CODEX_ENV_FILE=.env.terminal-test bin/codex_test test/queries/market_query_test.rb test/controllers/market_terminals_controller_test.rb test/controllers/terminal_market_results_test.rb test/controllers/star_trader_controller_test.rb test/models/production_facility_test.rb test/services/admin/data/terminals_importer_test.rb test/services/admin/data/facilities_populator_test.rb` — **44 tests / 302 assertions, zero failures/errors/skips**.
+- Actual required broader command: `CODEX_ENV_FILE=.env.terminal-test bin/codex_test` — **482 tests / 5394 assertions, 33 failures / 25 errors**. Fresh v168 archive baseline on the same isolated DB: 468 / 5247, 34 failures / 26 errors. Exact failure-identity comparison has **zero new failures**; only removed cases are the two relevant importer fixture defects. Do not call this suite green. See STARTRADER_TERMINAL_FILTER_REGRESSIONS.json and ignored baseline/candidate logs.
+- `script/verify_terminal_indexes.rb` and `script/rehearse_terminal_index_process.rb` ran only in star_trader_terminal_test. They prove concurrent down/up, duplicate refusal, wrong-DB refusal, exact two-version standalone application and idempotent verification. Production process is `script/apply_terminal_indexes.rb`; it loads pg, never Rails, and never runs unrestricted db:migrate.
+- Terminating build: isolated `RAILS_ENV=test bin/codex_exec bundle exec rails assets:precompile` passed; existing Browserslist freshness notice remains.
+- Official Google Chrome: `C:\Program Files\Google\Chrome\Application\chrome.exe`, **155.0.8059.41**, valid Google LLC Authenticode signature. Bundled Playwright is only the driver; every launch uses that explicit executable. No other browser used.
+- Chrome command: bundled Windows node + `test/browser/terminal_market_chrome.cjs`, with TERMINAL_PLAYWRIGHT_MODULE pointing to bundled Playwright and TERMINAL_EVIDENCE_DIR to this chat's visualization folder. Completed 24-check run: zero page/console errors. Strengthened final history/stale-frame and touch checks are recorded in final evidence. Screenshots visually inspected, including a wrapping long terminal selection at 320 px.
+- Separate `test/browser/terminal_map_chrome.cjs` readiness check: valid canvas, tick 701104 and retained `orbital-v3:cfc59e789927b6af`. An earlier screenshot taken while loading was not treated as map-readiness proof.
+- Real HTTP: `test/browser/terminal_market_http.cjs`, 30 warm samples/endpoint at 830 synthetic terminals / 2590 offers. Server p95 **17.130 ms lookup / 174.710 ms grouped**; max payload **3700 / 174436 bytes**. Lookup <=20 KiB; grouped DOM <=100 offers.
+- Earlier competing-load run had grouped p95 333.798 ms; after other Ruby/scale jobs ended, idle runs passed. Independent rapid Chrome navigations measured higher end-to-end costs, retained separately in timing evidence rather than substituted for HTTP server budgets.
+- `script/benchmark_terminal_market.rb` ran in a separate guarded scale DB at 830/2590, 8300/25900 and 83000/259000 terminals/offers. <=20 options, <=20 KiB, <=100 rows and **8 data statements** held, including association access on both in-memory copies of overlapping offers. BEGIN/SET/COMMIT control statements reported separately.
+- At 100x, broad substring search takes 277 ms median / 312 ms maximum in the final warm samples (an earlier run reached about 750 ms); no claim of a 150 ms 100x lookup. Revisit normalized/trigram search as growth or p95 warrants. Current catalog budgets pass without new extensions.
+- Browser findings corrected before qualification: Stimulus context-property collision, late initial restoration, Turbo retaining the outer frame on paging, explicit Refresh losing force intent through throttling, and preloading only one in-memory copy of overlapping rows.
+- Integration: normal forward-port PR to origin/main, plus feature-only PR into codex/terminal-filter-production from v168. Only the independently qualified production line is deployed. Unrelated main cargo widening/regression application changes remain excluded.

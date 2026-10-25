@@ -1,0 +1,86 @@
+{
+  "browser": "Google Chrome",
+  "binary": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "version": "155.0.8059.41",
+  "base": "http://localhost:8037",
+  "live": false,
+  "checks": [
+    {
+      "name": "single responsive form; legacy feed; no selector preload",
+      "browser": "155.0.8059.41"
+    },
+    {
+      "name": "bounded contextual search and keyboard selection are drafts",
+      "terminalId": "900029"
+    },
+    {
+      "name": "explicit Apply, canonical identity and Buy/Sell order"
+    },
+    {
+      "name": "full counts, overlap IDs, missing quotes, independent 50-row pages"
+    },
+    {
+      "name": "paging discards drafts; direct reload and back/forward restore canonical pages"
+    },
+    {
+      "name": "scoped burst invalidation, no ungrouped injection, draft preservation and unrelated streams"
+    },
+    {
+      "name": "one active refresh and one coalesced pending invalidation at one per second"
+    },
+    {
+      "name": "explicit Refresh sees unbroadcast bulk changes and preserves drafts"
+    },
+    {
+      "name": "automatic refresh clamps vanished last pages in both groups"
+    },
+    {
+      "name": "late automatic frame response is rejected after Apply navigation"
+    },
+    {
+      "name": "editing/clear invalidate hidden identity; controls remain staged"
+    },
+    {
+      "name": "Reset restores legacy mode"
+    },
+    {
+      "name": "stale response response rejected"
+    },
+    {
+      "name": "stale json response rejected"
+    },
+    {
+      "name": "stale clear response rejected"
+    },
+    {
+      "name": "stale system response rejected"
+    },
+    {
+      "name": "stale selection response rejected"
+    },
+    {
+      "name": "IME composition debounce, Up/Escape/Tab focus"
+    },
+    {
+      "name": "search error/retry preserves selected identity"
+    },
+    {
+      "name": "crafted mismatch and invalid identity never broaden results"
+    },
+    {
+      "name": "mobile 320 px selection/Apply and no overflow"
+    },
+    {
+      "name": "mobile 375 px selection/Apply and no overflow"
+    },
+    {
+      "name": "long selected name wraps recognizably in the 320 px filter panel"
+    },
+    {
+      "name": "map/details selection survives grouped rendering"
+    }
+  ],
+  "errors": [],
+  "consoleErrors": [],
+  "timestamp": "2026-10-25T01:54:11.017Z"
+}

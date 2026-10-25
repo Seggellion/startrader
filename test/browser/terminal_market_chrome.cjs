@@ -72,9 +72,9 @@ const record = (name, detail={}) => { checks.push({name, ...detail}); console.lo
       await page.waitForFunction(()=>document.querySelectorAll('[data-market-group="sell"] article').length===12);
       await page.waitForFunction(()=>document.querySelector('input[name="q"]').value==="");
       await page.goBack();
-      await page.waitForFunction(()=>new URL(location.href).searchParams.get("sell_page")==="1");
+      await page.waitForFunction(()=>new URL(location.href).searchParams.get("sell_page")==="1"&&document.querySelectorAll('[data-market-group="sell"] article').length===50);
       await page.goForward();
-      await page.waitForFunction(()=>new URL(location.href).searchParams.get("sell_page")==="2");
+      await page.waitForFunction(()=>new URL(location.href).searchParams.get("sell_page")==="2"&&document.querySelectorAll('[data-market-group="sell"] article').length===12);
       await page.reload();await ready();
       assert.equal(await selected().inputValue(),"900029");
       record("paging discards drafts; direct reload and back/forward restore canonical pages");
@@ -97,10 +97,14 @@ const record = (name, detail={}) => { checks.push({name, ...detail}); console.lo
       assert.equal(await page.locator('input[name="q"]').inputValue(),"draft must survive");
       assert((await page.locator('[data-market-results-target="status"]').textContent()).includes("Updates available"));
       await page.getByRole("heading",{name:"Terminal Market",exact:true}).focus();
+      const beforeRefreshScroll=await page.evaluate(()=>scrollY);
       await page.waitForFunction(()=>document.querySelector('[data-market-group="buy"]').textContent.includes("Changed by fixture"));
       assert.equal(await page.locator('input[name="q"]').inputValue(),"draft must survive");
       assert.equal(await page.locator('[data-group-count="sell"]').textContent(),"61");
       assert.equal(await page.evaluate(()=>window.__refreshRequests),1);
+      await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(resolve)));
+      assert.equal(await page.evaluate(()=>document.activeElement.id),"market_results_heading");
+      assert(Math.abs((await page.evaluate(()=>scrollY))-beforeRefreshScroll)<=1);
       await page.evaluate(()=>{
         const holder=document.createElement("div");holder.id="unrelated_stream";document.body.append(holder);
         window.Turbo.renderStreamMessage('<turbo-stream action="update" target="unrelated_stream"><template>unrelated preserved</template></turbo-stream>');
@@ -143,6 +147,29 @@ const record = (name, detail={}) => { checks.push({name, ...detail}); console.lo
       assert((await page.locator('[data-market-group="buy"] article').count())<50);
       assert((await page.locator('[data-market-group="sell"] article').count())<50);
       record("automatic refresh clamps vanished last pages in both groups");
+      await visit("/market?terminal_api_id=900029");
+      await page.evaluate(()=>{
+        const real=window.fetch,oldHTML=document.getElementById("market_results").outerHTML;
+        window.fetch=(url,options)=>{
+          if(options?.headers?.["Turbo-Frame"]==="market_results") {
+            window.__staleSignal=options.signal;
+            return Promise.resolve({ok:true,text:()=>new Promise(resolve=>window.__releaseStaleFrame=()=>resolve(oldHTML))});
+          }
+          return real(url,options);
+        };
+        const row=document.querySelector("[data-facility-id]");
+        window.Turbo.renderStreamMessage('<turbo-stream action="replace" target="market_row_production_facility_'+row.dataset.facilityId+'"><template><article data-terminal-api-id="900029">STALE_INJECTION</article></template></turbo-stream>');
+      });
+      await page.waitForFunction(()=>typeof window.__releaseStaleFrame==="function");
+      await page.locator('input[name="q"]').fill("No matching fixture");
+      await page.getByRole("button",{name:"Apply",exact:true}).click();
+      await page.waitForFunction(()=>document.querySelector('[data-group-count="buy"]')?.textContent==="0");
+      assert.equal(await page.evaluate(()=>window.__staleSignal.aborted),true);
+      await page.evaluate(()=>window.__releaseStaleFrame());
+      await page.waitForTimeout(100);
+      assert.equal(await page.locator('[data-group-count="buy"]').textContent(),"0");
+      assert.equal(await page.locator('input[name="q"]').inputValue(),"No matching fixture");
+      record("late automatic frame response is rejected after Apply navigation");
     }
 
     await visit("/market?terminal_api_id="+terminalId);
