@@ -1,0 +1,257 @@
+{
+  "summary": {
+    "browser": "Google Chrome",
+    "binary": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "version": "155.0.8059.41",
+    "samples": 30,
+    "viewport": "1500x1000",
+    "max_offer_rows": 100,
+    "ttfb_ms_p95": 341.60000002384186,
+    "download_ms_p95": 1.6999999284744263,
+    "dom_ms_p95": 486.2000000476837,
+    "controls_and_paint_ms_p95": 878.9897999999994,
+    "server_ms_p95": 302.35499999999996
+  },
+  "samples": [
+    {
+      "ttfb_ms": 273.89999997615814,
+      "download_ms": 0.8999999761581421,
+      "dom_ms": 427.2000000476837,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 767.4524000000001,
+      "server_ms": 232.186
+    },
+    {
+      "ttfb_ms": 261.5,
+      "download_ms": 1.2000000476837158,
+      "dom_ms": 425.5,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 764.8335999999999,
+      "server_ms": 210.38000000000002
+    },
+    {
+      "ttfb_ms": 293.2999999523163,
+      "download_ms": 1.2999999523162842,
+      "dom_ms": 504.90000009536743,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 872.4923999999992,
+      "server_ms": 230.033
+    },
+    {
+      "ttfb_ms": 289.5,
+      "download_ms": 0.8000000715255737,
+      "dom_ms": 390,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 741.3636000000006,
+      "server_ms": 225.768
+    },
+    {
+      "ttfb_ms": 242.79999995231628,
+      "download_ms": 0.8999999761581421,
+      "dom_ms": 408.7000000476837,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 738.5259999999998,
+      "server_ms": 180.9
+    },
+    {
+      "ttfb_ms": 295.09999990463257,
+      "download_ms": 1.2000000476837158,
+      "dom_ms": 458,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 840.2617,
+      "server_ms": 236.66899999999998
+    },
+    {
+      "ttfb_ms": 267.2000000476837,
+      "download_ms": 1,
+      "dom_ms": 414.7999999523163,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 759.8973999999998,
+      "server_ms": 231.94400000000002
+    },
+    {
+      "ttfb_ms": 273.10000002384186,
+      "download_ms": 0.8999999761581421,
+      "dom_ms": 434.6999999284744,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 790.7687999999998,
+      "server_ms": 228.191
+    },
+    {
+      "ttfb_ms": 341.60000002384186,
+      "download_ms": 0.8999999761581421,
+      "dom_ms": 422.6999999284744,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 846.7864000000009,
+      "server_ms": 290.45500000000004
+    },
+    {
+      "ttfb_ms": 275.60000002384186,
+      "download_ms": 1.1999999284744263,
+      "dom_ms": 456.89999997615814,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 823.5128000000004,
+      "server_ms": 226.448
+    },
+    {
+      "ttfb_ms": 253.39999997615814,
+      "download_ms": 0.8999999761581421,
+      "dom_ms": 414.3000000715256,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 723.2470999999987,
+      "server_ms": 201.99
+    },
+    {
+      "ttfb_ms": 301.1999999284744,
+      "download_ms": 1.2000000476837158,
+      "dom_ms": 444.60000002384186,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 822.2684999999983,
+      "server_ms": 302.35499999999996
+    },
+    {
+      "ttfb_ms": 448.2999999523163,
+      "download_ms": 1,
+      "dom_ms": 418,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 943.7588000000014,
+      "server_ms": 308.499
+    },
+    {
+      "ttfb_ms": 339.1999999284744,
+      "download_ms": 1.100000023841858,
+      "dom_ms": 452.10000002384186,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 878.9897999999994,
+      "server_ms": 273.913
+    },
+    {
+      "ttfb_ms": 277.5,
+      "download_ms": 0.7999999523162842,
+      "dom_ms": 436,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 796.6792999999998,
+      "server_ms": 227.932
+    },
+    {
+      "ttfb_ms": 276.5,
+      "download_ms": 0.7999999523162842,
+      "dom_ms": 409.8000000715256,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 741.7114999999994,
+      "server_ms": 168.173
+    },
+    {
+      "ttfb_ms": 258.5,
+      "download_ms": 4.899999976158142,
+      "dom_ms": 392.7999999523163,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 736.410899999999,
+      "server_ms": 204.03
+    },
+    {
+      "ttfb_ms": 235,
+      "download_ms": 1.6999999284744263,
+      "dom_ms": 245.70000004768372,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 578.5456999999988,
+      "server_ms": 182.792
+    },
+    {
+      "ttfb_ms": 299.10000002384186,
+      "download_ms": 0.7999999523162842,
+      "dom_ms": 393.90000009536743,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 774.1009999999987,
+      "server_ms": 270.001
+    },
+    {
+      "ttfb_ms": 235.10000002384186,
+      "download_ms": 1.2999999523162842,
+      "dom_ms": 432.7000000476837,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 743.1285000000025,
+      "server_ms": 192.677
+    },
+    {
+      "ttfb_ms": 273.2999999523163,
+      "download_ms": 1.100000023841858,
+      "dom_ms": 403.7999999523163,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 760.951100000002,
+      "server_ms": 222.091
+    },
+    {
+      "ttfb_ms": 297.7000000476837,
+      "download_ms": 1.0999999046325684,
+      "dom_ms": 415.10000002384186,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 788.4559000000008,
+      "server_ms": 260.368
+    },
+    {
+      "ttfb_ms": 245.5,
+      "download_ms": 1,
+      "dom_ms": 439.39999997615814,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 760.6074000000008,
+      "server_ms": 213.525
+    },
+    {
+      "ttfb_ms": 261.6999999284744,
+      "download_ms": 0.8000000715255737,
+      "dom_ms": 238.09999990463257,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 593.2965000000004,
+      "server_ms": 208.76600000000002
+    },
+    {
+      "ttfb_ms": 258.7999999523163,
+      "download_ms": 0.9000000953674316,
+      "dom_ms": 422.89999997615814,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 738.4019000000008,
+      "server_ms": 219.483
+    },
+    {
+      "ttfb_ms": 309.89999997615814,
+      "download_ms": 0.8000000715255737,
+      "dom_ms": 414.7999999523163,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 796.7639999999992,
+      "server_ms": 260.106
+    },
+    {
+      "ttfb_ms": 222.19999992847443,
+      "download_ms": 0.7000000476837158,
+      "dom_ms": 378.5,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 675.3976000000002,
+      "server_ms": 175.998
+    },
+    {
+      "ttfb_ms": 231.29999995231628,
+      "download_ms": 1.3000000715255737,
+      "dom_ms": 412.39999997615814,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 730.0701000000008,
+      "server_ms": 188.95600000000002
+    },
+    {
+      "ttfb_ms": 225.5,
+      "download_ms": 0.7999999523162842,
+      "dom_ms": 486.2000000476837,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 780.7609999999986,
+      "server_ms": 188.723
+    },
+    {
+      "ttfb_ms": 240,
+      "download_ms": 0.8999999761581421,
+      "dom_ms": 404.3000000715256,
+      "offer_rows": 100,
+      "controls_and_paint_ms": 713.8938999999991,
+      "server_ms": 190.00400000000002
+    }
+  ]
+}

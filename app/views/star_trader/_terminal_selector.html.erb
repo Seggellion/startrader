@@ -1,0 +1,31 @@
+<div data-controller="terminal-selector"
+     data-terminal-selector-url-value="<%= market_terminals_path %>"
+     data-terminal-selector-system-value="<%= @market_result&.terminal&.location&.star_system_name %>"
+     data-action="market-filters:system@window->terminal-selector#systemChanged terminal-selector:clear@window->terminal-selector#clear market-filters:restored@window->terminal-selector#restored">
+  <label for="market_terminal_search" class="block text-xs font-semibold uppercase text-zinc-400">Terminal</label>
+  <input id="market_terminal_search" type="search" role="combobox" autocomplete="off"
+         aria-autocomplete="list" aria-expanded="false" aria-controls="market_terminal_options"
+         aria-describedby="market_terminal_summary market_terminal_status"
+         value="<%= @market_result&.terminal&.name %>"
+         placeholder="Terminal, location, or code"
+         class="mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:border-cyan-400"
+         data-terminal-selector-target="input"
+         data-action="input->terminal-selector#edited keydown->terminal-selector#keyDown compositionstart->terminal-selector#compositionStart compositionend->terminal-selector#compositionEnd focus->terminal-selector#focused blur->terminal-selector#blurred">
+  <input type="hidden" name="terminal_api_id" value="<%= @filter_params[:terminal_api_id] %>" data-terminal-selector-target="identity">
+  <p id="market_terminal_summary" class="mt-2 break-words text-xs text-cyan-100" data-terminal-selector-target="summary">
+    <% if @market_result&.terminal %>
+      <%= @market_result.terminal.name %> · <%= terminal_selection_context(@market_result.terminal) %>
+    <% elsif @filter_params[:terminal_api_id].present? %>
+      Unavailable selection — clear and choose a terminal.
+    <% end %>
+  </p>
+  <ul id="market_terminal_options" role="listbox" aria-label="Matching terminals" hidden
+      class="mt-2 max-h-72 overflow-y-auto rounded-md border border-zinc-700 bg-zinc-950 text-sm"
+      data-terminal-selector-target="options"></ul>
+  <p id="market_terminal_status" role="status" aria-live="polite" class="mt-2 text-xs text-zinc-400" data-terminal-selector-target="status">Type at least two characters to search. Apply commits your selection.</p>
+  <div class="mt-2 flex flex-wrap gap-2">
+    <button type="button" class="rounded border border-zinc-700 px-3 py-2 text-xs" data-action="terminal-selector#clear">Clear terminal</button>
+    <button type="button" class="rounded border border-zinc-700 px-3 py-2 text-xs" data-action="terminal-selector#allSystems">Search all systems</button>
+    <button type="button" hidden class="rounded border border-zinc-700 px-3 py-2 text-xs" data-terminal-selector-target="retry" data-action="terminal-selector#search">Retry search</button>
+  </div>
+</div>

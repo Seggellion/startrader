@@ -22,76 +22,20 @@ class StarTraderController < ApplicationController
   private
 
   def load_dashboard
+    load_market
     @current_tick = Tick.instance
-    @active_system = market_params[:star_system].presence || "Stanton"
+    @active_system = @filter_params[:star_system].presence || "Stanton"
     @tracked_locations_count = ProductionFacility.where.not(location_name: [nil, ""]).distinct.count(:location_name)
     @last_market_update_at = ProductionFacility.maximum(:updated_at)
     @overview = market_overview
 
-    load_market
     @selected_facility = @market_facilities.first
   end
 
   def load_market
-    @filter_params = market_params.to_h.symbolize_keys
-    @market_page = [(@filter_params[:page].presence || 1).to_i, 1].max
-
-    scoped = filtered_market_scope
-    @total_count = scoped.count
-    @total_pages = (@total_count.to_f / PER_PAGE).ceil
-    @market_facilities = scoped
-      .includes(:commodity, :location)
-      .offset((@market_page - 1) * PER_PAGE)
-      .limit(PER_PAGE)
-    @next_page = @market_page < @total_pages ? @market_page + 1 : nil
-    @previous_page = @market_page > 1 ? @market_page - 1 : nil
-  end
-
-  def filtered_market_scope
-    scope = ProductionFacility
-      .left_joins(:commodity, :location)
-      .where.not(commodity_name: [nil, ""])
-      .where.not(location_name: [nil, ""])
-
-    if @filter_params[:q].present?
-      term = "%#{ActiveRecord::Base.sanitize_sql_like(@filter_params[:q])}%"
-      scope = scope.where(
-        "production_facilities.facility_name ILIKE :term OR production_facilities.location_name ILIKE :term OR production_facilities.commodity_name ILIKE :term OR locations.parent_name ILIKE :term OR locations.star_system_name ILIKE :term OR locations.planet_name ILIKE :term OR locations.moon_name ILIKE :term",
-        term: term
-      )
-    end
-
-    scope = scope.where(locations: { star_system_name: @filter_params[:star_system] }) if @filter_params[:star_system].present?
-    scope = scope.where(commodity_name: Commodity.where(id: @filter_params[:commodity_id]).select(:name)) if @filter_params[:commodity_id].present?
-    scope = scope.where(locations: { classification: @filter_params[:location_type] }) if @filter_params[:location_type].present?
-
-    case @filter_params[:trade_mode]
-    when "buy"
-      scope = scope.player_can_buy
-    when "sell"
-      scope = scope.player_can_sell
-    when "both"
-      scope = scope.player_can_buy.player_can_sell
-    end
-
-    scope.order(Arel.sql("#{sort_column} #{sort_direction} NULLS LAST"), id: :asc)
-  end
-
-  def sort_column
-    {
-      "location" => "production_facilities.location_name",
-      "commodity" => "production_facilities.commodity_name",
-      "buy_price" => ProductionFacility::PLAYER_BUY_PRICE_SQL,
-      "sell_price" => ProductionFacility::PLAYER_SELL_PRICE_SQL,
-      "inventory" => "production_facilities.inventory",
-      "demand" => "production_facilities.scu_buy",
-      "profit_margin" => "(#{ProductionFacility::PLAYER_SELL_PRICE_SQL} - #{ProductionFacility::PLAYER_BUY_PRICE_SQL})",
-      "updated" => "production_facilities.updated_at"
-    }.fetch(@filter_params[:sort].presence, "production_facilities.updated_at")
-  end
-
-  def sort_direction
-    @filter_params[:direction] == "asc" ? "ASC" : "DESC"
+    @market_result = MarketQuery.new(market_params).call
+    @filter_params = @market_result.filters
+    @market_facilities = @market_result.rows
   end
 
   def market_overview
@@ -115,19 +59,11 @@ class StarTraderController < ApplicationController
   end
 
   def market_params
-    params.permit(:q, :star_system, :commodity_id, :location_type, :trade_mode, :sort, :direction, :page)
+    params.slice(*MarketQuery::FILTER_KEYS)
   end
 
   def market_locals
-    {
-      market_facilities: @market_facilities,
-      filter_params: @filter_params,
-      total_count: @total_count,
-      page: @market_page,
-      total_pages: @total_pages,
-      previous_page: @previous_page,
-      next_page: @next_page
-    }
+    { market_result: @market_result }
   end
 
   def set_star_trader_metadata

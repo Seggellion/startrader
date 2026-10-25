@@ -107,7 +107,8 @@ module Admin
       end
 
       test "fallback location name is used and warning is logged when no location exists" do
-        payload = terminal_payload("id" => 7003, "city_name" => "Unknown Landing Zone", "id_city" => 999)
+        payload = terminal_payload("id" => 7003, "city_name" => "Unknown Landing Zone", "id_city" => 999,
+                                   "id_space_station" => nil, "code" => "UNKNOWN-Admin", "star_system_name" => nil)
 
         result = TerminalsImporter.import_raw_json!(JSON.generate([payload]))
 
@@ -191,7 +192,7 @@ module Admin
       test "ambiguous legacy fallback does not overwrite unrelated terminals" do
         Terminal.create!(name: "Legacy One", code: "PYR-GW")
         Terminal.create!(name: "Legacy Two", code: "PYR-GW")
-        payload = pyro_gateway_payload(id: 9005, code: "PYR-GW")
+        payload = pyro_gateway_payload(id: 9005, location_api_id: nil, star_system_name: "Stanton", code: "PYR-GW")
 
         result = nil
         assert_no_difference -> { Terminal.count } do

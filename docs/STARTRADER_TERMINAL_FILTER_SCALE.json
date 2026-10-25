@@ -1,0 +1,374 @@
+{
+  "machine": {
+    "ruby": "ruby 3.2.2 (2023-03-30 revision e51014f9c0) [x86_64-linux]",
+    "cpu_count": 16,
+    "platform": "x86_64-linux"
+  },
+  "scales": [
+    {
+      "factor": 1,
+      "terminals": 830,
+      "offers": 2590,
+      "grouped_query_ms": [
+        48.520962009206414,
+        16.766545013524592,
+        14.952657045796514,
+        14.867114019580185,
+        14.024241943843663
+      ],
+      "data_statements": [
+        8,
+        8,
+        8,
+        8,
+        8
+      ],
+      "max_allocations": 33953,
+      "lookup": {
+        "substring": {
+          "max_ms": 13.954840018413961,
+          "median_ms": 9.018077980726957,
+          "max_bytes": 4101,
+          "max_options": 20
+        },
+        "no_match": {
+          "max_ms": 8.523638010956347,
+          "median_ms": 8.130397996865213,
+          "max_bytes": 31,
+          "max_options": 0
+        },
+        "system": {
+          "max_ms": 9.885368985123932,
+          "median_ms": 9.187577059492469,
+          "max_bytes": 4101,
+          "max_options": 20
+        },
+        "duplicate_context": {
+          "max_ms": 12.556196074001491,
+          "median_ms": 11.149271042086184,
+          "max_bytes": 442,
+          "max_options": 2
+        }
+      },
+      "plans": {
+        "worst_terminal": {
+          "execution_ms": 0.536,
+          "planning_ms": 0.067,
+          "shared_hits": 280,
+          "nodes": [
+            {
+              "Node Type": "Limit",
+              "Actual Rows": 50.0,
+              "Actual Loops": 1
+            },
+            {
+              "Node Type": "Sort",
+              "Actual Rows": 50.0,
+              "Actual Loops": 1
+            },
+            {
+              "Node Type": "Bitmap Heap Scan",
+              "Relation Name": "production_facilities",
+              "Actual Rows": 101.0,
+              "Actual Loops": 1
+            },
+            {
+              "Node Type": "Bitmap Index Scan",
+              "Index Name": "index_production_facilities_on_id_terminal",
+              "Actual Rows": 10201.0,
+              "Actual Loops": 1
+            }
+          ]
+        },
+        "substring": {
+          "execution_ms": 1.161,
+          "planning_ms": 0.09,
+          "shared_hits": 1508,
+          "nodes": [
+            {
+              "Node Type": "Limit",
+              "Actual Rows": 21.0,
+              "Actual Loops": 1
+            },
+            {
+              "Node Type": "Sort",
+              "Actual Rows": 21.0,
+              "Actual Loops": 1
+            },
+            {
+              "Node Type": "Seq Scan",
+              "Relation Name": "terminals",
+              "Actual Rows": 828.0,
+              "Actual Loops": 1,
+              "Rows Removed by Filter": 2
+            }
+          ]
+        },
+        "no_match": {
+          "execution_ms": 0.992,
+          "planning_ms": 0.085,
+          "shared_hits": 1508,
+          "nodes": [
+            {
+              "Node Type": "Limit",
+              "Actual Rows": 0.0,
+              "Actual Loops": 1
+            },
+            {
+              "Node Type": "Seq Scan",
+              "Relation Name": "terminals",
+              "Actual Rows": 0.0,
+              "Actual Loops": 1,
+              "Rows Removed by Filter": 830
+            }
+          ]
+        }
+      }
+    },
+    {
+      "factor": 10,
+      "terminals": 8300,
+      "offers": 25900,
+      "grouped_query_ms": [
+        18.619865062646568,
+        16.12477609887719,
+        15.550020965747535,
+        14.595865039154887,
+        14.310305006802082
+      ],
+      "data_statements": [
+        8,
+        8,
+        8,
+        8,
+        8
+      ],
+      "max_allocations": 9725,
+      "lookup": {
+        "substring": {
+          "max_ms": 82.66982098575681,
+          "median_ms": 32.145146979019046,
+          "max_bytes": 4173,
+          "max_options": 20
+        },
+        "no_match": {
+          "max_ms": 77.14583503548056,
+          "median_ms": 64.0282150125131,
+          "max_bytes": 31,
+          "max_options": 0
+        },
+        "system": {
+          "max_ms": 57.32249398715794,
+          "median_ms": 56.625365978106856,
+          "max_bytes": 4173,
+          "max_options": 20
+        },
+        "duplicate_context": {
+          "max_ms": 78.07152101304382,
+          "median_ms": 73.0321069713682,
+          "max_bytes": 442,
+          "max_options": 2
+        }
+      },
+      "plans": {
+        "worst_terminal": {
+          "execution_ms": 0.841,
+          "planning_ms": 0.09,
+          "shared_hits": 307,
+          "nodes": [
+            {
+              "Node Type": "Limit",
+              "Actual Rows": 50.0,
+              "Actual Loops": 1
+            },
+            {
+              "Node Type": "Sort",
+              "Actual Rows": 50.0,
+              "Actual Loops": 1
+            },
+            {
+              "Node Type": "Bitmap Heap Scan",
+              "Relation Name": "production_facilities",
+              "Actual Rows": 1010.0,
+              "Actual Loops": 1
+            },
+            {
+              "Node Type": "Bitmap Index Scan",
+              "Index Name": "index_production_facilities_on_id_terminal",
+              "Actual Rows": 11211.0,
+              "Actual Loops": 1
+            }
+          ]
+        },
+        "substring": {
+          "execution_ms": 10.605,
+          "planning_ms": 0.135,
+          "shared_hits": 1508,
+          "nodes": [
+            {
+              "Node Type": "Limit",
+              "Actual Rows": 21.0,
+              "Actual Loops": 1
+            },
+            {
+              "Node Type": "Sort",
+              "Actual Rows": 21.0,
+              "Actual Loops": 1
+            },
+            {
+              "Node Type": "Seq Scan",
+              "Relation Name": "terminals",
+              "Actual Rows": 8298.0,
+              "Actual Loops": 1,
+              "Rows Removed by Filter": 2
+            }
+          ]
+        },
+        "no_match": {
+          "execution_ms": 6.535,
+          "planning_ms": 0.123,
+          "shared_hits": 1508,
+          "nodes": [
+            {
+              "Node Type": "Limit",
+              "Actual Rows": 0.0,
+              "Actual Loops": 1
+            },
+            {
+              "Node Type": "Seq Scan",
+              "Relation Name": "terminals",
+              "Actual Rows": 0.0,
+              "Actual Loops": 1,
+              "Rows Removed by Filter": 8300
+            }
+          ]
+        }
+      }
+    },
+    {
+      "factor": 100,
+      "terminals": 83000,
+      "offers": 259000,
+      "grouped_query_ms": [
+        30.871777096763253,
+        27.778149000369012,
+        27.48683001846075,
+        26.544942054897547,
+        28.664030018262565
+      ],
+      "data_statements": [
+        8,
+        8,
+        8,
+        8,
+        8
+      ],
+      "max_allocations": 9725,
+      "lookup": {
+        "substring": {
+          "max_ms": 311.6477410076186,
+          "median_ms": 277.1283210022375,
+          "max_bytes": 4241,
+          "max_options": 20
+        },
+        "no_match": {
+          "max_ms": 980.5860510095954,
+          "median_ms": 802.564623998478,
+          "max_bytes": 31,
+          "max_options": 0
+        },
+        "system": {
+          "max_ms": 573.5525189666077,
+          "median_ms": 362.64197097625583,
+          "max_bytes": 4241,
+          "max_options": 20
+        },
+        "duplicate_context": {
+          "max_ms": 596.8701089732349,
+          "median_ms": 511.45120500586927,
+          "max_bytes": 442,
+          "max_options": 2
+        }
+      },
+      "plans": {
+        "worst_terminal": {
+          "execution_ms": 4.234,
+          "planning_ms": 0.125,
+          "shared_hits": 279,
+          "nodes": [
+            {
+              "Node Type": "Limit",
+              "Actual Rows": 50.0,
+              "Actual Loops": 1
+            },
+            {
+              "Node Type": "Sort",
+              "Actual Rows": 50.0,
+              "Actual Loops": 1
+            },
+            {
+              "Node Type": "Bitmap Heap Scan",
+              "Relation Name": "production_facilities",
+              "Actual Rows": 10100.0,
+              "Actual Loops": 1
+            },
+            {
+              "Node Type": "Bitmap Index Scan",
+              "Index Name": "index_production_facilities_on_id_terminal",
+              "Actual Rows": 10100.0,
+              "Actual Loops": 1
+            }
+          ]
+        },
+        "substring": {
+          "execution_ms": 64.574,
+          "planning_ms": 0.149,
+          "shared_hits": 1506,
+          "nodes": [
+            {
+              "Node Type": "Limit",
+              "Actual Rows": 21.0,
+              "Actual Loops": 1
+            },
+            {
+              "Node Type": "Gather Merge",
+              "Actual Rows": 21.0,
+              "Actual Loops": 1
+            },
+            {
+              "Node Type": "Sort",
+              "Actual Rows": 12.5,
+              "Actual Loops": 2
+            },
+            {
+              "Node Type": "Seq Scan",
+              "Relation Name": "terminals",
+              "Actual Rows": 41499.0,
+              "Actual Loops": 2,
+              "Rows Removed by Filter": 1
+            }
+          ]
+        },
+        "no_match": {
+          "execution_ms": 63.363,
+          "planning_ms": 0.203,
+          "shared_hits": 2868,
+          "nodes": [
+            {
+              "Node Type": "Limit",
+              "Actual Rows": 0.0,
+              "Actual Loops": 1
+            },
+            {
+              "Node Type": "Seq Scan",
+              "Relation Name": "terminals",
+              "Actual Rows": 0.0,
+              "Actual Loops": 1,
+              "Rows Removed by Filter": 83000
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
