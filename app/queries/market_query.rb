@@ -75,7 +75,8 @@ class MarketQuery
       result.legacy = load_page(scope, :page)
     end
     result.filters = @filters.dup
-    ActiveRecord::Associations::Preloader.new(records: result.rows, associations: [:commodity, :location]).call
+    all_rows = grouped ? result.buy.rows + result.sell.rows : result.legacy.rows
+    ActiveRecord::Associations::Preloader.new(records: all_rows, associations: [:commodity, :location]).call
     result
   end
 

@@ -6,6 +6,7 @@
 <article id="<%= dom_id(facility, :market_row) %>"
   class="grid gap-3 bg-zinc-900/60 p-4 transition-colors duration-700 hover:bg-zinc-800/70 lg:grid-cols-[1.25fr_1fr_0.9fr_0.9fr_0.8fr_0.8fr_0.8fr_110px] lg:items-center"
   data-controller="market-row"
+  data-terminal-api-id="<%= facility.id_terminal %>"
   data-market-board-location-name-param="<%= facility.location_name %>"
   data-market-board-facility-name-param="<%= facility.facility_name %>"
   data-market-board-commodity-name-param="<%= facility.commodity_name %>"
