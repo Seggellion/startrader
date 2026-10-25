@@ -63,3 +63,6 @@ application.register("settings-form", SettingsFormController)
 
 import SlideshowController from "./slideshow_controller"
 application.register("slideshow", SlideshowController)
+
+import TerminalSelectorController from "./terminal_selector_controller"
+application.register("terminal-selector", TerminalSelectorController)
