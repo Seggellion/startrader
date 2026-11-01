@@ -1,0 +1,55 @@
+{
+  "browser": "Google Chrome",
+  "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "scope": "Isolated authenticated Rails-rendered synthetic HTML snapshots, scripts removed and built Tailwind inlined; visual state only, no external client end-to-end claim.",
+  "checks": [
+    {
+      "state": "no-journey",
+      "exit": 0,
+      "expected_text_present": true,
+      "screenshot_exists": true,
+      "passed": true,
+      "html_sha256": "043835b2837844520372417e765fcfe98664abbc6019d44ba6a8fcb5569a1446"
+    },
+    {
+      "state": "scheduled",
+      "exit": 0,
+      "expected_text_present": true,
+      "screenshot_exists": true,
+      "passed": true,
+      "html_sha256": "1f55d9e9a1c02cae0f9cf9b2e8ebbaef0b7b78653a1f1bcd6631925796ae1f0e"
+    },
+    {
+      "state": "interdicted",
+      "exit": 0,
+      "expected_text_present": true,
+      "screenshot_exists": true,
+      "passed": true,
+      "html_sha256": "b44145a14f81f011510629147cedc0750b7d760baf169f9984cdda781a0234cd"
+    },
+    {
+      "state": "interdicted-mismatch",
+      "exit": 0,
+      "expected_text_present": true,
+      "screenshot_exists": true,
+      "passed": true,
+      "html_sha256": "7039fe5f7035c8fd5e8a852f8932fdba899d0f9e84ca65dc10bc36947542e168"
+    },
+    {
+      "state": "overdue",
+      "exit": 0,
+      "expected_text_present": true,
+      "screenshot_exists": true,
+      "passed": true,
+      "html_sha256": "0e0264e95cee067533c72d63becbb85358c8208376a7b2dfa8c2cc12b8286732"
+    },
+    {
+      "state": "invalid",
+      "exit": 0,
+      "expected_text_present": true,
+      "screenshot_exists": true,
+      "passed": true,
+      "html_sha256": "243d952e511cf5d1897a063bf332d3e670c569de89b6d9b3e63dc117087b3c2e"
+    }
+  ]
+}

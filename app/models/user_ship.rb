@@ -10,16 +10,20 @@ class UserShip < ApplicationRecord
   has_many :star_bitizen_runs, dependent: :nullify
   belongs_to :location, primary_key: :name, foreign_key: :location_name, optional: true
 
+  # Destruction is an existing supported operation. Wrap dependent journey
+  # deletion before it takes any child locks, matching departure/arrival order.
+  around_destroy :serialize_lifecycle_destruction, prepend: true
+
   validates :total_scu, :used_scu, presence: true
 
   has_many :ship_travels, dependent: :destroy
   has_one :active_travel, -> {
-    where(is_paused: false, completed_at_tick: nil).where('arrival_tick >= ?', Tick.current)
+    where(completed_at_tick: nil)
   }, class_name: 'ShipTravel'
   has_one :ship_travel, -> {
     where(completed_at_tick: nil).order(updated_at: :desc)
   }, class_name: 'ShipTravel'
-  
+
   # keep shard_user in sync if missing but user_id+shard_id exist
   before_validation :infer_shard_user
 
@@ -39,6 +43,10 @@ class UserShip < ApplicationRecord
 
   def recalculate_used_scu!
     update!(used_scu: user_ship_cargos.sum(:scu))
+  end
+
+  def serialize_lifecycle_destruction
+    TravelLifecycle.with_ship(self) { yield }
   end
 
   private

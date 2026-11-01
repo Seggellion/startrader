@@ -237,7 +237,7 @@ class Api::GateTravelControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :unprocessable_entity
     assert_equal(
-      { "status" => "error", "message" => "Gateway Terra Gateway is not available from Stanton." },
+      { "code" => "invalid_request", "status" => "error", "message" => "Gateway Terra Gateway is not available from Stanton." },
       response_json
     )
   end
@@ -263,7 +263,7 @@ class Api::GateTravelControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :unprocessable_entity
     assert_equal(
-      { "status" => "error", "message" => "Multiple destination Jumpgates match Stanton Gateway in Pyro." },
+      { "code" => "invalid_request", "status" => "error", "message" => "Multiple destination Jumpgates match Stanton Gateway in Pyro." },
       response_json
     )
   end
@@ -303,7 +303,7 @@ class Api::GateTravelControllerTest < ActionDispatch::IntegrationTest
     post_gate_travel(ship_guid: nil)
 
     assert_response :unprocessable_entity
-    assert_equal({ "status" => "error", "message" => "ship_guid is required" }, response_json)
+    assert_equal({ "code" => "invalid_request", "status" => "error", "message" => "ship_guid is required" }, response_json)
   end
 
   test "unknown ship_guid returns a JSON error" do
@@ -311,7 +311,7 @@ class Api::GateTravelControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :unprocessable_entity
     assert_equal(
-      { "status" => "error", "message" => "No user ship found for ship_guid missing-ship-guid" },
+      { "code" => "invalid_request", "status" => "error", "message" => "No user ship found for ship_guid missing-ship-guid" },
       response_json
     )
   end
@@ -323,7 +323,7 @@ class Api::GateTravelControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :unprocessable_entity
     assert_equal(
-      { "status" => "error", "message" => "You are not at a valid Jumpgate location." },
+      { "code" => "invalid_request", "status" => "error", "message" => "You are not at a valid Jumpgate location." },
       response_json
     )
   end
@@ -337,7 +337,7 @@ class Api::GateTravelControllerTest < ActionDispatch::IntegrationTest
     Tick.instance.update_columns(current_tick: travel.arrival_tick, sequence: travel.arrival_tick)
     sent_reports = 0
 
-    RabbitmqSender.stub(:send_ship_report, ->(_travel) { sent_reports += 1 }) do
+    RabbitmqSender.stub(:send_arrival_event, ->(_travel) { sent_reports += 1 }) do
       ShipArrivalJob.perform_now
     end
 

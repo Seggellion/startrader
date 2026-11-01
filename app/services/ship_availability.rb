@@ -10,6 +10,7 @@ class ShipAvailability
   def status
     process_due_arrival!
     user_ship.reload
+    shard_user&.reload
 
     player_location = ensure_player_location_from_ship
     ship_location = user_ship.location || Location.find_by(name: user_ship.location_name)
@@ -37,7 +38,10 @@ class ShipAvailability
 
   def validate_usable!
     result = status
-    raise TradeService::ValidationError, result.reason unless result.available
+    unless result.available
+      TravelLifecycle.assert_free!(user_ship,current_tick) if result.in_transit
+      raise TravelLifecycle::Error.new('location_mismatch',result.reason)
+    end
 
     result
   end
@@ -45,7 +49,6 @@ class ShipAvailability
   def in_transit?
     user_ship.ship_travels
              .where(completed_at_tick: nil)
-             .where("is_paused = ? OR arrival_tick >= ?", true, current_tick)
              .exists?
   end
 
@@ -58,6 +61,9 @@ class ShipAvailability
                       .first
 
     ShipTravelArrivalProcessor.new(travel: travel, current_tick: current_tick).call if travel
+  rescue StandardError => error
+    Rails.logger.error("event=lazy_arrival_failed ship_id=#{user_ship.id} error_class=#{error.class.name}")
+    raise TravelLifecycle::Error.new('internal_failure','Arrival could not complete; the journey is retained for retry.')
   end
 
   private
@@ -65,6 +71,7 @@ class ShipAvailability
   attr_reader :shard_user, :user_ship, :current_tick
 
   def ensure_player_location_from_ship
+    return unless shard_user
     player_location = shard_user.current_location
     return player_location if player_location
 

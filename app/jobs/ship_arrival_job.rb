@@ -9,8 +9,13 @@ class ShipArrivalJob < ApplicationJob
               .where.not(arrival_tick: 0)
               .where(is_paused: false, completed_at_tick: nil)
               .find_each do |travel|
-      ShipTravelArrivalProcessor.new(travel: travel, current_tick: current_tick).call
+      begin
+        ShipTravelArrivalProcessor.new(travel: travel, current_tick: current_tick).call
+      rescue StandardError => error
+        Rails.logger.error("event=arrival_failed travel_id=#{travel.id} error_class=#{error.class.name}")
+      end
     end
+    TravelArrivalDispatchJob.perform_now
   end
   
 end

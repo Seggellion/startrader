@@ -108,7 +108,7 @@ class TickTest < ActiveSupport::TestCase
     server = Object.new
     server.define_singleton_method(:broadcast) { |_channel, _payload| }
 
-    RabbitmqSender.stub(:send_ship_report, nil) do
+    RabbitmqSender.stub(:send_arrival_event, nil) do
       MarketPriceUpdater.stub(:update_prices!, nil) do
         ActionCable.stub(:server, server) do
           Tick.increment!
@@ -143,7 +143,7 @@ class TickTest < ActiveSupport::TestCase
     assert_equal "in_transit", active_ship.reload.status
     assert_equal "in_transit", paused_ship.reload.status
     assert_equal "aimlessly floating in space", stranded_ship.reload.status
-    assert_equal "aimlessly floating in space", expired_ship.reload.status
+    assert_equal "in_transit", expired_ship.reload.status
   end
 
   test "market price failures do not stop the tick increment" do
@@ -254,7 +254,9 @@ class TickTest < ActiveSupport::TestCase
     ship = Ship.create!(model: "Drake Cutter #{SecureRandom.hex(4)}", slug: "drake-cutter-#{SecureRandom.hex(4)}", scu: 4, speed: 100)
     location = Location.create!(name: "Orison #{SecureRandom.hex(4)}", classification: "city", star_system_name: "Stanton")
 
+    shard=Shard.create!(name:"Tick shard #{SecureRandom.hex(4)}",region:"us",channel_uuid:SecureRandom.uuid)
     UserShip.create!(
+      shard:shard,
       user: user,
       ship: ship,
       guid: SecureRandom.uuid,
@@ -279,6 +281,10 @@ class TickTest < ActiveSupport::TestCase
       arrival_tick: arrival_tick,
       total_duration_ticks: 10,
       interdict_window_percent: 50,
+      paused_at_tick: is_paused ? 95 : nil,
+      remaining_ticks_from_arrival: is_paused ? 5 : nil,
+      interdiction_count: is_paused ? 1 : 0,
+      last_interdicted_tick: is_paused ? 95 : nil,
       is_paused: is_paused,
       completed_at_tick: completed_at_tick
     )

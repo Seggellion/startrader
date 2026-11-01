@@ -1,10 +1,17 @@
 # app/models/ship_travel.rb
 class ShipTravel < ApplicationRecord
+  attr_accessor :request_replayed, :request_outcome
+
   belongs_to :user_ship
   belongs_to :from_location, class_name: 'Location'
   belongs_to :to_location,   class_name: 'Location'
 
   validates :travel_guid, presence: true, uniqueness: true
+  validate :timing_contract
+
+  def timing_contract
+    errors.add(:base,'Invalid travel timing or pause metadata') if TravelState.new(self,tick:0).invalid?
+  end
 
   # Which RabbitMQ broker this travel's eventual ShipArrival event belongs to.
   # Chosen when the travel begins and preserved for the rest of its lifetime,
@@ -29,7 +36,7 @@ class ShipTravel < ApplicationRecord
   scope :completed, -> { where.not(completed_at_tick: nil) }
 
   scope :stale_after_arrival, ->(tick = Tick.current) {
-    where(is_paused: false)
+    where(is_paused: false).where.not(completed_at_tick: nil)
       .where("arrival_tick > 0")
       .where("arrival_tick <= ?", tick)
   }
@@ -66,7 +73,7 @@ scope :interdictable_now_sql, ->(tick = Tick.current) {
   # has_one :active_travel, -> { active }, class_name: 'ShipTravel'
 
   def duration_ticks
-    total_duration_ticks.positive? ? total_duration_ticks : (arrival_tick - departure_tick)
+    total_duration_ticks.to_i.positive? ? total_duration_ticks : (arrival_tick.to_i - departure_tick.to_i)
   end
 
   def window_ticks
@@ -131,35 +138,36 @@ scope :interdictable_now_sql, ->(tick = Tick.current) {
 
   # Pauses travel and records remaining distance to arrival.
   # Idempotent: calling when already paused simply returns self.
-  def interdict!(current_tick = Tick.current)
-    return self if is_paused
-
-    update!(
-      is_paused: true,
-      paused_at_tick: current_tick,
-      remaining_ticks_from_arrival: distance_from_arrival_in_ticks(current_tick),
-      interdiction_count: interdiction_count + 1,
-      last_interdicted_tick: current_tick,
-      arrival_tick: 0
-    )
+  def interdict!(current_tick = Tick.current, enforce_window: false)
+    TravelLifecycle.with_ship(user_ship) do
+      lock!
+      if TravelState.new(self,tick:current_tick).invalid?
+        raise TravelLifecycle::Error.new('invalid_state','Travel needs review before interdiction.')
+      end
+      next self if is_paused
+      if completed_at_tick || (enforce_window && current_interdictable_phase(current_tick).nil?)
+        raise TravelLifecycle::Error.new('invalid_state','Travel is not in an interdictable window.')
+      end
+      update!(is_paused:true,paused_at_tick:current_tick,
+        remaining_ticks_from_arrival:distance_from_arrival_in_ticks(current_tick),
+        interdiction_count:interdiction_count+1,last_interdicted_tick:current_tick,arrival_tick:0)
+      user_ship.update!(status:'interdicted')
+      self
+    end
   end
 
-  # Resumes travel from the recorded remaining ticks.
-  # Sets a fresh departure/arrival so downstream logic stays simple.
   def resume!(current_tick = Tick.current)
-    
-    raise "Not paused" unless is_paused
-    rem = remaining_ticks_from_arrival.to_i
-    rem = 1 if rem <= 0 
-
-
-    update!(
-      is_paused: false,
-      paused_at_tick: nil,
-      departure_tick: current_tick,
-      arrival_tick: current_tick + rem,
-      total_duration_ticks: rem
-    )
+    TravelLifecycle.with_ship(user_ship) do
+      lock!
+      unless TravelState.new(self,tick:current_tick).valid_pause? && !TravelState.new(self,tick:current_tick).invalid?
+        raise TravelLifecycle::Error.new('invalid_state','Travel has invalid pause metadata; review is required.')
+      end
+      rem=[remaining_ticks_from_arrival,1].max
+      update!(is_paused:false,paused_at_tick:nil,departure_tick:current_tick,
+        arrival_tick:TravelLifecycle.deadline!(current_tick,rem),total_duration_ticks:rem)
+      user_ship.update!(status:'in_transit')
+      self
+    end
   end
 
   def cleanup_after_arrival!(current_tick = Tick.current)
@@ -167,19 +175,29 @@ scope :interdictable_now_sql, ->(tick = Tick.current) {
   end
 
   def cleanup_after_cancellation!(current_tick = Tick.current)
-    destroy_for_lifecycle!(
-      reason: "cancelled",
-      current_tick: current_tick,
-      ship_status: "aimlessly floating in space"
-    )
+    TravelLifecycle.with_ship(user_ship) do
+      TravelRequestReceipt.lock_guid!(travel_guid)
+      lock!
+      if is_paused || completed_at_tick || arrival_tick.to_i < current_tick
+        raise TravelLifecycle::Error.new('invalid_state','Journey is not eligible for cancellation.')
+      end
+      TravelRequestReceipt.finish!(self,'cancelled',current_tick)
+      destroy_for_lifecycle!(reason:'cancelled',current_tick:current_tick,ship_status:'aimlessly floating in space')
+    end
   end
 
   def cleanup_stale_after_arrival!(current_tick = Tick.current)
-    destroy_for_lifecycle!(
-      reason: "stale_after_arrival",
-      current_tick: current_tick,
-      ship_status: "aimlessly floating in space"
-    )
+    TravelLifecycle.with_ship(user_ship) do
+      TravelRequestReceipt.lock_guid!(travel_guid)
+      lock!
+      next unless completed_at_tick.present? && !is_paused
+      # Retain identity before deleting already-completed historical evidence.
+      TravelRequestReceipt.finish!(self,'completed',completed_at_tick)
+      # Completed historical evidence must not release a newer pending journey.
+      destroy_for_lifecycle!(reason:'stale_completed',current_tick:current_tick)
+    end
+  rescue ActiveRecord::RecordNotFound
+    nil
   end
 
   def destroy_for_lifecycle!(reason:, current_tick: Tick.current, ship_status: nil)

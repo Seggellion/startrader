@@ -44,7 +44,7 @@ class ShipArrivalJobTest < ActiveJob::TestCase
     travel = create_travel(arrival_tick: 100)
     sent_reports = 0
 
-    RabbitmqSender.stub(:send_ship_report, ->(_travel) { sent_reports += 1 }) do
+    RabbitmqSender.stub(:send_arrival_event, ->(_travel) { sent_reports += 1 }) do
       ShipArrivalJob.perform_now
     end
 
@@ -58,7 +58,7 @@ class ShipArrivalJobTest < ActiveJob::TestCase
     travel = create_travel(arrival_tick: 100)
     sent_reports = 0
 
-    RabbitmqSender.stub(:send_ship_report, ->(_travel) { sent_reports += 1 }) do
+    RabbitmqSender.stub(:send_arrival_event, ->(_travel) { sent_reports += 1 }) do
       ShipArrivalJob.perform_now
       ShipArrivalJob.perform_now
     end
@@ -72,7 +72,7 @@ class ShipArrivalJobTest < ActiveJob::TestCase
   test "does not process paused travel" do
     travel = create_travel(arrival_tick: 100, is_paused: true)
 
-    RabbitmqSender.stub(:send_ship_report, ->(_travel) { raise "paused travel should not arrive" }) do
+    RabbitmqSender.stub(:send_arrival_event, ->(_travel) { raise "paused travel should not arrive" }) do
       ShipArrivalJob.perform_now
     end
 
@@ -119,20 +119,21 @@ class ShipArrivalJobTest < ActiveJob::TestCase
     assert_equal [prod_travel.travel_guid], recorder.publications_for("prod").map { |p| p[:message].split("|").last }
   end
 
-  test "an unavailable development broker leaves the travel unprocessed instead of publishing to production" do
+  test "an unavailable development broker retains a pending event and never publishes to production" do
     travel = create_travel(arrival_tick: 100, rabbitmq_environment: "dev")
     Setting.create!(key: "rabbitmq_host", value: "prod-host", setting_type: "text")
     Setting.create!(key: "rabbitmq_dev_host", value: "dev-host", setting_type: "text")
     RabbitmqConnection.reset!
 
     FakeRabbitmq.stub_bunny(unreachable: ["dev-host"]) do
-      assert_raises(RabbitmqConnection::UnavailableError) { ShipArrivalJob.perform_now }
+      ShipArrivalJob.perform_now
 
       assert_empty RabbitmqConnection.channel_for("prod").publications
     end
 
-    assert ShipTravel.exists?(travel.id)
-    assert_equal "in_transit", @user_ship.reload.status
+    refute ShipTravel.exists?(travel.id)
+    assert TravelArrivalEvent.pending.exists?(travel_guid:travel.travel_guid)
+    assert_equal "landed", @user_ship.reload.status
   ensure
     RabbitmqConnection.reset!
   end
@@ -182,6 +183,10 @@ class ShipArrivalJobTest < ActiveJob::TestCase
       arrival_tick: arrival_tick,
       total_duration_ticks: 10,
       interdict_window_percent: 50,
+      paused_at_tick: is_paused ? 95 : nil,
+      remaining_ticks_from_arrival: is_paused ? 5 : nil,
+      interdiction_count: is_paused ? 1 : 0,
+      last_interdicted_tick: is_paused ? 95 : nil,
       is_paused: is_paused,
       rabbitmq_environment: rabbitmq_environment
     )

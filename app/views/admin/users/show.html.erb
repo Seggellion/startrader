@@ -15,6 +15,9 @@
   active_ship_name = active_ship&.ship&.model.presence || active_ship&.ship_slug.presence || (active_ship ? "Unknown ship" : "No active ship")
   active_location = if active_ship.blank?
     "No active ship"
+  elsif active_travel
+    state = TravelState.new(active_travel)
+    "#{state.label}: #{destination_name.presence || 'Unknown destination'}"
   elsif active_ship.status.to_s == "in_transit"
     ["Traveling to #{destination_name.presence || "Unknown destination"}", active_travel&.arrival_tick.present? ? "Arriving at tick #{active_travel.arrival_tick}" : nil].compact.join(" ")
   else

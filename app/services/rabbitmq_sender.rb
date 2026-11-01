@@ -1,4 +1,7 @@
+require 'timeout'
+
 class RabbitmqSender
+  ARRIVAL_PUBLISH_LOCK = Mutex.new
   EXCHANGE_NAME = "MaidenB0T_events".freeze
 
   # Streamer check-status events are not part of the ShipTravel workflow and
@@ -58,6 +61,43 @@ class RabbitmqSender
 
     Rails.logger.info "Sent ship report to #{EXCHANGE_NAME} on rabbitmq environment #{environment} " \
       "with routing key #{routing_key}: #{redact_secret(message, secret_guid)}"
+  end
+
+  def self.ship_report_payload(travel)
+    ship=travel.user_ship
+    shard=ship.shard
+    raise ArgumentError,'Arrival shard is missing' unless shard
+    {routing_key:"maidenb0tevents.#{shard.name.downcase}",
+     fields:[shard.name.downcase,'ShipArrival',ship.user.uid,travel.departure_tick,travel.arrival_tick,
+       shard.channel_uuid,ship.user.username,ship.guid,ship.status,ship.ship.model,
+       travel.from_location.name,travel.to_location.name,travel.travel_guid]}
+  end
+
+  def self.send_arrival_event(event)
+    ARRIVAL_PUBLISH_LOCK.synchronize do
+      payload=event.payload
+      fields=payload.fetch('fields').dup
+      # Authentication remains runtime configuration, not stored in an outbox.
+      fields.insert(10,Setting.get('secret_guid'))
+      channel=RabbitmqConnection.channel_for(RabbitmqConnection.normalize!(event.rabbitmq_environment))
+      channel.confirm_select
+      exchange=channel.topic(EXCHANGE_NAME,durable:true)
+      exchange.publish(fields.join('|'),routing_key:payload.fetch('routing_key'),persistent:true,
+        message_id:event.event_guid,headers:{tagId:payload.fetch('routing_key'),travel_guid:event.travel_guid})
+      # Bunny 2.24 wait_for_confirms polls repeatedly and can otherwise wait
+      # indefinitely. Interrupt only this wait, after the publish has returned.
+      begin
+        confirmed=Timeout.timeout(15){channel.wait_for_confirms}
+        raise IOError,'Arrival publication was not confirmed' unless confirmed
+      rescue Timeout::Error
+        begin
+          channel.close
+        rescue StandardError
+          nil
+        end
+        raise
+      end
+    end
   end
 
   def self.publish(environment:, routing_key:, tag_id:, message:)

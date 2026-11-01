@@ -427,6 +427,8 @@ class TradeService
         cargo: cargo,
       }
 
+      response[:ship].merge!(TravelState.new(ship_travel,tick:current_tick).payload) if ship_travel
+
       if active_travel
         travel_payload = status_travel_payload(active_travel, current_tick)
         Rails.logger.info(
@@ -460,7 +462,7 @@ class TradeService
 
       reason =
         if active_travel
-          "Ship is currently in transit."
+          active_travel.is_paused? ? "Ship is interdicted. Resolve the existing interdiction before departing." : "Ship is currently in transit."
         elsif player_location.nil?
           "Player location is unknown; initialize current location with *status before use"
         elsif ship_location.nil?
@@ -481,7 +483,6 @@ class TradeService
     def self.active_status_travel(user_ship, current_tick = Tick.current)
       user_ship.ship_travels
                .where(completed_at_tick: nil)
-               .where("is_paused = ? OR arrival_tick > ?", true, current_tick)
                .order(updated_at: :desc)
                .first
     end
@@ -503,7 +504,7 @@ class TradeService
         remaining_ticks: remaining_ticks,
         time_remaining: remaining_ticks * Tick.seconds_per_tick,
         is_paused: travel.is_paused
-      }
+      }.merge(TravelState.new(travel,tick:current_tick).payload)
     end
 
     def self.latest_relevant_ship_travel(user_ship)

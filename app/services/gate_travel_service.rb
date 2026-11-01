@@ -37,36 +37,48 @@ class GateTravelService
     raise StandardError, "No ship found for ship_guid #{ship_guid}" unless ship
     raise StandardError, "No shard found for ship_guid #{ship_guid}" unless shard
 
-    availability = ShipAvailability.new(shard_user: user_ship.shard_user, user_ship: user_ship).validate_usable!
-    current_location = availability.ship_location
-    raise StandardError, "Current location not found for ship_guid #{ship_guid}" unless current_location
+    context = {kind:'gate_travel', gateway:TravelRequestReceipt.normalize_name(gateway_name)}
+    TravelLifecycle.with_ship(user_ship) do
+      if (replay = TravelRequestReceipt.replay!(travel_guid,user_ship,context))
+        return Result.new(user_ship:user_ship,user:user,ship:ship,shard:shard,
+          origin_location:replay.from_location,arrival_location:replay.to_location,
+          origin_star_system:replay.from_location.star_system_name,target_star_system:replay.to_location.star_system_name,
+          travel:replay,travel_time_seconds:TRAVEL_TIME_SECONDS)
+      end
+      availability = ShipAvailability.new(shard_user: user_ship.shard_user, user_ship: user_ship).validate_usable!
+      current_location = availability.ship_location
+      raise StandardError, "Current location not found for ship_guid #{ship_guid}" unless current_location
 
-    origin_location = resolved_origin_gateway(current_location)
-    validate_gateway_location!(origin_location)
+      origin_location = resolved_origin_gateway(current_location)
+      validate_gateway_location!(origin_location)
 
-    origin_star_system = origin_location.star_system_name.to_s.strip
-    target_star_system = target_star_system_from(origin_location)
-    arrival_gateway_name = "#{origin_star_system} Gateway"
-    arrival_location = resolve_gateway!(arrival_gateway_name, target_star_system)
+      origin_star_system = origin_location.star_system_name.to_s.strip
+      target_star_system = target_star_system_from(origin_location)
+      arrival_gateway_name = "#{origin_star_system} Gateway"
+      arrival_location = resolve_gateway!(arrival_gateway_name, target_star_system)
 
-    travel = create_gate_travel!(
-      user_ship: user_ship,
-      origin_location: origin_location,
-      arrival_location: arrival_location
-    )
+      TravelRequestReceipt.lock_guid!(travel_guid)
+      travel = TravelRequestReceipt.replay!(travel_guid,user_ship,context) || create_gate_travel!(
+        user_ship: user_ship,
+        origin_location: origin_location,
+        arrival_location: arrival_location
+      )
 
-    Result.new(
-      user_ship: user_ship,
-      user: user,
-      ship: ship,
-      shard: shard,
-      origin_location: origin_location,
-      arrival_location: arrival_location,
-      origin_star_system: origin_star_system,
-      target_star_system: target_star_system,
-      travel: travel,
-      travel_time_seconds: TRAVEL_TIME_SECONDS
-    )
+      TravelRequestReceipt.record!(travel,context) unless travel.request_replayed
+
+      Result.new(
+        user_ship: user_ship,
+        user: user,
+        ship: ship,
+        shard: shard,
+        origin_location: origin_location,
+        arrival_location: arrival_location,
+        origin_star_system: origin_star_system,
+        target_star_system: target_star_system,
+        travel: travel,
+        travel_time_seconds: TRAVEL_TIME_SECONDS
+      )
+    end
   end
 
   private
@@ -97,7 +109,7 @@ class GateTravelService
   def target_star_system_from(location)
     normalized_name = normalized_gateway_name(location.name)
     target = normalized_name.delete_suffix(GATEWAY_SUFFIX).strip
-    raise StandardError, "No valid destination Jumpgate found." if target.blank? || target == normalized_name
+    raise TravelLifecycle::Error.new("route_unavailable", "No valid destination Jumpgate found.") if target.blank? || target == normalized_name
 
     target
   end
@@ -112,13 +124,12 @@ class GateTravelService
       raise StandardError, "Multiple destination Jumpgates match #{name} in #{star_system_name}."
     end
 
-    raise StandardError, "No valid destination Jumpgate found."
+    raise TravelLifecycle::Error.new("route_unavailable", "No valid destination Jumpgate found.")
   end
 
   def create_gate_travel!(user_ship:, origin_location:, arrival_location:)
-    raise StandardError, "Already in transit" if user_ship.active_travel.present?
-
     current_tick = start_tick || Tick.current
+    TravelLifecycle.assert_free!(user_ship,current_tick)
     duration_ticks = gate_travel_duration_ticks
 
     ShipTravel.transaction do
@@ -128,13 +139,14 @@ class GateTravelService
         to_location: arrival_location,
         travel_guid: travel_guid,
         departure_tick: current_tick,
-        arrival_tick: current_tick + duration_ticks,
+        arrival_tick: TravelLifecycle.deadline!(current_tick, duration_ticks),
         total_duration_ticks: duration_ticks,
         interdict_window_percent: Setting.get("interdiction_window_percent").presence || TravelService::DEFAULT_WINDOW_PERCENT,
         ship_travel_type: "gate_travel"
       )
 
       user_ship.update!(location_name: origin_location.name, status: "in_transit")
+      user_ship.shard_user&.update_current_location!(origin_location)
       travel
     end
   end

@@ -23,7 +23,7 @@ class LocationsController < ApplicationController
     travel = user_ship.active_travel
     render json: travel ? {in_transit: true, from_location: travel.from_location.name,
       to_location: travel.to_location.name, departure_tick: travel.departure_tick,
-      arrival_tick: travel.arrival_tick, current_tick: Tick.current} :
+      arrival_tick: travel.arrival_tick, current_tick: Tick.current}.merge(TravelState.new(travel).payload) :
       {in_transit: false, location: user_ship.location&.name}
   end
 end

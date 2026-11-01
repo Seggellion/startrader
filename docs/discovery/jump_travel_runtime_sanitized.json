@@ -1,0 +1,700 @@
+{
+  "sampled_at": "2026-11-01T14:07:26Z",
+  "release": {
+    "version": 171,
+    "status": "succeeded",
+    "created_at": "2026-10-25T02:50:55Z",
+    "id": "b5fb6bfb-0f27-4c27-9146-f508b27b125e",
+    "slug": {
+      "id": "6b21cedb-622b-4d80-8278-c24c9d1bf2b2"
+    }
+  },
+  "identity": [
+    {
+      "current_database": "[production database identifier redacted]",
+      "server_version": "16.14",
+      "read_only": "on",
+      "snapshot_time": "2026-11-01 14:07:30.605862+00"
+    }
+  ],
+  "columns": [
+    {
+      "column_name": "id",
+      "data_type": "bigint",
+      "is_nullable": "NO",
+      "column_default": "nextval('ship_travels_id_seq'::regclass)"
+    },
+    {
+      "column_name": "user_ship_id",
+      "data_type": "bigint",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "from_location_id",
+      "data_type": "bigint",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "to_location_id",
+      "data_type": "bigint",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "departure_tick",
+      "data_type": "integer",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "arrival_tick",
+      "data_type": "integer",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp without time zone",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp without time zone",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "total_duration_ticks",
+      "data_type": "integer",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "column_name": "is_paused",
+      "data_type": "boolean",
+      "is_nullable": "NO",
+      "column_default": "false"
+    },
+    {
+      "column_name": "paused_at_tick",
+      "data_type": "integer",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "remaining_ticks_from_arrival",
+      "data_type": "integer",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "interdict_window_percent",
+      "data_type": "integer",
+      "is_nullable": "NO",
+      "column_default": "15"
+    },
+    {
+      "column_name": "interdiction_count",
+      "data_type": "integer",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "column_name": "last_interdicted_tick",
+      "data_type": "integer",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "ship_travel_type",
+      "data_type": "character varying",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "travel_guid",
+      "data_type": "character varying",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "column_name": "completed_at_tick",
+      "data_type": "integer",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "rabbitmq_environment",
+      "data_type": "character varying",
+      "is_nullable": "NO",
+      "column_default": "'prod'::character varying"
+    }
+  ],
+  "constraints": [
+    {
+      "conname": "ship_travels_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "fk_rails_24f42ec486",
+      "definition": "FOREIGN KEY (from_location_id) REFERENCES locations(id)"
+    },
+    {
+      "conname": "fk_rails_9fda4e5315",
+      "definition": "FOREIGN KEY (to_location_id) REFERENCES locations(id)"
+    },
+    {
+      "conname": "fk_rails_b9f8888dd5",
+      "definition": "FOREIGN KEY (user_ship_id) REFERENCES user_ships(id)"
+    }
+  ],
+  "tick": [
+    {
+      "id": "34",
+      "current_tick": "746094",
+      "sequence": "746095",
+      "processed_at": "2026-11-01 14:07:29.336155"
+    }
+  ],
+  "settings": [
+    {
+      "key": "seconds_per_tick",
+      "value": "15"
+    },
+    {
+      "key": "hours_per_tick",
+      "value": "168"
+    },
+    {
+      "key": "interdiction_window_percent",
+      "value": "15"
+    }
+  ],
+  "counts": [
+    {
+      "total": "8",
+      "zero": "8",
+      "nulls": "0",
+      "negative": "0",
+      "backwards": "0"
+    }
+  ],
+  "groups": [
+    {
+      "is_zero": "t",
+      "is_paused": "t",
+      "completed": "f",
+      "ship_travel_type": null,
+      "count": "8",
+      "first_created": "2026-08-31 02:18:49.82675",
+      "last_created": "2026-10-30 15:06:39.491595",
+      "first_updated": "2026-08-31 02:24:00.985174",
+      "last_updated": "2026-10-30 15:07:38.362934"
+    }
+  ],
+  "sample": [
+    {
+      "id": "4607",
+      "user_ship_id": "640",
+      "from_location_id": "1191",
+      "to_location_id": "699",
+      "departure_tick": "391226",
+      "arrival_tick": "0",
+      "created_at": "2026-08-31 02:18:49.82675",
+      "updated_at": "2026-08-31 02:24:00.985174",
+      "total_duration_ticks": "23",
+      "is_paused": "t",
+      "paused_at_tick": "391247",
+      "remaining_ticks_from_arrival": "2",
+      "interdict_window_percent": "15",
+      "interdiction_count": "1",
+      "last_interdicted_tick": "391247",
+      "ship_travel_type": null,
+      "completed_at_tick": null,
+      "rabbitmq_environment": "dev",
+      "location_name": "Lorville",
+      "ship_status": "interdicted",
+      "shard_user_id": "468",
+      "used_scu": "0",
+      "total_scu": "2200",
+      "origin": "Lorville",
+      "origin_system": "Stanton",
+      "destination": "Rayari Anvik Research Outpost",
+      "destination_system": "Stanton"
+    },
+    {
+      "id": "5007",
+      "user_ship_id": "455",
+      "from_location_id": "1412",
+      "to_location_id": "1413",
+      "departure_tick": "678312",
+      "arrival_tick": "0",
+      "created_at": "2026-10-20 15:34:36.362592",
+      "updated_at": "2026-10-20 15:35:14.172152",
+      "total_duration_ticks": "27",
+      "is_paused": "t",
+      "paused_at_tick": "678314",
+      "remaining_ticks_from_arrival": "25",
+      "interdict_window_percent": "15",
+      "interdiction_count": "1",
+      "last_interdicted_tick": "678314",
+      "ship_travel_type": null,
+      "completed_at_tick": null,
+      "rabbitmq_environment": "dev",
+      "location_name": "Terra Gateway (Stanton)",
+      "ship_status": "interdicted",
+      "shard_user_id": "352",
+      "used_scu": "696",
+      "total_scu": "696",
+      "origin": "Terra Gateway (Stanton)",
+      "origin_system": "Stanton",
+      "destination": "Seraphim Station",
+      "destination_system": "Stanton"
+    },
+    {
+      "id": "5028",
+      "user_ship_id": "426",
+      "from_location_id": "1412",
+      "to_location_id": "1410",
+      "departure_tick": "689360",
+      "arrival_tick": "0",
+      "created_at": "2026-10-22 14:16:06.828734",
+      "updated_at": "2026-10-22 14:16:59.028164",
+      "total_duration_ticks": "35",
+      "is_paused": "t",
+      "paused_at_tick": "689363",
+      "remaining_ticks_from_arrival": "32",
+      "interdict_window_percent": "15",
+      "interdiction_count": "1",
+      "last_interdicted_tick": "689363",
+      "ship_travel_type": null,
+      "completed_at_tick": null,
+      "rabbitmq_environment": "dev",
+      "location_name": "Terra Gateway (Stanton)",
+      "ship_status": "interdicted",
+      "shard_user_id": "327",
+      "used_scu": "12288",
+      "total_scu": "12288",
+      "origin": "Terra Gateway (Stanton)",
+      "origin_system": "Stanton",
+      "destination": "Pyro Gateway (Stanton)",
+      "destination_system": "Stanton"
+    },
+    {
+      "id": "5042",
+      "user_ship_id": "504",
+      "from_location_id": "1404",
+      "to_location_id": "1391",
+      "departure_tick": "689725",
+      "arrival_tick": "0",
+      "created_at": "2026-10-22 15:48:42.416837",
+      "updated_at": "2026-10-22 15:50:14.461305",
+      "total_duration_ticks": "7",
+      "is_paused": "t",
+      "paused_at_tick": "689731",
+      "remaining_ticks_from_arrival": "1",
+      "interdict_window_percent": "15",
+      "interdiction_count": "1",
+      "last_interdicted_tick": "689731",
+      "ship_travel_type": null,
+      "completed_at_tick": null,
+      "rabbitmq_environment": "dev",
+      "location_name": "MIC-L2 Long Forest Station",
+      "ship_status": "interdicted",
+      "shard_user_id": "383",
+      "used_scu": "696",
+      "total_scu": "696",
+      "origin": "MIC-L2 Long Forest Station",
+      "origin_system": "Stanton",
+      "destination": "ARC-L5 Yellow Core Station",
+      "destination_system": "Stanton"
+    },
+    {
+      "id": "5043",
+      "user_ship_id": "507",
+      "from_location_id": "1412",
+      "to_location_id": "1413",
+      "departure_tick": "689806",
+      "arrival_tick": "0",
+      "created_at": "2026-10-22 16:09:18.710088",
+      "updated_at": "2026-10-22 16:10:14.51261",
+      "total_duration_ticks": "27",
+      "is_paused": "t",
+      "paused_at_tick": "689810",
+      "remaining_ticks_from_arrival": "23",
+      "interdict_window_percent": "15",
+      "interdiction_count": "1",
+      "last_interdicted_tick": "689810",
+      "ship_travel_type": null,
+      "completed_at_tick": null,
+      "rabbitmq_environment": "dev",
+      "location_name": "Terra Gateway (Stanton)",
+      "ship_status": "interdicted",
+      "shard_user_id": "386",
+      "used_scu": "2880",
+      "total_scu": "2880",
+      "origin": "Terra Gateway (Stanton)",
+      "origin_system": "Stanton",
+      "destination": "Seraphim Station",
+      "destination_system": "Stanton"
+    },
+    {
+      "id": "5071",
+      "user_ship_id": "767",
+      "from_location_id": "1399",
+      "to_location_id": "1406",
+      "departure_tick": "702296",
+      "arrival_tick": "0",
+      "created_at": "2026-10-24 21:01:44.295683",
+      "updated_at": "2026-10-24 21:03:32.490252",
+      "total_duration_ticks": "47",
+      "is_paused": "t",
+      "paused_at_tick": "702303",
+      "remaining_ticks_from_arrival": "40",
+      "interdict_window_percent": "15",
+      "interdiction_count": "1",
+      "last_interdicted_tick": "702303",
+      "ship_travel_type": null,
+      "completed_at_tick": null,
+      "rabbitmq_environment": "dev",
+      "location_name": "HUR-L2 Faithful Dream Station",
+      "ship_status": "interdicted",
+      "shard_user_id": "595",
+      "used_scu": "0",
+      "total_scu": "4608",
+      "origin": "HUR-L2 Faithful Dream Station",
+      "origin_system": "Stanton",
+      "destination": "MIC-L4 Red Crossroads Station",
+      "destination_system": "Stanton"
+    },
+    {
+      "id": "5090",
+      "user_ship_id": "551",
+      "from_location_id": "687",
+      "to_location_id": "1411",
+      "departure_tick": "723686",
+      "arrival_tick": "0",
+      "created_at": "2026-10-28 15:24:09.043168",
+      "updated_at": "2026-10-28 15:26:25.92637",
+      "total_duration_ticks": "68",
+      "is_paused": "t",
+      "paused_at_tick": "723695",
+      "remaining_ticks_from_arrival": "59",
+      "interdict_window_percent": "15",
+      "interdiction_count": "1",
+      "last_interdicted_tick": "723695",
+      "ship_travel_type": null,
+      "completed_at_tick": null,
+      "rabbitmq_environment": "dev",
+      "location_name": "HDMS-Woodruff",
+      "ship_status": "interdicted",
+      "shard_user_id": "332",
+      "used_scu": "2880",
+      "total_scu": "2880",
+      "origin": "HDMS-Woodruff",
+      "origin_system": "Stanton",
+      "destination": "Nyx Gateway (Stanton)",
+      "destination_system": "Stanton"
+    },
+    {
+      "id": "5121",
+      "user_ship_id": "506",
+      "from_location_id": "1411",
+      "to_location_id": "674",
+      "departure_tick": "734966",
+      "arrival_tick": "0",
+      "created_at": "2026-10-30 15:06:39.491595",
+      "updated_at": "2026-10-30 15:07:38.362934",
+      "total_duration_ticks": "66",
+      "is_paused": "t",
+      "paused_at_tick": "734970",
+      "remaining_ticks_from_arrival": "62",
+      "interdict_window_percent": "15",
+      "interdiction_count": "1",
+      "last_interdicted_tick": "734970",
+      "ship_travel_type": null,
+      "completed_at_tick": null,
+      "rabbitmq_environment": "dev",
+      "location_name": "Nyx Gateway (Stanton)",
+      "ship_status": "interdicted",
+      "shard_user_id": "385",
+      "used_scu": "50",
+      "total_scu": "696",
+      "origin": "Nyx Gateway (Stanton)",
+      "origin_system": "Stanton",
+      "destination": "HDMS-Anderson",
+      "destination_system": "Stanton"
+    }
+  ],
+  "duplicates": [],
+  "orphan": [
+    {
+      "missing_ship": "0",
+      "missing_origin": "0",
+      "missing_destination": "0"
+    }
+  ],
+  "overdue": [
+    {
+      "due": "0"
+    }
+  ],
+  "contradictions": [
+    {
+      "status": "interdicted",
+      "is_paused": "t",
+      "is_zero": "t",
+      "count": "8"
+    }
+  ],
+  "gateways": [
+    {
+      "id": "1442",
+      "name": "Pyro Gateway (Nyx)",
+      "star_system_name": "Nyx",
+      "classification": "space_station",
+      "is_available": "t",
+      "is_visible": "t"
+    },
+    {
+      "id": "1441",
+      "name": "Stanton Gateway (Nyx)",
+      "star_system_name": "Nyx",
+      "classification": "space_station",
+      "is_available": "t",
+      "is_visible": "t"
+    },
+    {
+      "id": "1440",
+      "name": "Nyx Gateway (Pyro)",
+      "star_system_name": "Pyro",
+      "classification": "space_station",
+      "is_available": "t",
+      "is_visible": "t"
+    },
+    {
+      "id": "1436",
+      "name": "Stanton Gateway (Pyro)",
+      "star_system_name": "Pyro",
+      "classification": "space_station",
+      "is_available": "t",
+      "is_visible": "t"
+    },
+    {
+      "id": "1411",
+      "name": "Nyx Gateway (Stanton)",
+      "star_system_name": "Stanton",
+      "classification": "space_station",
+      "is_available": "t",
+      "is_visible": "t"
+    },
+    {
+      "id": "1410",
+      "name": "Pyro Gateway (Stanton)",
+      "star_system_name": "Stanton",
+      "classification": "space_station",
+      "is_available": "t",
+      "is_visible": "t"
+    },
+    {
+      "id": "1412",
+      "name": "Terra Gateway (Stanton)",
+      "star_system_name": "Stanton",
+      "classification": "space_station",
+      "is_available": "t",
+      "is_visible": "t"
+    }
+  ],
+  "players": [
+    {
+      "id": "4607",
+      "cargo_rows": "0",
+      "decoded_location": {
+        "id": 1191,
+        "name": "Lorville",
+        "location_name": "Lorville",
+        "star_system_name": "Stanton",
+        "classification": "city"
+      }
+    },
+    {
+      "id": "5007",
+      "cargo_rows": "1",
+      "decoded_location": {
+        "id": 1412,
+        "name": "Terra Gateway (Stanton)",
+        "location_name": "Terra Gateway (Stanton)",
+        "star_system_name": "Stanton",
+        "classification": "space_station"
+      }
+    },
+    {
+      "id": "5028",
+      "cargo_rows": "1",
+      "decoded_location": {
+        "id": 1412,
+        "name": "Terra Gateway (Stanton)",
+        "location_name": "Terra Gateway (Stanton)",
+        "star_system_name": "Stanton",
+        "classification": "space_station"
+      }
+    },
+    {
+      "id": "5042",
+      "cargo_rows": "1",
+      "decoded_location": {
+        "id": 1404,
+        "name": "MIC-L2 Long Forest Station",
+        "location_name": "MIC-L2 Long Forest Station",
+        "star_system_name": "Stanton",
+        "classification": "space_station"
+      }
+    },
+    {
+      "id": "5043",
+      "cargo_rows": "1",
+      "decoded_location": {
+        "id": 1412,
+        "name": "Terra Gateway (Stanton)",
+        "location_name": "Terra Gateway (Stanton)",
+        "star_system_name": "Stanton",
+        "classification": "space_station"
+      }
+    },
+    {
+      "id": "5071",
+      "cargo_rows": "0",
+      "decoded_location": {
+        "id": 1398,
+        "name": "HUR-L1 Green Glade Station",
+        "location_name": "HUR-L1 Green Glade Station",
+        "star_system_name": "Stanton",
+        "classification": "space_station"
+      }
+    },
+    {
+      "id": "5090",
+      "cargo_rows": "1",
+      "decoded_location": {
+        "id": 687,
+        "name": "HDMS-Woodruff",
+        "location_name": "HDMS-Woodruff",
+        "star_system_name": "Stanton",
+        "classification": "outpost"
+      }
+    },
+    {
+      "id": "5121",
+      "cargo_rows": "1",
+      "decoded_location": {
+        "id": 1411,
+        "name": "Nyx Gateway (Stanton)",
+        "location_name": "Nyx Gateway (Stanton)",
+        "star_system_name": "Stanton",
+        "classification": "space_station"
+      }
+    }
+  ],
+  "timing_consistency": [
+    {
+      "matching_original_arrival": "8",
+      "bad_pause_fields": "0"
+    }
+  ],
+  "jobs": [
+    {
+      "total": "1",
+      "failed": "0",
+      "min": "2026-11-01 14:07:44.39543",
+      "max": "2026-11-01 14:07:44.39543"
+    }
+  ],
+  "verified_deployment": {
+    "at_utc": "2026-11-01T14:04:57.374118+00:00",
+    "app_id": "6b362b75-1732-42a4-9888-669a393f7f82",
+    "version": 171,
+    "release_id": "b5fb6bfb-0f27-4c27-9146-f508b27b125e",
+    "slug_id": "6b21cedb-622b-4d80-8278-c24c9d1bf2b2",
+    "commit": "4d2d7cb97bea19f629a8f71262eaabf10748ebb8",
+    "dynos": [
+      {
+        "name": "web.1",
+        "state": "up",
+        "release": {
+          "id": "b5fb6bfb-0f27-4c27-9146-f508b27b125e",
+          "version": 171
+        }
+      },
+      {
+        "name": "worker.1",
+        "state": "up",
+        "release": {
+          "id": "b5fb6bfb-0f27-4c27-9146-f508b27b125e",
+          "version": 171
+        }
+      }
+    ]
+  },
+  "bounded_logs": {
+    "at_utc": "2026-11-01T14:08:19.799949+00:00",
+    "command": "heroku logs --app star-trader --num 500",
+    "success": true,
+    "line_count": 500,
+    "first_timestamp": "2026-11-01T14:03:25.213425+00:00",
+    "last_timestamp": "2026-11-01T14:08:14.916639+00:00",
+    "gateway_router_requests": 0,
+    "gateway_statuses": {
+      "200": 0,
+      "401": 0,
+      "422": 0,
+      "500": 0
+    },
+    "side_effect_failure_lines": 0
+  },
+  "supplemental_trigger_index_audit": {
+    "sampled_at": "2026-11-01T14:17:39Z",
+    "release": {
+      "version": 171,
+      "status": "succeeded",
+      "created_at": "2026-10-25T02:50:55Z",
+      "id": "b5fb6bfb-0f27-4c27-9146-f508b27b125e",
+      "slug": {
+        "id": "6b21cedb-622b-4d80-8278-c24c9d1bf2b2"
+      }
+    },
+    "triggers": [],
+    "indexes": [
+      {
+        "indexname": "idx_on_is_paused_departure_tick_arrival_tick_218f541b33",
+        "indexdef": "CREATE INDEX idx_on_is_paused_departure_tick_arrival_tick_218f541b33 ON public.ship_travels USING btree (is_paused, departure_tick, arrival_tick)"
+      },
+      {
+        "indexname": "index_ship_travels_on_completed_at_tick",
+        "indexdef": "CREATE INDEX index_ship_travels_on_completed_at_tick ON public.ship_travels USING btree (completed_at_tick)"
+      },
+      {
+        "indexname": "index_ship_travels_on_from_location_id",
+        "indexdef": "CREATE INDEX index_ship_travels_on_from_location_id ON public.ship_travels USING btree (from_location_id)"
+      },
+      {
+        "indexname": "index_ship_travels_on_to_location_id",
+        "indexdef": "CREATE INDEX index_ship_travels_on_to_location_id ON public.ship_travels USING btree (to_location_id)"
+      },
+      {
+        "indexname": "index_ship_travels_on_travel_guid",
+        "indexdef": "CREATE UNIQUE INDEX index_ship_travels_on_travel_guid ON public.ship_travels USING btree (travel_guid)"
+      },
+      {
+        "indexname": "index_ship_travels_on_user_ship_id",
+        "indexdef": "CREATE INDEX index_ship_travels_on_user_ship_id ON public.ship_travels USING btree (user_ship_id)"
+      },
+      {
+        "indexname": "ship_travels_pkey",
+        "indexdef": "CREATE UNIQUE INDEX ship_travels_pkey ON public.ship_travels USING btree (id)"
+      }
+    ]
+  }
+}

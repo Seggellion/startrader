@@ -20,10 +20,20 @@ module Api
         origin_star_system: result.origin_star_system,
         arrival_location: result.arrival_location.name,
         arrival_star_system: result.target_star_system,
+        request_replayed: !!result.travel.request_replayed,
+        lifecycle_status: result.travel.request_outcome || "pending",
         new_location: result.arrival_location.name
       }
+    rescue TravelLifecycle::Error => e
+      render json: {status:'error',message:e.message,code:e.code},status: :unprocessable_entity
+    rescue ActiveRecord::RecordNotUnique
+      render json: {status:'error',message:'Travel request conflicts with an existing journey.',code:'request_conflict'},status: :unprocessable_entity
     rescue => e
-      render json: { status: "error", message: e.message }, status: :unprocessable_entity
+      # Existing validation messages remain stable; unexpected exceptions are redacted.
+      expected = e.instance_of?(StandardError)
+      Rails.logger.error("event=gate_request_failed error_class=#{e.class.name}") unless expected
+      render json: {status:'error',message:expected ? e.message : 'Travel could not start; retry or request review.',
+        code:expected ? 'invalid_request' : 'internal_failure'},status: :unprocessable_entity
     end
 
     private

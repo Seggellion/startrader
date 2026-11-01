@@ -88,25 +88,15 @@ class Tick < ApplicationRecord
   end
 
   def correct_ship_statuses
-    current_tick = Tick.current.to_i
-    ActiveRecord::Base.connection.execute(<<~SQL.squish)
-      UPDATE user_ships
-      SET status = 'aimlessly floating in space'
-      WHERE status = 'in_transit'
-      AND NOT EXISTS (
-        SELECT 1
-        FROM ship_travels
-        WHERE ship_travels.user_ship_id = user_ships.id
-        AND (
-          ship_travels.is_paused = TRUE
-          OR (
-            ship_travels.completed_at_tick IS NULL
-            AND ship_travels.arrival_tick > #{current_tick}
-          )
-        )
-      )
-    SQL
+    UserShip.where(status:'in_transit').order(:id).find_each do |ship|
+      TravelLifecycle.with_ship(ship) do
+        if ship.status=='in_transit' && !ship.ship_travels.where(completed_at_tick:nil).exists?
+          ship.update!(status:'aimlessly floating in space')
+        end
+      end
+    end
   end
+
 
 
   def update_market_prices

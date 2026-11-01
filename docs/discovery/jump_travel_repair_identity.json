@@ -1,0 +1,26 @@
+{
+  "at_utc": "2026-11-01T15:25:59.183916+00:00",
+  "app_id": "6b362b75-1732-42a4-9888-669a393f7f82",
+  "version": 171,
+  "release_id": "b5fb6bfb-0f27-4c27-9146-f508b27b125e",
+  "slug_id": "6b21cedb-622b-4d80-8278-c24c9d1bf2b2",
+  "commit": "4d2d7cb97bea19f629a8f71262eaabf10748ebb8",
+  "dynos": [
+    {
+      "name": "web.1",
+      "state": "up",
+      "release": {
+        "id": "b5fb6bfb-0f27-4c27-9146-f508b27b125e",
+        "version": 171
+      }
+    },
+    {
+      "name": "worker.1",
+      "state": "up",
+      "release": {
+        "id": "b5fb6bfb-0f27-4c27-9146-f508b27b125e",
+        "version": 171
+      }
+    }
+  ]
+}

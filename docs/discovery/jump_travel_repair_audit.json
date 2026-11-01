@@ -1,0 +1,119 @@
+{
+  "at_utc": "2026-11-01T15:40:26Z",
+  "dry_run": true,
+  "read_only": "on",
+  "tick": 746459,
+  "timing_counts": {
+    "total": 8,
+    "zero": 8,
+    "null_arrival": 0,
+    "negative_arrival": 0,
+    "completed_zero": 0
+  },
+  "total_unfinished": 8,
+  "sample_limit": 1000,
+  "truncated": false,
+  "sample_state_counts": {
+    "interdicted": 8
+  },
+  "records": [
+    {
+      "travel_id": 4607,
+      "ship_id": 640,
+      "state": "interdicted",
+      "warnings": [],
+      "cargo_rows": 0,
+      "broker": "dev",
+      "arrival_tick": 0,
+      "remaining_ticks": 2,
+      "proposed_action": "no_action"
+    },
+    {
+      "travel_id": 5007,
+      "ship_id": 455,
+      "state": "interdicted",
+      "warnings": [],
+      "cargo_rows": 1,
+      "broker": "dev",
+      "arrival_tick": 0,
+      "remaining_ticks": 25,
+      "proposed_action": "no_action"
+    },
+    {
+      "travel_id": 5028,
+      "ship_id": 426,
+      "state": "interdicted",
+      "warnings": [],
+      "cargo_rows": 1,
+      "broker": "dev",
+      "arrival_tick": 0,
+      "remaining_ticks": 32,
+      "proposed_action": "no_action"
+    },
+    {
+      "travel_id": 5042,
+      "ship_id": 504,
+      "state": "interdicted",
+      "warnings": [],
+      "cargo_rows": 1,
+      "broker": "dev",
+      "arrival_tick": 0,
+      "remaining_ticks": 1,
+      "proposed_action": "no_action"
+    },
+    {
+      "travel_id": 5043,
+      "ship_id": 507,
+      "state": "interdicted",
+      "warnings": [],
+      "cargo_rows": 1,
+      "broker": "dev",
+      "arrival_tick": 0,
+      "remaining_ticks": 23,
+      "proposed_action": "no_action"
+    },
+    {
+      "travel_id": 5071,
+      "ship_id": 767,
+      "state": "interdicted",
+      "warnings": [
+        "player_location_discrepancy"
+      ],
+      "cargo_rows": 0,
+      "broker": "dev",
+      "arrival_tick": 0,
+      "remaining_ticks": 40,
+      "proposed_action": "review_only_no_mutation"
+    },
+    {
+      "travel_id": 5090,
+      "ship_id": 551,
+      "state": "interdicted",
+      "warnings": [],
+      "cargo_rows": 1,
+      "broker": "dev",
+      "arrival_tick": 0,
+      "remaining_ticks": 59,
+      "proposed_action": "no_action"
+    },
+    {
+      "travel_id": 5121,
+      "ship_id": 506,
+      "state": "interdicted",
+      "warnings": [],
+      "cargo_rows": 1,
+      "broker": "dev",
+      "arrival_tick": 0,
+      "remaining_ticks": 62,
+      "proposed_action": "no_action"
+    }
+  ],
+  "orphan_reference_counts": {
+    "missing_ship": 0,
+    "missing_origin": 0,
+    "missing_destination": 0
+  },
+  "notifications": {
+    "schema": "outbox_not_deployed"
+  }
+}

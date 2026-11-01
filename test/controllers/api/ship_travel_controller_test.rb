@@ -263,7 +263,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     }, as: :json
 
     assert_response :unprocessable_entity
-    assert_equal({ "error" => "Ship does not belong to this player" }, response_json)
+    assert_equal({ "error" => "Ship does not belong to this player", "code" => "invalid_request" }, response_json)
     assert_nil ShipTravel.find_by(travel_guid: "client-travel-guid-ship-theft")
   end
 
@@ -302,7 +302,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     }, as: :json
 
     assert_response :unprocessable_entity
-    assert_equal({ "error" => "Ship does not belong to this shard" }, response_json)
+    assert_equal({ "error" => "Ship does not belong to this shard", "code" => "invalid_request" }, response_json)
     assert_nil ShipTravel.find_by(travel_guid: "client-travel-guid-wrong-shard")
   end
 
@@ -638,7 +638,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     }, as: :json
 
     assert_response :unprocessable_entity
-    assert_equal({ "error" => "Ship is already in transit." }, response_json)
+    assert_equal({ "error" => "Ship is already in transit.", "code" => "in_transit" }, response_json)
     assert_equal nyx_gateway_pyro.name, user_ship.reload.location_name
     assert_nil ShipTravel.find_by(travel_guid: "client-travel-guid-active-override")
   end
@@ -687,6 +687,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     user_ship_id = response_json["user_ship_id"]
 
     get "/api/location/#{user_ship_id}"
+      TravelArrivalDispatchJob.perform_now
 
     assert_response :success
     assert_equal true, response_json["in_transit"]
@@ -700,8 +701,9 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     Tick.instance.update_columns(current_tick: travel.arrival_tick, sequence: travel.arrival_tick)
 
     sent_reports = 0
-    RabbitmqSender.stub(:send_ship_report, ->(_travel) { sent_reports += 1 }) do
+    RabbitmqSender.stub(:send_arrival_event, ->(_travel) { sent_reports += 1 }) do
       get "/api/location/#{travel.user_ship_id}"
+      TravelArrivalDispatchJob.perform_now
       assert_response :success
       assert_equal false, response_json["in_transit"]
       assert_equal true, response_json["arrived"]
@@ -709,6 +711,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
       assert_equal guid, response_json["travel_guid"]
 
       get "/api/location/#{travel.user_ship_id}"
+      TravelArrivalDispatchJob.perform_now
       assert_response :success
       assert_equal false, response_json["in_transit"]
       assert_equal @to_location.name, response_json["location"]
@@ -730,6 +733,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     assert_equal [], response_json["user_ship_cargo"]
 
     get "/api/location/#{travel.user_ship_id}"
+      TravelArrivalDispatchJob.perform_now
     assert_response :success
     assert_equal false, response_json["in_transit"]
     assert_equal true, response_json["paused"]
@@ -866,7 +870,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     }, as: :json
 
     assert_response :unprocessable_entity
-    assert_includes response_json["error"], "Travel guid has already been taken"
+    assert_equal "request_conflict", response_json["code"]
     assert_equal 1, ShipTravel.where(travel_guid: guid).count
   end
 
@@ -1171,7 +1175,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
       arrival_tick: 0,
       total_duration_ticks: 10,
       interdict_window_percent: 50,
-      is_paused: true,
+      is_paused: true,paused_at_tick:16,last_interdicted_tick:16,interdiction_count:1,
       remaining_ticks_from_arrival: 4
     )
 
@@ -1187,7 +1191,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :unprocessable_entity
-    assert_equal "Ship is already in transit.", response_json["error"]
+    assert_equal "interdicted", response_json["code"]
     assert_equal @from_location.name, shard_user.reload.current_location_name
   end
 
@@ -1209,7 +1213,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     )
     new_destination = Location.create!(name: "Lorville", classification: "city", star_system_name: "Stanton")
 
-    RabbitmqSender.stub(:send_ship_report, nil) do
+    RabbitmqSender.stub(:send_arrival_event, nil) do
     post "/api/travel", params: {
       ship_travel: travel_payload(
         travel_guid: "after-stale-arrival-travel",
@@ -1316,6 +1320,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     recorder = FakeRabbitmq::ChannelRecorder.new
     RabbitmqConnection.stub(:channel_for, recorder.to_proc) do
       get "/api/location/#{travel.user_ship_id}"
+      TravelArrivalDispatchJob.perform_now
     end
 
     assert_response :success
@@ -1333,6 +1338,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     recorder = FakeRabbitmq::ChannelRecorder.new
     RabbitmqConnection.stub(:channel_for, recorder.to_proc) do
       get "/api/location/#{travel.user_ship_id}"
+      TravelArrivalDispatchJob.perform_now
     end
 
     assert_response :success
@@ -1357,6 +1363,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
           to_location: @from_location.name
         )
       }, as: :json
+      TravelArrivalDispatchJob.perform_now
     end
 
     assert_response :success
@@ -1384,6 +1391,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     recorder = FakeRabbitmq::ChannelRecorder.new
     RabbitmqConnection.stub(:channel_for, recorder.to_proc) do
       get "/api/location/#{user_ship.id}"
+      TravelArrivalDispatchJob.perform_now
     end
 
     assert_equal ["dev"], recorder.requested_environments
@@ -1416,6 +1424,23 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
     assert_equal %w[dev prod], recorder.requested_environments.sort
     assert_equal ["concurrent-dev"], recorder.publications_for("dev").map { |p| p[:message].split("|").last }
     assert_equal ["concurrent-prod"], recorder.publications_for("prod").map { |p| p[:message].split("|").last }
+  end
+
+  test "request replay after deletion returns completion receipt without creating another trip" do
+    payload=travel_payload(travel_guid:'durable-api-replay')
+    post '/api/travel',params:{ship_travel:payload},as: :json
+    assert_response :success
+    post '/api/travel',params:{ship_travel:payload},as: :json
+    assert_response :success
+    assert_equal true,response_json['request_replayed']
+    assert_equal 1,ShipTravel.count
+    travel=ShipTravel.sole
+    ShipTravelArrivalProcessor.new(travel:travel,current_tick:travel.arrival_tick,notify:false).call
+    post '/api/travel',params:{ship_travel:payload},as: :json
+    assert_response :success
+    assert_equal 'completed',response_json['lifecycle_status']
+    assert_equal true,response_json['request_replayed']
+    assert_empty ShipTravel.all
   end
 
   private
@@ -1558,7 +1583,7 @@ class Api::ShipTravelControllerTest < ActionDispatch::IntegrationTest
 
   def arrive!(travel)
     Tick.instance.update_columns(current_tick: travel.arrival_tick, sequence: travel.arrival_tick)
-    RabbitmqSender.stub(:send_ship_report, nil) do
+    RabbitmqSender.stub(:send_arrival_event, nil) do
       ShipArrivalJob.perform_now
     end
   end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_10_25_010100) do
+ActiveRecord::Schema[8.0].define(version: 2026_11_01_010300) do
   create_schema "cable"
 
   # These are extensions that must be enabled in order to support this database
@@ -466,7 +466,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_25_010100) do
     t.index ["is_paused", "departure_tick", "arrival_tick"], name: "idx_on_is_paused_departure_tick_arrival_tick_218f541b33"
     t.index ["to_location_id"], name: "index_ship_travels_on_to_location_id"
     t.index ["travel_guid"], name: "index_ship_travels_on_travel_guid", unique: true
+    t.index ["user_ship_id"], name: "index_one_unfinished_journey_per_ship", unique: true, where: "(completed_at_tick IS NULL)"
     t.index ["user_ship_id"], name: "index_ship_travels_on_user_ship_id"
+    t.check_constraint "arrival_tick IS NOT NULL AND arrival_tick >= 0 AND (arrival_tick > 0 OR is_paused IS TRUE AND completed_at_tick IS NULL AND departure_tick IS NOT NULL AND departure_tick >= 0 AND paused_at_tick IS NOT NULL AND paused_at_tick >= departure_tick AND remaining_ticks_from_arrival IS NOT NULL AND remaining_ticks_from_arrival >= 0 AND interdiction_count IS NOT NULL AND interdiction_count > 0 AND last_interdicted_tick IS NOT NULL AND last_interdicted_tick = paused_at_tick)", name: "ship_travels_arrival_state"
   end
 
   create_table "ships", force: :cascade do |t|
@@ -652,6 +654,35 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_25_010100) do
     t.datetime "processed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "travel_arrival_events", force: :cascade do |t|
+    t.string "event_guid", null: false
+    t.string "travel_guid", null: false
+    t.string "rabbitmq_environment", null: false
+    t.jsonb "payload", null: false
+    t.integer "attempts", default: 0, null: false
+    t.datetime "next_attempt_at"
+    t.datetime "sent_at"
+    t.string "last_error_class"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_guid"], name: "index_travel_arrival_events_on_event_guid", unique: true
+    t.index ["next_attempt_at", "id"], name: "index_pending_travel_arrivals", where: "(sent_at IS NULL)"
+    t.index ["travel_guid"], name: "index_travel_arrival_events_on_travel_guid", unique: true
+  end
+
+  create_table "travel_request_receipts", force: :cascade do |t|
+    t.string "travel_guid", null: false
+    t.bigint "user_ship_id", null: false
+    t.jsonb "request_context", default: {}, null: false
+    t.jsonb "travel_snapshot", default: {}, null: false
+    t.string "outcome", default: "pending", null: false
+    t.integer "completed_at_tick"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["travel_guid"], name: "index_travel_request_receipts_on_travel_guid", unique: true
+    t.index ["user_ship_id"], name: "index_travel_request_receipts_on_user_ship_id"
   end
 
   create_table "user_ship_cargos", force: :cascade do |t|

@@ -19,22 +19,22 @@ class ShipTravelTest < ActiveSupport::TestCase
     @to_location = Location.create!(name: "Area18", classification: "city", star_system_name: "Stanton")
   end
 
-  test "cleanup removes stale incomplete unpaused travel and recovers in transit ship status" do
+  test "cleanup retains incomplete due travel and occupied ship" do
     user_ship = create_user_ship(status: "in_transit")
     travel = create_travel(user_ship: user_ship, arrival_tick: 100)
 
     cleaned_count = ShipTravel.cleanup_stale_after_arrival!(105)
 
-    assert_equal 1, cleaned_count
-    refute ShipTravel.exists?(travel.id)
-    assert_equal "aimlessly floating in space", user_ship.reload.status
+    assert_equal 0, cleaned_count
+    assert ShipTravel.exists?(travel.id)
+    assert_equal "in_transit", user_ship.reload.status
   end
 
-  test "cleanup removes current tick arrival" do
+  test "cleanup retains current tick incomplete arrival" do
     travel = create_travel(arrival_tick: 105)
 
-    assert_equal 1, ShipTravel.cleanup_stale_after_arrival!(105)
-    refute ShipTravel.exists?(travel.id)
+    assert_equal 0, ShipTravel.cleanup_stale_after_arrival!(105)
+    assert ShipTravel.exists?(travel.id)
   end
 
   test "cleanup does not remove future travel" do
@@ -66,7 +66,7 @@ class ShipTravelTest < ActiveSupport::TestCase
   end
 
   test "cleanup is idempotent" do
-    create_travel(arrival_tick: 100)
+    create_travel(arrival_tick: 100, completed_at_tick: 100)
 
     assert_equal 1, ShipTravel.cleanup_stale_after_arrival!(105)
     assert_equal 0, ShipTravel.cleanup_stale_after_arrival!(105)
@@ -76,7 +76,7 @@ class ShipTravelTest < ActiveSupport::TestCase
     destroyed_ids = []
     callback = -> { destroyed_ids << id }
     ShipTravel.set_callback(:destroy, :after, callback)
-    travel = create_travel(arrival_tick: 100)
+    travel = create_travel(arrival_tick: 100, completed_at_tick: 100)
 
     ShipTravel.cleanup_stale_after_arrival!(105)
 
@@ -174,6 +174,10 @@ class ShipTravelTest < ActiveSupport::TestCase
       arrival_tick: arrival_tick,
       total_duration_ticks: 10,
       interdict_window_percent: 50,
+      paused_at_tick: is_paused ? 95 : nil,
+      remaining_ticks_from_arrival: is_paused ? 5 : nil,
+      interdiction_count: is_paused ? 1 : 0,
+      last_interdicted_tick: is_paused ? 95 : nil,
       is_paused: is_paused,
       completed_at_tick: completed_at_tick,
       rabbitmq_environment: rabbitmq_environment

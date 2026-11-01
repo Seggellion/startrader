@@ -247,8 +247,9 @@
               </div>
 
               <% if travel.present? %>
+                <%= render "admin/ship_travels/state", travel:travel, state:TravelState.new(travel) %>
                 <div class="mt-4 grid gap-4 sm:grid-cols-2">
-                  <% travel_rows.call(travel).each do |label, value| %>
+                  <% travel_rows.call(travel).except("Arrival Tick").each do |label, value| %>
                     <%= render_field.call(label, value) %>
                   <% end %>
                 </div>

@@ -4,6 +4,9 @@ require_relative '../../../lib/travel_timing'
 module Api
   class ShipTravelController < ApplicationController
     include SecretGuidAuth
+    rescue_from TravelLifecycle::Error do |error|
+      render json:{error:error.message,code:error.code},status: :unprocessable_entity
+    end
 
     # API endpoint: skip CSRF
     skip_before_action :verify_authenticity_token
@@ -34,6 +37,21 @@ module Api
       shard = sync.shard
       shard_user = sync.shard_user
 
+      TravelLifecycle.with_ship(user_ship) do
+      request_context = {kind:'ordinary',from:TravelRequestReceipt.normalize_name(permitted_params[:from_location]),
+        to:TravelRequestReceipt.normalize_name(permitted_params[:to_location]),rabbitmq_environment:rabbitmq_environment}
+      replay = TravelLifecycle.with_ship(user_ship) do
+        TravelRequestReceipt.replay!(permitted_params[:travel_guid],user_ship,request_context)
+      end
+      if replay
+        response_tick=OrbitalState.current_tick!
+        return render json: {status:'travel_started',request_replayed:true,lifecycle_status:replay.request_outcome,
+          travel_guid:replay.travel_guid,user_ship_id:user_ship.id,channel_name:shard.name,
+          rabbitmq:replay.rabbitmq_environment,destination:replay.to_location.name,
+          departure_tick:replay.departure_tick,arrival_tick:replay.arrival_tick,current_tick:response_tick,
+          time_remaining:replay.seconds_remaining(response_tick),player_location:shard_user.reload.current_location_name}
+      end
+
       process_due_arrival_for(user_ship)
       user_ship.reload
       # Arrival processing may update a different AR instance of this player.
@@ -49,7 +67,7 @@ module Api
       return if performed?
 
       if travel_in_progress?(user_ship)
-        return render json: { error: "Ship is already in transit." }, status: :unprocessable_entity
+        TravelLifecycle.assert_free!(user_ship,Tick.current)
       end
 
       availability = ShipAvailability.new(shard_user: shard_user, user_ship: user_ship).validate_usable!
@@ -107,7 +125,7 @@ module Api
         from_location: current_location,
         to_location: destination,
         travel_guid: permitted_params[:travel_guid],
-        rabbitmq_environment: rabbitmq_environment
+        rabbitmq_environment: rabbitmq_environment,request_context:request_context
       ).call
       response_tick = OrbitalState.current_tick!
       timing = TravelTiming.metadata(duration_ticks: travel.total_duration_ticks, seconds_per_tick: Tick.seconds_per_tick)
@@ -124,8 +142,15 @@ module Api
         time_remaining: travel.seconds_remaining(response_tick),
         player_location: availability.player_location&.name
       }.merge(timing)
+      end
+    rescue TravelLifecycle::Error => e
+      render json: {error:e.message,code:e.code},status: :unprocessable_entity
+    rescue ActiveRecord::RecordNotUnique
+      render json: {error:'Travel request conflicts with an existing journey.',code:'request_conflict'},status: :unprocessable_entity
     rescue StandardError => e
-      render json: { error: e.message }, status: :unprocessable_entity
+      expected=e.instance_of?(StandardError) || e.is_a?(ArgumentError) || e.is_a?(TradeService::ValidationError)
+      Rails.logger.error("event=travel_request_failed error_class=#{e.class.name}") unless expected
+      render json: {error:expected ? e.message : 'Travel could not complete; request review.',code:expected ? 'invalid_request' : 'internal_failure'},status: :unprocessable_entity
     end
 
     # GET /api/location/:user_ship_id
@@ -141,7 +166,8 @@ module Api
       if active_travel
         phase = active_travel.current_interdictable_phase(Tick.current)
         render json: {
-          in_transit:     true,
+          in_transit:     !active_travel.is_paused?,
+          paused: active_travel.is_paused?,
           travel_guid:    active_travel.travel_guid,
           from_location:  active_travel.from_location.name,
           to_location:    active_travel.to_location.name,
@@ -152,10 +178,10 @@ module Api
           interdictable:  !active_travel.is_paused && !phase.nil?,
           interdict_phase: phase,  # null, "departure" or "arrival"
           windows: {
-            departure: active_travel.departure_window_range.to_a.minmax,
-            arrival:   active_travel.arrival_window_range.to_a.minmax
+            departure: [active_travel.departure_window_range.begin,active_travel.departure_window_range.end],
+            arrival:   [active_travel.arrival_window_range.begin,active_travel.arrival_window_range.end]
           }
-        }
+        }.merge(TravelState.new(active_travel).payload)
       else
         # optionally expose paused status
         paused = user_ship.ship_travels.where(is_paused: true).order(updated_at: :desc).first
@@ -193,11 +219,11 @@ module Api
       travel = user_ship.active_travel
       return render json: { error: "No active travel for this ship." }, status: :unprocessable_entity if travel.nil?
 
-      phase = travel.current_interdictable_phase(Tick.current)
+      phase = travel.is_paused? && TravelState.new(travel).valid_pause? ? :paused : travel.current_interdictable_phase(Tick.current)
       return render json: { error: "Not in an interdictable window." }, status: :unprocessable_entity if phase.nil?
 
-      travel.interdict!(Tick.current)
-      user_ship.update!(status: "interdicted")
+      travel.interdict!(Tick.current, enforce_window: true)
+
 
       render json: {
         status: "interdicted",
@@ -222,7 +248,7 @@ module Api
     return render json: { error: "No paused travel for this ship." }, status: :unprocessable_entity if travel.nil? || !travel.is_paused?
 
       travel.resume!(Tick.current)
-      user_ship.update!(status: "in_transit")
+
 
       render json: {
         status: "resumed",
@@ -241,11 +267,11 @@ module Api
     # POST /api/ship_travel/:id/interdict
     def interdict
       travel = ShipTravel.find(params[:id])
-      phase = travel.current_interdictable_phase(Tick.current)
+      phase = travel.is_paused? && TravelState.new(travel).valid_pause? ? :paused : travel.current_interdictable_phase(Tick.current)
       return render json: { error: "Not in an interdictable window." }, status: :unprocessable_entity if phase.nil?
 
-      travel.interdict!(Tick.current)
-      travel.user_ship.update!(status: "interdicted")
+      travel.interdict!(Tick.current, enforce_window: true)
+
 
       render json: {
         status: "interdicted",
@@ -290,7 +316,7 @@ module Api
     ship = UserShip.find_by(guid:params[:id])
     travel = ship.ship_travel
     travel.resume!(Tick.current)
-    travel.user_ship.update!(status: "in_transit")
+
 
     render json: {
       status: "resumed",
@@ -333,8 +359,14 @@ module Api
       end
 
       render json: response
+    rescue TravelLifecycle::Error => e
+      render json: {error:e.message,code:e.code},status: :unprocessable_entity
+    rescue ActiveRecord::RecordNotUnique
+      render json: {error:'Travel request conflicts with an existing journey.',code:'request_conflict'},status: :unprocessable_entity
     rescue StandardError => e
-      render json: { error: e.message }, status: :unprocessable_entity
+      expected=e.instance_of?(StandardError) || e.is_a?(ArgumentError) || e.is_a?(TradeService::ValidationError)
+      Rails.logger.error("event=travel_request_failed error_class=#{e.class.name}") unless expected
+      render json: {error:expected ? e.message : 'Travel could not complete; request review.',code:expected ? 'invalid_request' : 'internal_failure'},status: :unprocessable_entity
     end
 
 
@@ -397,8 +429,14 @@ module Api
         travel_guid: active_travel.travel_guid,
         channel_uuid: shard.channel_uuid
       }
+    rescue TravelLifecycle::Error => e
+      render json: {error:e.message,code:e.code},status: :unprocessable_entity
+    rescue ActiveRecord::RecordNotUnique
+      render json: {error:'Travel request conflicts with an existing journey.',code:'request_conflict'},status: :unprocessable_entity
     rescue StandardError => e
-      render json: { error: e.message }, status: :unprocessable_entity
+      expected=e.instance_of?(StandardError) || e.is_a?(ArgumentError) || e.is_a?(TradeService::ValidationError)
+      Rails.logger.error("event=travel_request_failed error_class=#{e.class.name}") unless expected
+      render json: {error:expected ? e.message : 'Travel could not complete; request review.',code:expected ? 'invalid_request' : 'internal_failure'},status: :unprocessable_entity
     end
 
     private
@@ -713,7 +751,6 @@ end
 def travel_in_progress?(user_ship)
   user_ship.ship_travels
            .where(completed_at_tick: nil)
-           .where("is_paused = ? OR arrival_tick >= ?", true, Tick.current)
            .exists?
 end
 

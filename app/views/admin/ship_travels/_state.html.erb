@@ -1,0 +1,23 @@
+<% state ||= TravelState.new(travel) %>
+<% presentation=state.payload %>
+<h2 class="font-bold"><%= state.label %> · Journey <%= travel.id %></h2>
+<% if state.state=='interdicted' %>
+  <p>No scheduled arrival while interdicted</p>
+  <p><%= travel.remaining_ticks_from_arrival %> saved remaining ticks · approximately <%= (presentation[:nominal_seconds_after_resume] / 60.0).round(2) %> minutes after resume (nominal).</p>
+<% elsif state.state=='scheduled' %>
+  <p>Arrival tick <%= travel.arrival_tick %> · <%= presentation[:remaining_ticks] %> ticks remaining (nominal).</p>
+<% else %><p><%= state.label %></p><% end %>
+<ul><% state.warnings.each do |warning| %><li><strong>Needs review:</strong> <%= warning %></li><% end %></ul>
+<p>From <%= travel.from_location&.name %> → <%= travel.to_location&.name %></p>
+<p>Ship location: <%= travel.user_ship.location_name %> · Player location: <%= travel.user_ship.shard_user&.current_location_name || 'Unknown' %></p>
+<p><%= link_to 'Ship', edit_admin_user_ship_path(travel.user_ship) %> · <%= link_to 'Player', admin_user_path(travel.user_ship.user) %></p>
+<details><summary>Raw diagnostic fields</summary>
+  <dl>
+    <% {kind:travel.ship_travel_type || 'ordinary',broker:travel.rabbitmq_environment,departure_tick:travel.departure_tick,
+        arrival_tick:travel.arrival_tick,paused:travel.is_paused,pause_tick:travel.paused_at_tick,
+        remaining_ticks:travel.remaining_ticks_from_arrival,interdiction_count:travel.interdiction_count,
+        last_interdicted_tick:travel.last_interdicted_tick}.each do |key,value| %>
+      <dt><%= key.to_s.humanize %></dt><dd><%= value %></dd>
+    <% end %>
+  </dl>
+</details>

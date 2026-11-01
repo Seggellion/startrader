@@ -37,6 +37,10 @@ module FakeRabbitmq
       Exchange.new(self, name, options)
     end
 
+    def confirm_select; end
+
+    def wait_for_confirms; true; end
+
     def host
       session.options[:host]
     end
