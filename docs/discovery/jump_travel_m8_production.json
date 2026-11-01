@@ -1,0 +1,583 @@
+{
+  "recorded_at_utc": "2026-11-01T16:59:53.689663+00:00",
+  "status": "M8 completed; development broker intentionally offline as confirmed by owner",
+  "release": {
+    "at_utc": "2026-11-01T16:34:25.320500+00:00",
+    "app_id": "6b362b75-1732-42a4-9888-669a393f7f82",
+    "version": 172,
+    "release_id": "e5679f07-3219-4eb3-a226-09a3821a1c27",
+    "slug_id": "3313b0ac-d9da-4183-85b5-774b38fbf625",
+    "commit": "b82472163ff6b73abc6d37323dacd3665b027087",
+    "dynos": [
+      {
+        "name": "web.1",
+        "state": "up",
+        "release": {
+          "id": "e5679f07-3219-4eb3-a226-09a3821a1c27",
+          "version": 172
+        }
+      },
+      {
+        "name": "worker.1",
+        "state": "up",
+        "release": {
+          "id": "e5679f07-3219-4eb3-a226-09a3821a1c27",
+          "version": 172
+        }
+      }
+    ]
+  },
+  "platform": {
+    "at_utc": "2026-11-01T16:49:28.364961+00:00",
+    "app_id": "6b362b75-1732-42a4-9888-669a393f7f82",
+    "maintenance": false,
+    "release": 172,
+    "release_id": "e5679f07-3219-4eb3-a226-09a3821a1c27",
+    "status": "succeeded",
+    "slug_id": "3313b0ac-d9da-4183-85b5-774b38fbf625",
+    "sha": "b82472163ff6b73abc6d37323dacd3665b027087",
+    "process_types": {
+      "rake": "bundle exec rake",
+      "console": "bin/rails console",
+      "web": "bundle exec rails server -p $PORT",
+      "worker": "bundle exec rake jobs:work"
+    },
+    "formation": [
+      {
+        "type": "worker",
+        "quantity": 1,
+        "size": "Basic"
+      },
+      {
+        "type": "web",
+        "quantity": 1,
+        "size": "Basic"
+      },
+      {
+        "type": "rake",
+        "quantity": 0,
+        "size": "Basic"
+      },
+      {
+        "type": "console",
+        "quantity": 0,
+        "size": "Basic"
+      }
+    ],
+    "dynos": [
+      {
+        "name": "web.1",
+        "state": "up",
+        "release": {
+          "id": "e5679f07-3219-4eb3-a226-09a3821a1c27",
+          "version": 172
+        }
+      },
+      {
+        "name": "worker.1",
+        "state": "up",
+        "release": {
+          "id": "e5679f07-3219-4eb3-a226-09a3821a1c27",
+          "version": 172
+        }
+      }
+    ],
+    "queue_config": {
+      "QUEUES": null,
+      "QUEUE": null,
+      "TICK_BOOTSTRAP": null
+    },
+    "config_sha256": "cdd9b18e21b22b2b4d23725c2587111f64541cde34684b1edc35c558aea810c3"
+  },
+  "runtime_source_hashes": {
+    "app/controllers/admin/ship_travels_controller.rb": "6a5aa47fd056e54650fd6156f389bfc7ac01f0968a257fe2480379b1ea390de2",
+    "app/controllers/api/gate_travel_controller.rb": "6ab8e9e6f0fae4eb2518f88108408cbb599854eee00fd16b9b3b65e3499893f7",
+    "app/controllers/api/ship_travel_controller.rb": "ec76d06eb090d141ffd2efa3d2d00cbf36d5b4e30424987eda467bfeb345f09a",
+    "app/controllers/locations_controller.rb": "3e46d5b0205c6ec3e1cd683cac5b701e0ca3b2ba1432cdac64bab98766d5d447",
+    "app/jobs/ship_arrival_job.rb": "b8e5fd2ad11a8aba0664ec75673e302a46af72edb06e85742b845b64d450df95",
+    "app/jobs/travel_arrival_dispatch_job.rb": "3c755b5422f975244e20e1324c568a6fdfef9a6d0de52ca458f798a3fb02b76d",
+    "app/models/ship_travel.rb": "8276c105b1d2634e05c477a65b0f91670dae1d2822bce7fbb5e64b51e0b99d9d",
+    "app/models/tick.rb": "2bea3134447c27512fba39de38ba4365aa09bec20648e4a575853c1ce239820e",
+    "app/models/travel_arrival_event.rb": "28e120976dc7b51efbaa2969e2cc20f2e5e891a4dcb405dbd020d0e3185e34eb",
+    "app/models/travel_request_receipt.rb": "91b563fd2ebe47b2b6ad8bd4dc8711ea90ca68eca236f712b629bd035c4c8f40",
+    "app/models/user_ship.rb": "4e8b36e53cbca7ea6295f14728c5beb69b2e7ca22b414c115e2efa5c885a2352",
+    "app/services/gate_travel_service.rb": "d4a1f5cd0c9e1b49174be42a030fa48e19eb296dc2577b468308c7fa2e73e22f",
+    "app/services/rabbitmq_sender.rb": "7ca1dbf0babbbfbb44ee4031bf3133575bbc345a0bc8ce8180a18d2b2932ffa1",
+    "app/services/ship_availability.rb": "bba0ebbbca23a773eb6b745d1e1bf040493e7760766f5805624cb8481b8f3364",
+    "app/services/ship_travel_arrival_processor.rb": "6cb59de8ac78cda698f844889ecec40363e3bf266f3b48911271aef160aaca40",
+    "app/services/trade_service.rb": "e20459acc25cc047559967d93edc7fc63226d0d6405a2c05b0981a4331d30a07",
+    "app/services/travel_lifecycle.rb": "993588dcdb362f0a1e2b7304aae6adac5b9dce56c83826505b3fefb84032b4a0",
+    "app/services/travel_service.rb": "bb5f8a720f7d34ddb1cfc1ff9d0ad35b2c456733d4ebf64b759f5a7c08299c4a",
+    "app/services/travel_state.rb": "a046cc0b34fb2198a1599d64033afb20471c459b178da011a7b9bd89fd172350",
+    "app/views/admin/ship_travels/_state.html.erb": "7807e5528e9db1ed9b0c2aaee0ee70ab9d6d427a284213980a3395260fbc1047",
+    "app/views/admin/ship_travels/edit.html.erb": "636a576fdac69a5881743ae9a61621478921e7a5b389d849f727ff7012f34dba",
+    "app/views/admin/ship_travels/index.html.erb": "06a341a6ff9a66025178e6b6d487135a7a780e5dc1475832a6985f9659940477",
+    "app/views/admin/ship_travels/show.html.erb": "5f03630b5a5ac3273ad216d1c3371c03096e3f2eb570bd69736459358b59730f",
+    "app/views/admin/user_ships/edit.html.erb": "833e6e87d28ac66adc390972f4fc955cae479d096c7ba6c9eca75ecb3f74df3d",
+    "app/views/admin/users/index.html.erb": "7698de74e4f410ac2c7dfc84cc1f8b14b7ba6dede79a526990ae9cca90321c03",
+    "app/views/admin/users/show.html.erb": "a8a52b37385e95c3a4027452b04dab2356c95e2f35b47cd178e2f635073d7c37",
+    "config/routes.rb": "302c4fdf07fb16c60191f71f5c6b0df58c410a877f9dab9e99d89c3130f18c4b",
+    "db/migrate/20261101010000_create_travel_lifecycle_receipts.rb": "4ccc3bb570183fa4f58346132ab4dbc9b28859d8e874446ffa64e94b60f495fd",
+    "db/migrate/20261101010100_guard_travel_arrival_state.rb": "9839c12a5196a01d223539b69af9839d8d47a8708cd2bfc563d96ce62b3847de",
+    "db/migrate/20261101010200_guard_unfinished_ship_journeys.rb": "f886a5a76e08d3a78dff522da74dfd2dabd29711f4ca81e18eac88c43218c2c7",
+    "db/migrate/20261101010300_validate_travel_arrival_state.rb": "fa443cb53a5aa4018cff49e1a01add76387e881f320f5d80fb2e7e90c56e8f1a",
+    "db/schema.rb": "6af8083a50fb4686b6ed72efe193f1d08961d182dea52d2c055e34e365944c6b",
+    "lib/travel_state_contract.rb": "7647d2bfe7010e5d5d7543b738e071a2da95d6a81245ab3ce7ee4f3149f79513",
+    "script/audit_travel_lifecycle.rb": "dda738c69e15653ee4002b4f09ac0287aa3112c5bd9b128fdb031b34484adaa9",
+    "test/browser/jump_travel_admin_chrome.py": "58909e764a3398be360061c3e085e62eee7918c1979524a7ac18802bd3452ca2",
+    "test/controllers/admin/travel_diagnostics_test.rb": "08c486ab15af9d0e4a32ed93644ab4a191373c751dd0bfd9b421c2033d3e0474",
+    "test/controllers/api/gate_travel_controller_test.rb": "c500affadae19113e3cb9d3b04491487130d8778239f9393bf25978a719a7d1a",
+    "test/controllers/api/ship_travel_controller_test.rb": "52e9a1d963061bd0b1528a82390f4d05c2aee74e4a9cff58935297acf98c85cb",
+    "test/jobs/ship_arrival_job_test.rb": "3d8d0bb87a67aea86d1b2eeaa0e05de6a4b5de4fe01ea36302823340b37ce6d3",
+    "test/migrations/travel_schema_rehearsal_test.rb": "476d7d28254b78f92f290d84a47aade8aee8e9a0418e749aa66b0cc27228ac35",
+    "test/models/ship_travel_test.rb": "8631cb7701ab20d45780a6d308415948ec774ce786a70c14b647e9195e23257a",
+    "test/models/tick_test.rb": "acdcc3419e3fb1432906471f1c085c005ef42cd249122151915465572ac4a0ca",
+    "test/models/travel_constraints_test.rb": "eb7c2c4c660f3ae4a833c2375b8849fc877d02d74800b02f8ab583628f693e8d",
+    "test/services/travel_repair_concurrency_test.rb": "669af5e3a4f5ef612dc189470d91246f669efaed89957a10a91122cdcf9c48fb",
+    "test/services/travel_repair_lifecycle_test.rb": "ed9bea1e3c9a0592ac201ab8e086ceda39e333e6bd6dd5ab68e5ffcd31778374",
+    "test/services/travel_repair_test.rb": "175bdc08d821caf037ccd107db1f2f6d56e40c8bc9a962cfac0001dad82ecba1",
+    "test/support/fake_rabbitmq.rb": "8c9142ba825f6b98819d946ab7a66e0b7272a4d9d6267108b52deeb1a529dad0",
+    "test/support/travel_repair_fixtures.rb": "39480360fb2bb56201a987f15a0fe01f6dffdd76d6999eb288c89afe06fad90b",
+    "script/apply_jump_travel_migrations.rb": "b442740486f31d5afe280a8d2344deffb3962983857e7d3d1f63548c15caa405"
+  },
+  "qualification_exact_commit": {
+    "runs": 177,
+    "assertions": 1630,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0
+  },
+  "operator_rehearsal": {
+    "cases": 5,
+    "all_protected_unchanged": true,
+    "database": "isolated PostgreSQL16"
+  },
+  "backup": {
+    "id": "b005",
+    "status": "Completed",
+    "started_at_utc": "2026-11-01T16:10:13Z",
+    "finished_at_utc": "2026-11-01T16:10:14Z",
+    "previous_b004_retained": true
+  },
+  "quiesced_at_utc": "2026-11-01T16:20:04.180374+00:00",
+  "traffic_reopened_at_utc": "2026-11-01T16:26:27.258432+00:00",
+  "migrations": {
+    "expand": {
+      "at_utc": "2026-11-01T16:21:04Z",
+      "mode": "apply",
+      "phase": "expand",
+      "source_sha": "b82472163ff6b73abc6d37323dacd3665b027087",
+      "protected_travel_ids": [
+        4607,
+        5007,
+        5028,
+        5042,
+        5043,
+        5071,
+        5090,
+        5121
+      ],
+      "invalid": 0,
+      "duplicate_groups": 0,
+      "versions": [
+        {
+          "version": "20261101010000",
+          "action": "applied"
+        }
+      ],
+      "protected_fingerprints_unchanged": true,
+      "protected_fingerprints": {
+        "travel": "bc15b4fe99dcfcf6061a075e0bc7ab55328a1fda1a68aa9761131da686734c7b",
+        "ships": "385b9443d662178218946509c34055d5765e9440b55361fd3b8073789e56d2cf",
+        "players": "4151e465f2287968ccf650d5cd289f1dbca924e730de80a3de2de74f13c14bc9",
+        "cargo": "e5ff0e726cc8ccf42119efbe7f6d47376cfec76df48a9dca65ae271a4d91ba5c"
+      }
+    },
+    "guards": {
+      "at_utc": "2026-11-01T16:23:47Z",
+      "mode": "apply",
+      "phase": "guards",
+      "source_sha": "b82472163ff6b73abc6d37323dacd3665b027087",
+      "protected_travel_ids": [
+        4607,
+        5007,
+        5028,
+        5042,
+        5043,
+        5071,
+        5090,
+        5121
+      ],
+      "invalid": 0,
+      "duplicate_groups": 0,
+      "versions": [
+        {
+          "version": "20261101010100",
+          "action": "applied"
+        },
+        {
+          "version": "20261101010200",
+          "action": "applied"
+        },
+        {
+          "version": "20261101010300",
+          "action": "applied"
+        }
+      ],
+      "protected_fingerprints_unchanged": true,
+      "protected_fingerprints": {
+        "travel": "bc15b4fe99dcfcf6061a075e0bc7ab55328a1fda1a68aa9761131da686734c7b",
+        "ships": "385b9443d662178218946509c34055d5765e9440b55361fd3b8073789e56d2cf",
+        "players": "4151e465f2287968ccf650d5cd289f1dbca924e730de80a3de2de74f13c14bc9",
+        "cargo": "e5ff0e726cc8ccf42119efbe7f6d47376cfec76df48a9dca65ae271a4d91ba5c"
+      }
+    }
+  },
+  "protected_records": {
+    "ids": [
+      4607,
+      5007,
+      5028,
+      5042,
+      5043,
+      5071,
+      5090,
+      5121
+    ],
+    "baseline_at_utc": "2026-11-01T16:20:12Z",
+    "verified_at_utc": "2026-11-01T16:49:33Z",
+    "before_hashes": {
+      "travel": "d25b0dcdf076bf34fac49813bd7bb0e6884f022821a3dab1b52b729b4d5f44a1",
+      "ships": "b3b95243b12b6c785ccd2c8d5f94cf35ebb1d0a430b51ed06a66dd101039eb75",
+      "players": "140fc5c6145be3aeb251b7281ae5e417aa27cd738d8f8fb2a1a55e874337c8f0",
+      "cargo": "6c41c58b534206bd57fe29213720f1511b76b4b1a7fdea8a001c2a3a0127870f",
+      "users": "313e7656dddcdaece6954dbd89317575d19129252ad4b99fe919c93c22918e2d",
+      "timing_settings": "5173e617358a3344ed4d4c3e727caa9ad8680a9193272a104b6bf2d0a0e53132"
+    },
+    "after_hashes": {
+      "travel": "d25b0dcdf076bf34fac49813bd7bb0e6884f022821a3dab1b52b729b4d5f44a1",
+      "ships": "b3b95243b12b6c785ccd2c8d5f94cf35ebb1d0a430b51ed06a66dd101039eb75",
+      "players": "140fc5c6145be3aeb251b7281ae5e417aa27cd738d8f8fb2a1a55e874337c8f0",
+      "cargo": "6c41c58b534206bd57fe29213720f1511b76b4b1a7fdea8a001c2a3a0127870f",
+      "users": "313e7656dddcdaece6954dbd89317575d19129252ad4b99fe919c93c22918e2d",
+      "timing_settings": "5173e617358a3344ed4d4c3e727caa9ad8680a9193272a104b6bf2d0a0e53132"
+    },
+    "all_unchanged": true,
+    "journey_5071_unchanged": true,
+    "no_resume_retime_refund_or_teleport": true
+  },
+  "schema": {
+    "versions": [
+      "20261101010000",
+      "20261101010100",
+      "20261101010200",
+      "20261101010300"
+    ],
+    "check": [
+      {
+        "conname": "ship_travels_arrival_state",
+        "convalidated": true,
+        "definition": "CHECK (((arrival_tick IS NOT NULL) AND (arrival_tick >= 0) AND ((arrival_tick > 0) OR ((is_paused IS TRUE) AND (completed_at_tick IS NULL) AND (departure_tick IS NOT NULL) AND (departure_tick >= 0) AND (paused_at_tick IS NOT NULL) AND (paused_at_tick >= departure_tick) AND (remaining_ticks_from_arrival IS NOT NULL) AND (remaining_ticks_from_arrival >= 0) AND (interdiction_count IS NOT NULL) AND (interdiction_count > 0) AND (last_interdicted_tick IS NOT NULL) AND (last_interdicted_tick = paused_at_tick)))))"
+      }
+    ],
+    "indexes": [
+      {
+        "relname": "index_one_unfinished_journey_per_ship",
+        "indisvalid": true,
+        "indisready": true,
+        "definition": "CREATE UNIQUE INDEX index_one_unfinished_journey_per_ship ON public.ship_travels USING btree (user_ship_id) WHERE (completed_at_tick IS NULL)"
+      },
+      {
+        "relname": "index_travel_arrival_events_on_event_guid",
+        "indisvalid": true,
+        "indisready": true,
+        "definition": "CREATE UNIQUE INDEX index_travel_arrival_events_on_event_guid ON public.travel_arrival_events USING btree (event_guid)"
+      },
+      {
+        "relname": "index_travel_arrival_events_on_travel_guid",
+        "indisvalid": true,
+        "indisready": true,
+        "definition": "CREATE UNIQUE INDEX index_travel_arrival_events_on_travel_guid ON public.travel_arrival_events USING btree (travel_guid)"
+      },
+      {
+        "relname": "index_travel_request_receipts_on_travel_guid",
+        "indisvalid": true,
+        "indisready": true,
+        "definition": "CREATE UNIQUE INDEX index_travel_request_receipts_on_travel_guid ON public.travel_request_receipts USING btree (travel_guid)"
+      }
+    ]
+  },
+  "clock": {
+    "before": 746616,
+    "after": 746716,
+    "manual_tick_changes": false,
+    "tick_control": [
+      {
+        "running": true,
+        "failure_count": 0,
+        "last_tick_started_at": "2026-11-01 16:49:30.069614",
+        "last_tick_completed_at": "2026-11-01 16:49:30.210405",
+        "last_tick_failed_at": null,
+        "last_tick_error_class": null
+      }
+    ]
+  },
+  "jobs": [
+    {
+      "queue": "default",
+      "queued": 3,
+      "failed": 0,
+      "locked": 0,
+      "first_run": "2026-11-01 16:49:44 -0700",
+      "last_run": "2026-11-03 03:58:41 -0700"
+    }
+  ],
+  "events": [
+    {
+      "total": 0,
+      "pending": 0,
+      "retrying": 0
+    }
+  ],
+  "receipts": [],
+  "http": {
+    "at_utc": "2026-11-01T16:29:06.898700+00:00",
+    "checks": [
+      {
+        "path": "/up",
+        "status": 200
+      },
+      {
+        "path": "/admin/ship_travels",
+        "status": 302,
+        "anonymous_login_guard": true
+      },
+      {
+        "path": "/api/location/640",
+        "status": 200,
+        "valid_interdiction_visible": true,
+        "remaining_ticks": 2
+      },
+      {
+        "path": "/api/gate_travel",
+        "status": 401,
+        "authentication_preserved": true,
+        "no_player_attempt": true
+      },
+      {
+        "path": "/api/distance_calculator",
+        "status": 200,
+        "read_only_quote": true,
+        "speed_gm_per_tick": 1,
+        "seconds_per_tick": 15
+      }
+    ]
+  },
+  "chrome": {
+    "at_utc": "2026-11-01T16:34:18.956968+00:00",
+    "checks": [
+      {
+        "name": "health",
+        "url": "https://startrader.altama.energy/up",
+        "google_chrome": true,
+        "passed": true,
+        "screenshot": "jump-m8-live-health.png"
+      },
+      {
+        "name": "production-data-admin-render",
+        "google_chrome": true,
+        "passed": true,
+        "interdicted": 8,
+        "review_5071": true,
+        "screenshot": "jump-m8-production-admin.png",
+        "scope": "Internal read-only operator render of deployed source + live DB, not an authenticated HTTP browser session"
+      }
+    ]
+  },
+  "read_only_admin_render": {
+    "status": 200,
+    "read_only": true,
+    "admin_principal_role_checked": true,
+    "scope": "internal operator render from committed deployed source and live read-only DB; no authenticated HTTP session created",
+    "interdicted": 8,
+    "scheduled_eta_removed": true,
+    "review_5071": true
+  },
+  "assets": {
+    "observed_404": [
+      {
+        "status": 404,
+        "path": "/sitemap.xml"
+      }
+    ],
+    "public_page": "/market?terminal_api_id=29",
+    "public_page_status": 200,
+    "asset_checks": [
+      {
+        "path": "/assets/Dusk-6ad3ab38d55cc9435ba3920c724dff40145e2a9f3544c1bbab70a852b535a49b.css",
+        "status": 200,
+        "bytes": 486
+      },
+      {
+        "path": "/assets/actioncable.esm-b66d83871f0a453b10ba8b4c147c2bafa655caaa5d13fa34e9bf361c1c2aedb7.js",
+        "status": 200,
+        "bytes": 14813
+      },
+      {
+        "path": "/assets/actiontext.esm-8386a561a026b3cbe8b226bf99965ba3e0d76c7ac6c97ef80a5dfec240795708.js",
+        "status": 200,
+        "bytes": 29011
+      },
+      {
+        "path": "/assets/application-8da4ecbdf0c591c18e56f00b9c99417d8cdd7d0f7b2b56e47019978e43f886c2.js",
+        "status": 200,
+        "bytes": 261
+      },
+      {
+        "path": "/assets/application.tailwind-f718b6cd972c6c8f4ba8ab9f1104ea3ff32bfe384c81b11dda2e8fac45022aae.css",
+        "status": 200,
+        "bytes": 199
+      },
+      {
+        "path": "/assets/channels/consumer-b0ce945e7ae055dba9cceb062a47080dd9c7794a600762c19d38dbde3ba8ff0d.js",
+        "status": 200,
+        "bytes": 271
+      },
+      {
+        "path": "/assets/channels/index-5b636429fdc4e303f457d09047f3b17c2f58ae3aeee898cf3d0ef33f72b94ead.js",
+        "status": 200,
+        "bytes": 79
+      },
+      {
+        "path": "/assets/channels/tick_channel-0bf845f0c2ad2e378090726cc77e619b0aa4fa4eb7f5dc06989030d99e025ae7.js",
+        "status": 200,
+        "bytes": 368
+      },
+      {
+        "path": "/assets/controllers/accordion_controller-0b8473e2f11acb274763cd7ceaa83f16003beddb9fc17968e00b2ce53c4c3401.js",
+        "status": 200,
+        "bytes": 560
+      },
+      {
+        "path": "/assets/controllers/application-368d98631bccbf2349e0d4f8269afb3fe9625118341966de054759d96ea86c7e.js",
+        "status": 200,
+        "bytes": 219
+      },
+      {
+        "path": "/assets/controllers/block_form_controller-9fd0e744a39cbea94f630bac7b95b3be514167a722b8a19b29a96f48b4a5b6d2.js",
+        "status": 200,
+        "bytes": 1908
+      },
+      {
+        "path": "/assets/controllers/category_selector_controller-a50375d6c7d41124967e4f75477f5215eaba40c8ee6b00ce4de7b583f066e68c.js",
+        "status": 200,
+        "bytes": 1299
+      }
+    ]
+  },
+  "css_assets": {
+    "observed_404": [
+      {
+        "status": 404,
+        "path": "/sitemap.xml"
+      }
+    ],
+    "public_page": "/market?terminal_api_id=29",
+    "public_page_status": 200,
+    "asset_checks": [
+      {
+        "path": "/assets/Dusk-6ad3ab38d55cc9435ba3920c724dff40145e2a9f3544c1bbab70a852b535a49b.css",
+        "status": 200,
+        "bytes": 486
+      },
+      {
+        "path": "/assets/application.tailwind-f718b6cd972c6c8f4ba8ab9f1104ea3ff32bfe384c81b11dda2e8fac45022aae.css",
+        "status": 200,
+        "bytes": 199
+      },
+      {
+        "path": "/assets/inter-font-8c3e82affb176f4bca9616b838d906343d1251adc8408efe02cf2b1e4fcf2bc4.css",
+        "status": 200,
+        "bytes": 9237
+      },
+      {
+        "path": "/assets/tailwind-2fb9aecaebfaa146e461f03a08b6f715c5f2f35337dd62a8c8ff6db9547098e4.css",
+        "status": 200,
+        "bytes": 44988
+      }
+    ]
+  },
+  "health_samples": [
+    {
+      "at_utc": "2026-11-01T16:37:21.264721+00:00",
+      "window_start_utc": "2026-11-01T16:26:27.258432+00:00",
+      "command": "heroku logs --app star-trader --num 1500",
+      "sampled_lines": 1500,
+      "post_open_lines": 1143,
+      "http_statuses": {
+        "200": 6,
+        "302": 1,
+        "401": 1
+      },
+      "platform_error_codes": {},
+      "lifecycle_failure_markers": {},
+      "completed_tick_log_lines": 41,
+      "dispatcher_log_lines": 82,
+      "limits": "Bounded available log sample, not continuous monitoring; no manufactured journey or delivery.",
+      "broker_connected_by_environment": {
+        "prod": 2,
+        "dev": 0
+      },
+      "broker_startup_failures": 4
+    },
+    {
+      "at_utc": "2026-11-01T16:49:39.442686+00:00",
+      "window_start_utc": "2026-11-01T16:26:27.258432+00:00",
+      "command": "heroku logs --app star-trader --num 1500",
+      "sampled_lines": 1500,
+      "post_open_lines": 1500,
+      "first_retained_post_open_timestamp": "2026-11-01T16:35:48.691857+00:00",
+      "http_statuses": {
+        "101": 4,
+        "200": 1,
+        "404": 1
+      },
+      "platform_error_codes": {},
+      "lifecycle_failure_markers": {},
+      "completed_tick_log_lines": 54,
+      "dispatcher_log_lines": 106,
+      "limits": "Bounded available log sample, not continuous monitoring; no manufactured journey or delivery.",
+      "broker_connected_by_environment": {
+        "prod": 0,
+        "dev": 0
+      },
+      "broker_startup_failures": 0
+    }
+  ],
+  "development_broker": {
+    "environment": "dev",
+    "probe": "connect and open channel only; no exchange or publish; read-only settings",
+    "host_source": "setting",
+    "host_contains_scheme": false,
+    "connected": false,
+    "error_class": "RabbitmqConnection::UnavailableError",
+    "root_error_class": "Bunny::TCPConnectionFailedForAllHosts",
+    "category": "connection_error",
+    "at_utc": "2026-11-01T16:44:37.239929+00:00",
+    "owner_disposition": "Intentionally offline; keep its configuration"
+  },
+  "limits": [
+    "No manufactured production journey, arrival or broker publication.",
+    "No natural arrival events occurred in the recorded window; production end-to-end notification delivery and consumer deduplication remain unverified.",
+    "Chrome checked live health and a live-data read-only operator render; no authenticated HTTP admin browser session was created.",
+    "Interactive browser runtime failed with host MXC process-security initialization error; existing Chrome headless test path succeeded.",
+    "Bounded log samples are not continuous monitoring. One unrelated /sitemap.xml 404 was observed."
+  ],
+  "reminder_5071": {
+    "state": "paused and unchanged",
+    "ship_location": "HUR-L2 Faithful Dream Station",
+    "player_location": "HUR-L1 Green Glade Station",
+    "saved_remaining_ticks": 40,
+    "action": "Owner review before any separately authorized gameplay change"
+  }
+}

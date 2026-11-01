@@ -1,10 +1,11 @@
 # StarTrader jump travel repair status
 
-**M0–M7 complete locally. M8 explicitly authorized; preflight and release commit in progress.**
-Date:2026-11-01 UTC. Branch:codex/jump-travel-repair.
-Base/HEAD:e393c2834d774169a8e4541a084668b811a6e1c4.
-Candidate provenance:uncommitted working-tree files in [source manifest](discovery/jump_travel_repair_source_manifest.json).
-Prior local execution made no commits or production changes. The owner now explicitly authorizes commit, deployment, conditional migrations and verification. Valid interdictions and5071 must remain unchanged.
+**M0–M8 complete. Production v172 is deployed and verified.**
+Deployed source:b82472163ff6b73abc6d37323dacd3665b027087.
+Branch:codex/jump-travel-repair. Implementation baseline:e393c2834d774169a8e4541a084668b811a6e1c4.
+A documentation-only closeout commit follows the deployed source; no second deployment is needed.
+Production evidence:[M8 record](discovery/jump_travel_m8_production.json).
+Unrelated initial untracked files remain preserved.
 
 ## Authoritative policy
 
@@ -56,7 +57,7 @@ Documentation:requested playbook,status,release,source manifest,audit/identity,r
 
 ## Continuation / next action
 
-Local work is finished. Review/commit an immutable candidate matching the source manifest,then obtain explicit authorization for the named M8 operation. Follow the release's expand-tables-before-code,retire-old-writers,conditional-guards/validation ordering. No unrestricted migrations or old-slug rollback after receipts/events exist.
+M8 was explicitly authorized and executed; the committed candidate is live asv172. Do not repeat the rollout as a continuation task. Follow the release's expand-tables-before-code,retire-old-writers,conditional-guards/validation ordering. No unrestricted migrations or old-slug rollback after receipts/events exist.
 External prerequisites:consumer deduplication/acceptance of at-least-once delivery; external client request/error handling and a real incident trace; owner review of5071. These do not authorize player movement. Terra remains unavailable.
 Disposable test databases/archives/logs and Chrome-only profiles remain ignored/local; private PostgreSQL16 servers are stopped at handoff. Recreate UTF-8 local cluster/profile to rerun; never fall back to production credentials.
 
@@ -66,4 +67,16 @@ Owner instruction: proceed with M8 using the release plan; commit/deploy repairs
 Preflight2026-11-01T16:04:48Z: v171 identity/binding verified; eight valid interdictions;5071 same discrepancy; no null/negative/completed-zero or orphan references.
 Delivery boundary remains disclosed at-least-once with unverified external consumer deduplication. The owner's explicit proceed instruction authorizes rollout with that documented limit; no exactly-once external claim and no manufactured production message/jump.
 Operator preparation adds a standalone ActiveRecord-only runner for the exact four reviewed migrations, database/SHA gates and protected-record fingerprints. No Rails application boot or broker/tick callbacks.
-Next: commit scoped files, qualify exact SHA/operator in isolated PostgreSQL16, capture fresh backup, quiesce old writers, expand before deployment, apply guards, restart/verify, record the5071 reminder. No gameplay recovery is authorized.
+Executed: source commit/push, exact-SHA177/1630 qualification,5 operator rehearsals, backupb005, maintenance/quiescence, additive schema, v172 deployment, all conditional guards/validation, restored web/worker, reopened ingress and bounded production verification. No gameplay recovery performed.
+
+## M8 final handoff
+
+- Releasev172,sourceb82472163ff6b73abc6d37323dacd3665b027087; all four migration versions recorded; conditional CHECK validated and unique indexes ready/valid.
+- Backupb005 Completed; original web/worker formation restored; app config fingerprint unchanged; no manual ticks or queue purge.
+- All8 protected journeys remain paused withzero arrival; all protected travel/ship/player/cargo/user and timing-setting fingerprints unchanged through2026-11-01T16:49:33Z.
+-5071 is unchanged and still flagged:shipHUR-L2 Faithful Dream Station versus playerHUR-L1 Green Glade Station. Keep paused; owner review only. Remind the owner in the final response.
+- Production broker connected. Development broker TCP connectivity failed; the owner confirmed it is **intentionally offline—keep configuration**. No routing/configuration change.
+- Tick/dispatcher healthy,failure_count0,failed queued jobs0,pending delivery0. No manufactured production journey or publication. External consumer deduplication/end-to-end notification delivery remains unverified because no natural arrivals occurred.
+- Live HTTP/asset checks and Google Chrome health/render capture passed. Admin diagnostics were rendered internally against live read-only DB and role-checked operator context,not an authenticated HTTP browser session. Interactive browser tool initialization failed with MXC; fallback used only installed Google Chrome.
+- No new production blocker or data recovery operation remains. Future work:normal observation,external consumer deduplication acceptance,and separately authorized5071 review. Do not resume or teleport it as cleanup.
+- Code/source files match the qualified manifest. Remaining commit is documentation/evidence only. Original unrelated files remain untracked and untouched.

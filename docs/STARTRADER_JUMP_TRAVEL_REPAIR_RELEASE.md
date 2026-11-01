@@ -1,6 +1,6 @@
 # StarTrader jump travel and interdiction repair release
 
-Prepared 2026-11-01 UTC. **M0–M7 local implementation and release preparation; M8 has not run. Production is not fixed by this local delivery.**
+Prepared 2026-11-01 UTC. **M0–M8 complete. Production v172 runs b82472163ff6b73abc6d37323dacd3665b027087. The planning/qualification record below is retained; executed production results are appended at the end.**
 
 ## Corrected policy and provenance
 
@@ -112,9 +112,9 @@ Latest [read-only audit](discovery/jump_travel_repair_audit.json) and identity e
 
 If a later audit finds true invalidity, stop that scope, collect historical timing/authoritative completion evidence and obtain a reviewed per-record action manifest with expected before-state, assets, broker and idempotent recovery ledger under these lifecycle locks. There is intentionally no blanket SQL repair, current_tick+1 fallback, deletion/refund or automatic player relocation tool in this delivery.
 
-## Concrete later rollout sequence — not executed
+## Reviewed M8 rollout sequence
 
-Every production step below is M8 and needs explicit operational authorization.
+The owner authorized and executed M8. The reviewed sequence below is retained for audit; final outcomes are recorded in the execution section.
 
 1. Review/commit the working-tree candidate, establish exact immutable SHA, match the source manifest, and confirm consumer deduplication or explicit acceptance of at-least-once delivery. Identify a compatible roll-forward/rollback build and operator/runtime. Do not deploy an unspecified branch head.
 2. Freshly verify app/domain/add-on/database binding, running release/processes, migration history, candidate schema diff and corrected read-only audit. Snapshot/backup production and verify restore availability; record a targeted before-image of travel/ship/player/assets and pending notifications without publishing credentials.
@@ -139,7 +139,7 @@ RAILS_ENV=production TICK_BOOTSTRAP=false bin/codex_exec bundle exec rails db:mi
 # ... db:migrate:up VERSION=20261101010300
 ```
 
-Do not copy/run these commands during the current read-only execution. A Heroku old slug does not contain the new migration files; use the reviewed candidate's prepared operator runtime/artifact, not an assumption that running old release migrations can expand the schema.
+These are version-scoped operator procedures, not standing authorization to repeat production operations. A Heroku old slug does not contain the new migration files; use the reviewed candidate's prepared operator runtime/artifact, not an assumption that running old release migrations can expand the schema.
 
 ## Health queries and stop conditions
 
@@ -182,3 +182,40 @@ Local qualification/release preparation is complete when the recorded final chec
 The owner has now explicitly authorized commit/deployment, the conditional migrations and production verification using this plan, with all valid interdictions kept paused and5071 unchanged. Execution evidence will be appended after rollout.
 The existing external at-least-once delivery limitation remains disclosed; the proceed instruction authorizes operation with that boundary. Consumer deduplication remains unverified, and no artificial production delivery/jump will be used for verification.
 A standalone ActiveRecord-only operator runner, script/apply_jump_travel_migrations.rb, loads only the four reviewed migration classes and no Rails initializers/models. It has explicit database/committed-SHA/phase gates, default dry-run, and before/after fingerprints for existing travel/ship/player/cargo state.
+
+## M8 executed — production v172
+
+Owner authorization: commit/deploy repairs, apply conditional migrations and verify production; keep all valid interdictions paused and5071 unchanged. The owner subsequently confirmed: **development broker intentionally offline; keep its configuration**.
+
+| Executed action | Actual result |
+| --- | --- |
+| Repair commit and publish | [b82472163ff6b73abc6d37323dacd3665b027087](https://github.com/Seggellion/startrader/commit/b82472163ff6b73abc6d37323dacd3665b027087), origin repair branch and Heroku main |
+| Exact committed qualification |177 runs /1630 assertions,0 failures/errors/skips; assertion count varies with the tested race schedule |
+| Standalone operator qualification |5 PostgreSQL16 dry/apply/repeat cases; protected synthetic records unchanged |
+| Backup |b005 Completed16:10:14Z, previousb004 retained |
+| Cutover |Quiescence confirmed2026-11-01T16:20:04.180374+00:00; ingress/old web+worker stopped; no queue purge or manual tick advance |
+| Additive schema before code |20261101010000 applied; protected rows unchanged |
+| Deployment |v172 succeeded; full slug source matches exact committed SHA; web.1/worker.1 up |
+| Conditional enforcement |20261101010100,20261101010200,20261101010300 applied in order; CHECK validated; unique indexes ready/valid with expected definitions |
+| Reopen |2026-11-01T16:26:27.258432+00:00; original Basic web/worker formation restored; persistent app config fingerprint unchanged; all queues available |
+| Protected assets/state |All8 travel rows and corresponding ship/player/cargo/user rows plus timing settings full-row fingerprints unchanged through2026-11-01T16:49:33Z |
+| Clock/worker |Natural tick746616→746716; running=true,failure_count0; no failed queued jobs |
+| Delivery backlog |0 events,0 pending/retrying notifications; no fabricated messages or player journeys |
+| Live HTTP |Health200; anonymous admin302/login guard; valid paused location API200; missing-auth gateway401; read-only distance quote200 retaining1Gm/tick and15seconds |
+| Served assets |Public market200;12 sampled assets and4 CSS resources200; compiled Tailwind44,988bytes |
+| Chrome |Live health and read-only production-data admin render passed;8 interdictions and5071 review warning visually verified |
+| Data recovery |None needed; no resume,retime,refund,cancellation or teleport performed |
+
+[Sanitized production evidence](discovery/jump_travel_m8_production.json) records source hashes, migrations, schema definitions, fingerprints, platform state, HTTP/Chrome results and bounded health samples. Restricted before-images, raw logs and production HTML remain ignored under tmp; they are not committed.
+
+The startup sample showed production-broker connections and development-broker TCP failures. A connection-only one-off against the deployed helper confirmed Bunny::TCPConnectionFailedForAllHosts fordev; it used read-only settings and published no message. The owner explicitly confirmed thatdev is intentionally offline. No broker configuration,credentials or saved routing were changed. This is an expected environment limit,not an unexplained deployment regression.
+
+After reopen, bounded samples show no lifecycle failure markers or platform errors and regular tick/dispatcher execution. The later sample contains a /sitemap.xml404 unrelated to this repair. Samples are bounded and overlap; they are not a continuous monitor or a lifetime success claim.
+
+Interactive Chrome control could not initialize because of the host MXC process-security error. Existing Google Chrome headless verification succeeded. Admin labels were checked using the deployed source with a live **read-only** database and an internal role-checked diagnostic render, then inspected in Chrome; no authenticated HTTP session cookie was created or used and no authenticated HTTP browser end-to-end claim is made. Actual anonymous HTTP authorization and the deployed paused-state API were separately verified.
+
+No natural arrival publication occurred during the observation window. Production notification end-to-end delivery/consumer deduplication therefore remains unverified; at-least-once delivery semantics remain as disclosed. A future deliberately stopped tick loop would need the reviewed lost-enqueue recovery scheduling; ticks are currently running, timed retries are installed, and no new recurring schedule was created.
+
+**5071 reminder:** it is still paused and unchanged,with40 saved ticks. Ship location is HUR-L2 Faithful Dream Station; player location is HUR-L1 Green Glade Station. It needs owner review before any separately authorized gameplay change. Viewing diagnostics must not resolve it automatically.
+
+The deployment source is immutableb824721; a later documentation-only closeout commit is not a second runtime deployment. Do not roll back by recreating journeys or discarding receipt/outbox evidence. Operational follow-up is normal observation,external consumer acceptance/dedup confirmation,and the5071 review; no pending player-data recovery is authorized.
