@@ -1,6 +1,6 @@
 {
   "recorded_at_utc": "2026-11-03T19:33:38.986075+00:00",
-  "status": "qualified_for_code_only_deployment",
+  "status": "deployed_and_verified",
   "authorization": "Owner requested server-side status synchronization repair so stale client updates cannot undo completed jumps, preserving 5071 and all valid interdictions. This continues the authorized jump/travel repair and deployment work.",
   "qualified_parent": "8838df90bfdd4a5f9e6c2c1d8be38e7a304be0ba",
   "policy": {
@@ -36,7 +36,8 @@
     },
     "environment": "Dedicated synthetic loopback PostgreSQL18 database star_trader_ac3_jump_diagnostic_test; single test worker; real RabbitMQ disabled; no production test writes.",
     "diff_check": "passed",
-    "browser": "No browser/UI change; no browser tests run. Chrome-only preference retained."
+    "browser": "No browser/UI change; no browser tests run. Chrome-only preference retained.",
+    "committed_source_hashes_rechecked": true
   },
   "migrations": [],
   "data_repair_actions": [],
@@ -51,5 +52,474 @@
     5090,
     5121
   ],
-  "deployment": null
+  "deployment": {
+    "source_commit": "ccf02b2885efda7f8b110140bd101f15d01e7439",
+    "release": 173,
+    "before": {
+      "at_utc": "2026-11-03T19:34:33.325813+00:00",
+      "phase": "before",
+      "app_id": "6b362b75-1732-42a4-9888-669a393f7f82",
+      "release": 172,
+      "status": "succeeded",
+      "sha": "b82472163ff6b73abc6d37323dacd3665b027087",
+      "slug_id": "3313b0ac-d9da-4183-85b5-774b38fbf625",
+      "maintenance": false,
+      "config_sha256": "cdd9b18e21b22b2b4d23725c2587111f64541cde34684b1edc35c558aea810c3",
+      "formation": [
+        {
+          "type": "worker",
+          "quantity": 1,
+          "size": "Basic"
+        },
+        {
+          "type": "web",
+          "quantity": 1,
+          "size": "Basic"
+        },
+        {
+          "type": "rake",
+          "quantity": 0,
+          "size": "Basic"
+        },
+        {
+          "type": "console",
+          "quantity": 0,
+          "size": "Basic"
+        }
+      ],
+      "dynos": [
+        {
+          "name": "web.1",
+          "state": "up",
+          "release": {
+            "id": "e5679f07-3219-4eb3-a226-09a3821a1c27",
+            "version": 172
+          }
+        },
+        {
+          "name": "worker.1",
+          "state": "up",
+          "release": {
+            "id": "e5679f07-3219-4eb3-a226-09a3821a1c27",
+            "version": 172
+          }
+        }
+      ]
+    },
+    "after": {
+      "at_utc": "2026-11-03T19:36:48.345816+00:00",
+      "phase": "after",
+      "app_id": "6b362b75-1732-42a4-9888-669a393f7f82",
+      "release": 173,
+      "status": "succeeded",
+      "sha": "ccf02b2885efda7f8b110140bd101f15d01e7439",
+      "slug_id": "c5371d01-38f2-42e4-9213-f3708189eca8",
+      "maintenance": false,
+      "config_sha256": "cdd9b18e21b22b2b4d23725c2587111f64541cde34684b1edc35c558aea810c3",
+      "formation": [
+        {
+          "type": "worker",
+          "quantity": 1,
+          "size": "Basic"
+        },
+        {
+          "type": "web",
+          "quantity": 1,
+          "size": "Basic"
+        },
+        {
+          "type": "rake",
+          "quantity": 0,
+          "size": "Basic"
+        },
+        {
+          "type": "console",
+          "quantity": 0,
+          "size": "Basic"
+        }
+      ],
+      "dynos": [
+        {
+          "name": "web.1",
+          "state": "up",
+          "release": {
+            "id": "c85912b9-6612-43ec-a690-2bc0c84b895c",
+            "version": 173
+          }
+        },
+        {
+          "name": "worker.1",
+          "state": "up",
+          "release": {
+            "id": "c85912b9-6612-43ec-a690-2bc0c84b895c",
+            "version": 173
+          }
+        }
+      ],
+      "config_unchanged": true,
+      "formation_unchanged": true
+    },
+    "code_only": true,
+    "migrations_applied": [],
+    "data_repair_actions": [],
+    "protected_before": {
+      "at_utc": "2026-11-03T19:34:30Z",
+      "phase": "before",
+      "read_only": "on",
+      "hashes": {
+        "travel": "1119a0d5e81ffed85b69e05d227f4108bae80c39cb1a3e8fbb4259c11dd148d8",
+        "ships": "42384692bfe08f173052c572f061c2c48f5f9c977a2773621dfba22eb24b3102",
+        "players": "560a0d8f8f90fd9bfd9b64dd9c5dca15fd35e6bca539f46fb58b41a142a34558",
+        "cargo": "85d9631b0e15255004fb3d56a7b20a6ef509875b28ad9d0dff809fdbef6bcede",
+        "users": "5c933f9376b24e1d3554f00ab3f67e56899c8d9454d80fed5f6d1431aaf9ba94",
+        "timing": "9af433e0b6bb66050e41ff77077a183eb5aae019a2baedf862b0448f0e823b88",
+        "broker_settings": "fe2c401edf4a2425bf6362c05f1283abea4193c2a5edf160350aea03f698682b"
+      },
+      "protected_state": [
+        {
+          "id": "4607",
+          "is_paused": "t",
+          "arrival_tick": "0",
+          "remaining_ticks_from_arrival": "2",
+          "completed_at_tick": null
+        },
+        {
+          "id": "5007",
+          "is_paused": "t",
+          "arrival_tick": "0",
+          "remaining_ticks_from_arrival": "25",
+          "completed_at_tick": null
+        },
+        {
+          "id": "5028",
+          "is_paused": "t",
+          "arrival_tick": "0",
+          "remaining_ticks_from_arrival": "32",
+          "completed_at_tick": null
+        },
+        {
+          "id": "5042",
+          "is_paused": "t",
+          "arrival_tick": "0",
+          "remaining_ticks_from_arrival": "1",
+          "completed_at_tick": null
+        },
+        {
+          "id": "5043",
+          "is_paused": "t",
+          "arrival_tick": "0",
+          "remaining_ticks_from_arrival": "23",
+          "completed_at_tick": null
+        },
+        {
+          "id": "5071",
+          "is_paused": "t",
+          "arrival_tick": "0",
+          "remaining_ticks_from_arrival": "40",
+          "completed_at_tick": null
+        },
+        {
+          "id": "5090",
+          "is_paused": "t",
+          "arrival_tick": "0",
+          "remaining_ticks_from_arrival": "59",
+          "completed_at_tick": null
+        },
+        {
+          "id": "5121",
+          "is_paused": "t",
+          "arrival_tick": "0",
+          "remaining_ticks_from_arrival": "62",
+          "completed_at_tick": null
+        }
+      ],
+      "tick_control": [
+        {
+          "running": "t",
+          "failure_count": "0",
+          "last_tick_error_class": null,
+          "last_tick_started_at": "2026-11-03 19:34:26.834046",
+          "last_tick_completed_at": "2026-11-03 19:34:26.962889"
+        }
+      ],
+      "failed_jobs": "0",
+      "notifications": [
+        {
+          "total": "21",
+          "pending": "0",
+          "retrying": "0"
+        }
+      ],
+      "migrations": [
+        "20261101010000",
+        "20261101010100",
+        "20261101010200",
+        "20261101010300"
+      ]
+    },
+    "protected_after": {
+      "at_utc": "2026-11-03T19:36:46Z",
+      "phase": "after",
+      "read_only": "on",
+      "hashes": {
+        "travel": "1119a0d5e81ffed85b69e05d227f4108bae80c39cb1a3e8fbb4259c11dd148d8",
+        "ships": "42384692bfe08f173052c572f061c2c48f5f9c977a2773621dfba22eb24b3102",
+        "players": "560a0d8f8f90fd9bfd9b64dd9c5dca15fd35e6bca539f46fb58b41a142a34558",
+        "cargo": "85d9631b0e15255004fb3d56a7b20a6ef509875b28ad9d0dff809fdbef6bcede",
+        "users": "5c933f9376b24e1d3554f00ab3f67e56899c8d9454d80fed5f6d1431aaf9ba94",
+        "timing": "9af433e0b6bb66050e41ff77077a183eb5aae019a2baedf862b0448f0e823b88",
+        "broker_settings": "fe2c401edf4a2425bf6362c05f1283abea4193c2a5edf160350aea03f698682b"
+      },
+      "protected_state": [
+        {
+          "id": "4607",
+          "is_paused": "t",
+          "arrival_tick": "0",
+          "remaining_ticks_from_arrival": "2",
+          "completed_at_tick": null
+        },
+        {
+          "id": "5007",
+          "is_paused": "t",
+          "arrival_tick": "0",
+          "remaining_ticks_from_arrival": "25",
+          "completed_at_tick": null
+        },
+        {
+          "id": "5028",
+          "is_paused": "t",
+          "arrival_tick": "0",
+          "remaining_ticks_from_arrival": "32",
+          "completed_at_tick": null
+        },
+        {
+          "id": "5042",
+          "is_paused": "t",
+          "arrival_tick": "0",
+          "remaining_ticks_from_arrival": "1",
+          "completed_at_tick": null
+        },
+        {
+          "id": "5043",
+          "is_paused": "t",
+          "arrival_tick": "0",
+          "remaining_ticks_from_arrival": "23",
+          "completed_at_tick": null
+        },
+        {
+          "id": "5071",
+          "is_paused": "t",
+          "arrival_tick": "0",
+          "remaining_ticks_from_arrival": "40",
+          "completed_at_tick": null
+        },
+        {
+          "id": "5090",
+          "is_paused": "t",
+          "arrival_tick": "0",
+          "remaining_ticks_from_arrival": "59",
+          "completed_at_tick": null
+        },
+        {
+          "id": "5121",
+          "is_paused": "t",
+          "arrival_tick": "0",
+          "remaining_ticks_from_arrival": "62",
+          "completed_at_tick": null
+        }
+      ],
+      "unchanged_categories": {
+        "travel": true,
+        "ships": true,
+        "players": true,
+        "cargo": true,
+        "users": true,
+        "timing": true,
+        "broker_settings": true
+      },
+      "all_protected_unchanged": true,
+      "tick_control": [
+        {
+          "running": "t",
+          "failure_count": "0",
+          "last_tick_error_class": null,
+          "last_tick_started_at": "2026-11-03 19:36:44.326396",
+          "last_tick_completed_at": "2026-11-03 19:36:44.523986"
+        }
+      ],
+      "failed_jobs": "0",
+      "notifications": [
+        {
+          "total": "21",
+          "pending": "0",
+          "retrying": "0"
+        }
+      ],
+      "migrations": [
+        "20261101010000",
+        "20261101010100",
+        "20261101010200",
+        "20261101010300"
+      ]
+    },
+    "live_read_only_policy_evaluation": {
+      "at_utc": "2026-11-03T19:36:11Z",
+      "read_only": true,
+      "scope": "Pure location-policy evaluation from deployed-source-equivalent code against live read-only database; no status writer, lock helper, client session, publication, or gameplay command invoked.",
+      "results": [
+        {
+          "travel_id": 4607,
+          "ship_id": 640,
+          "paused": true,
+          "arrival_tick": 0,
+          "incoming_conflict_ignored_for": [
+            "ship",
+            "player"
+          ],
+          "canonical_ship_location": "Lorville",
+          "canonical_player_location": "Lorville"
+        },
+        {
+          "travel_id": 5007,
+          "ship_id": 455,
+          "paused": true,
+          "arrival_tick": 0,
+          "incoming_conflict_ignored_for": [
+            "ship",
+            "player"
+          ],
+          "canonical_ship_location": "Terra Gateway (Stanton)",
+          "canonical_player_location": "Terra Gateway (Stanton)"
+        },
+        {
+          "travel_id": 5028,
+          "ship_id": 426,
+          "paused": true,
+          "arrival_tick": 0,
+          "incoming_conflict_ignored_for": [
+            "ship",
+            "player"
+          ],
+          "canonical_ship_location": "Terra Gateway (Stanton)",
+          "canonical_player_location": "Terra Gateway (Stanton)"
+        },
+        {
+          "travel_id": 5042,
+          "ship_id": 504,
+          "paused": true,
+          "arrival_tick": 0,
+          "incoming_conflict_ignored_for": [
+            "ship",
+            "player"
+          ],
+          "canonical_ship_location": "MIC-L2 Long Forest Station",
+          "canonical_player_location": "MIC-L2 Long Forest Station"
+        },
+        {
+          "travel_id": 5043,
+          "ship_id": 507,
+          "paused": true,
+          "arrival_tick": 0,
+          "incoming_conflict_ignored_for": [
+            "ship",
+            "player"
+          ],
+          "canonical_ship_location": "Terra Gateway (Stanton)",
+          "canonical_player_location": "Terra Gateway (Stanton)"
+        },
+        {
+          "travel_id": 5071,
+          "ship_id": 767,
+          "paused": true,
+          "arrival_tick": 0,
+          "incoming_conflict_ignored_for": [
+            "ship",
+            "player"
+          ],
+          "canonical_ship_location": "HUR-L2 Faithful Dream Station",
+          "canonical_player_location": "HUR-L1 Green Glade Station"
+        },
+        {
+          "travel_id": 5090,
+          "ship_id": 551,
+          "paused": true,
+          "arrival_tick": 0,
+          "incoming_conflict_ignored_for": [
+            "ship",
+            "player"
+          ],
+          "canonical_ship_location": "HDMS-Woodruff",
+          "canonical_player_location": "HDMS-Woodruff"
+        },
+        {
+          "travel_id": 5121,
+          "ship_id": 506,
+          "paused": true,
+          "arrival_tick": 0,
+          "incoming_conflict_ignored_for": [
+            "ship",
+            "player"
+          ],
+          "canonical_ship_location": "Nyx Gateway (Stanton)",
+          "canonical_player_location": "Nyx Gateway (Stanton)"
+        },
+        {
+          "ship_id": 635,
+          "completed_receipt_guard": true,
+          "canonical_ship_location": "Stanton Gateway (Pyro)",
+          "canonical_player_location": "Stanton Gateway (Pyro)",
+          "conflicting_report": {
+            "status": "ignored",
+            "code": "stale_location",
+            "message": "Saved travel locations were preserved. Refresh the client location from this response.",
+            "reported_location": "Pyro Gateway (Stanton)",
+            "ignored_for": [
+              "ship",
+              "player"
+            ]
+          }
+        }
+      ]
+    },
+    "health": {
+      "at_utc": "2026-11-03T19:36:55.612169+00:00",
+      "http": [
+        {
+          "path": "/up",
+          "status": 200,
+          "final_path": "/up"
+        },
+        {
+          "path": "/api/location/635",
+          "status": 200,
+          "final_path": "/api/location/635",
+          "state": {
+            "in_transit": false,
+            "paused": null,
+            "location": "Stanton Gateway (Pyro)",
+            "travel_state": null
+          }
+        },
+        {
+          "path": "/admin/ship_travels",
+          "status": 200,
+          "final_path": "/login"
+        }
+      ],
+      "release_created_at_utc": "2026-11-03T19:35:47Z",
+      "retained_since_release": 245,
+      "platform_error_count": 0,
+      "http_5xx_count": 0,
+      "deadlock_or_lock_timeout_count": 0,
+      "lifecycle_error_markers": 0,
+      "ignored_location_events": 0,
+      "production_broker_connected": 0,
+      "development_broker_expected_offline_markers": 0,
+      "limits": "Bounded logs and read-only HTTP checks; no authenticated status mutation, production jump or notification manufactured. Broker dev remains intentionally offline."
+    },
+    "limits": "No production jump or stateful status request was manufactured for testing. Real bot consumption/arrival handling remains outside this code verification; server guard is live. Ac3 saved Pyro location was not corrected by inference.",
+    "reminder_5071": "Still paused, arrival zero, 40 saved ticks. Ship HUR-L2 Faithful Dream; player HUR-L1 Green Glade. No reconciliation authorized or performed.",
+    "broker": "Configuration fingerprints unchanged; dev remains intentionally offline per owner."
+  },
+  "closed_at_utc": "2026-11-03T19:37:32.977493+00:00"
 }
