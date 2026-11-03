@@ -1,0 +1,55 @@
+{
+  "recorded_at_utc": "2026-11-03T19:33:38.986075+00:00",
+  "status": "qualified_for_code_only_deployment",
+  "authorization": "Owner requested server-side status synchronization repair so stale client updates cannot undo completed jumps, preserving 5071 and all valid interdictions. This continues the authorized jump/travel repair and deployment work.",
+  "qualified_parent": "8838df90bfdd4a5f9e6c2c1d8be38e7a304be0ba",
+  "policy": {
+    "managed_ship": "Any retained journey or durable travel receipt makes the existing server location authoritative. No expiry or inferred move back to an old destination.",
+    "managed_player": "Check travel history across all ships linked to that shard player, so a different or new ship GUID cannot overwrite the player location.",
+    "stale_report": "Keep success-compatible status response, return canonical locations plus location_sync.status=ignored/code=stale_location and ignored_for; emit request-correlated status_location_ignored without credentials.",
+    "locks": "Persisted ship then old/new players in ascending ID order, retained through status response construction; no journey/receipt locks acquired in status paths.",
+    "identity": "Managed ship identity/model/shard cannot be reassigned through status to bypass travel protection; entire attempt rolls back.",
+    "compatibility": "Ships/players with no saved server travel history retain status initialization/external relocation behavior. Wallet updates stay independent. New, nested and legacy status forms covered.",
+    "limitation": "Unversioned status cannot distinguish stale location from an intentional external relocation after travel. Such locations are preserved and require actual server travel or a separately designed explicit reconciliation mechanism.",
+    "paused": "Do not realign mismatched players, alter timing, resume, cancel, refund, recreate cargo or touch managed ships for recency."
+  },
+  "changes": {
+    "app/services/trade_service.rb": "9b4351c09c5df9036f52ad60dc1d1864a48819c1d549f0554ddb80e385f54b33",
+    "app/services/travel_lifecycle.rb": "55cb2606803b15108025c32ba7bb5e6603323b93045e87fd63f383306a014278",
+    "app/services/status_location_sync.rb": "7bf5ae2f4876ff924b832545b30efb83dcb58f7ea67186670ec264b71931121a",
+    "test/services/status_location_sync_test.rb": "14956d008bdf7bfde35fd66cf0d1bf1c061947e1b3fbdf46879ebe849e73b5b2",
+    "test/services/status_location_sync_concurrency_test.rb": "c6084c04a59fba1fe74d7b1b82f01b14c8cd569386877f73aedda761db48036d",
+    "test/controllers/api/status_location_sync_test.rb": "fab327c1148fc7b8b09a590c8e80e0c388b435f04cdab15c0fee00d866d4c130"
+  },
+  "validation": {
+    "travel_and_new_status": "199 runs, 1742 assertions, 0 failures, 0 errors, 0 skips",
+    "new_status_cases": "22 tests,109 assertions,0 failures/errors",
+    "existing_status_group": {
+      "before": "64 tests,255 assertions,2 failures,1 error",
+      "after": "64 tests,255 assertions,2 failures,1 error",
+      "new_failure_identities": [],
+      "baseline_failures": [
+        "Api::TradesControllerTest#test_status_accepts_new_authenticated_payload_and_keeps_response_shape: unsorted expected key array",
+        "TradeServiceTest#test_status_preserves_success_response_shape: unsorted expected key array",
+        "TradeServiceTest#test_status_treats_same_player_name_with_different_player_guid_as_different_user: existing unique username validation"
+      ]
+    },
+    "environment": "Dedicated synthetic loopback PostgreSQL18 database star_trader_ac3_jump_diagnostic_test; single test worker; real RabbitMQ disabled; no production test writes.",
+    "diff_check": "passed",
+    "browser": "No browser/UI change; no browser tests run. Chrome-only preference retained."
+  },
+  "migrations": [],
+  "data_repair_actions": [],
+  "broker_configuration_changes": [],
+  "protected_journey_ids": [
+    4607,
+    5007,
+    5028,
+    5042,
+    5043,
+    5071,
+    5090,
+    5121
+  ],
+  "deployment": null
+}

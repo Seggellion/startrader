@@ -2,6 +2,8 @@
   # app/services/trade_service.rb
 
 class TradeService
+    StatusSyncResult = Struct.new(:user, :shard, :shard_user, :user_ship, :ship, :location_sync, keyword_init: true)
+
     BASE_LOADING_TICKS = 10
     LOADING_TICKS_PER_SCU = 2
 
@@ -73,79 +75,79 @@ class TradeService
         ship_guid: ship_guid
       )
 
-      sync = authoritative_status_sync!(
-        ship_guid: ship_guid,
-        ship_model: ship_model,
-        shard_uuid: shard_uuid,
-        player_guid: player_guid,
-        player_name: player_name,
-        wallet_balance: wallet_balance,
-        location_name: location,
-        resolved_location: resolved_location,
-        request_id: request_id
-      )
+      UserShip.transaction do
+        sync = authoritative_status_sync!(
+          ship_guid: ship_guid,
+          ship_model: ship_model,
+          shard_uuid: shard_uuid,
+          player_guid: player_guid,
+          player_name: player_name,
+          wallet_balance: wallet_balance,
+          location_name: location,
+          resolved_location: resolved_location,
+          request_id: request_id
+        )
 
-      status_response_for(shard_user: sync.shard_user, user_ship: sync.user_ship, wallet_balance: wallet_balance, request_id: request_id)
+        status_response_for(shard_user: sync.shard_user, user_ship: sync.user_ship,
+          wallet_balance: wallet_balance, request_id: request_id, location_sync: sync.location_sync)
+      end
+    rescue ActiveRecord::RecordNotUnique
+      retry
     end
 
     def self.authoritative_status_sync!(ship_guid:, ship_model:, shard_uuid:, player_guid:, player_name:, wallet_balance:, location_name:, resolved_location:, request_id: nil)
-      shard = find_or_create_status_shard!(shard_uuid)
-      user = find_or_create_status_user!(player_guid: player_guid, player_name: player_name)
-      shard_user = user.shard_users.find_or_create_by!(shard_id: shard.id) do |record|
-        record.shard_name = shard.name
+      UserShip.transaction do
+        shard = find_or_create_status_shard!(shard_uuid)
+        user = find_or_create_status_user!(player_guid: player_guid, player_name: player_name)
+        shard_user = user.shard_users.find_or_create_by!(shard_id: shard.id) do |record|
+          record.shard_name = shard.name
+        end
+        ship = find_or_create_status_ship!(ship_model)
+        user_ship = UserShip.find_or_initialize_by(guid: ship_guid)
+
+        TravelLifecycle.with_status_ship(user_ship, shard_user) do
+          location_sync = StatusLocationSync.new(ship: user_ship, player: shard_user,
+            reported_location: resolved_location)
+          if location_sync.managed_ship? &&
+              [user_ship.user_id, user_ship.shard_id, user_ship.shard_user_id, user_ship.ship_id] !=
+                [user.id, shard.id, shard_user.id, ship.id]
+            raise TravelLifecycle::Error.new('status_identity_conflict',
+              'Saved travel identity cannot be reassigned by a status report.')
+          end
+
+          was_new = user_ship.new_record?
+          previous_shard_user_location = shard_user.current_location_name
+          previous_user_ship_location = user_ship.location_name
+          previous_associations = [user_ship.user_id, user_ship.shard_id, user_ship.shard_user_id]
+          # Capture the conflict before applying permitted initialization.
+          ignored_location = location_sync.payload
+          location_sync.log(request_id: request_id)
+          shard_user.shard_name = shard.name
+          shard_user.wallet_balance = wallet_balance if wallet_balance.present?
+          shard_user.save! if shard_user.changed?
+          shard_user.update_current_location!(location_sync.player_location) if location_sync.player_location
+
+          unless location_sync.managed_ship?
+            assign_authoritative_status_user_ship!(
+              user_ship: user_ship, user: user, shard: shard, shard_user: shard_user,
+              ship: ship, location: location_sync.ship_location
+            )
+          end
+
+          log_authoritative_status_sync(
+            player_name: player_name, player_guid: player_guid, shard_uuid: shard_uuid,
+            ship_guid: ship_guid, incoming_location: location_name,
+            resolved_location: ignored_location ? nil : resolved_location,
+            previous_shard_user_location: previous_shard_user_location,
+            previous_user_ship_location: previous_user_ship_location,
+            user_ship_was_new: was_new, user_ship: user_ship, request_id: request_id,
+            user_ship_overwrote_associations: previous_associations != [user.id, shard.id, shard_user.id]
+          )
+
+          StatusSyncResult.new(user: user, shard: shard, shard_user: shard_user,
+            user_ship: user_ship, ship: user_ship.ship, location_sync: location_sync)
+        end
       end
-      ship = find_or_create_status_ship!(ship_model)
-      user_ship = UserShip.find_or_initialize_by(guid: ship_guid)
-
-      was_new = user_ship.new_record?
-      previous_shard_user_location = shard_user.current_location_name
-      previous_user_ship_location = user_ship.location_name
-      previous_user_ship_user_id = user_ship.user_id
-      previous_user_ship_shard_id = user_ship.shard_id
-      previous_user_ship_shard_user_id = user_ship.shard_user_id
-
-      ActiveRecord::Base.transaction do
-        shard_user.shard_name = shard.name
-        shard_user.wallet_balance = wallet_balance if wallet_balance.present?
-        shard_user.save! if shard_user.changed?
-        shard_user.update_current_location!(resolved_location) if resolved_location
-
-        assign_authoritative_status_user_ship!(
-          user_ship: user_ship,
-          user: user,
-          shard: shard,
-          shard_user: shard_user,
-          ship: ship,
-          location: resolved_location
-        )
-      end
-
-      log_authoritative_status_sync(
-        player_name: player_name,
-        player_guid: player_guid,
-        shard_uuid: shard_uuid,
-        ship_guid: ship_guid,
-        incoming_location: location_name,
-        resolved_location: resolved_location,
-        previous_shard_user_location: previous_shard_user_location,
-        previous_user_ship_location: previous_user_ship_location,
-        user_ship_was_new: was_new,
-        user_ship: user_ship,
-        request_id: request_id,
-        user_ship_overwrote_associations: previous_user_ship_user_id != user.id ||
-          previous_user_ship_shard_id != shard.id ||
-          previous_user_ship_shard_user_id != shard_user.id
-      )
-
-      StarTraderShipSync::Result.new(
-        user: user,
-        shard: shard,
-        shard_user: shard_user,
-        user_ship: user_ship,
-        ship: ship
-      )
-    rescue ActiveRecord::RecordNotUnique
-      retry
     end
 
     def self.find_or_create_status_shard!(shard_uuid)
@@ -239,27 +241,17 @@ class TradeService
       raise ValidationError, "Location not found: #{location_name}"
     end
 
-    def self.update_status_location!(shard_user:, user_ship:, location_name:, resolved_location:, player_name:, shard_uuid:, ship_guid:)
+    def self.update_status_location!(shard_user:, user_ship:, location_name:, resolved_location:, player_name:, shard_uuid:, ship_guid:, request_id: nil)
       return unless resolved_location
 
-      Rails.logger.info(
-        "[TradeService.status] location_update applying " \
-        "player=#{player_name.inspect} shard_uuid=#{shard_uuid.inspect} " \
-        "ship_guid=#{ship_guid.inspect} incoming_location=#{location_name.inspect} " \
-        "resolved_location_id=#{resolved_location.id} resolved_location_name=#{resolved_location.name.inspect}"
-      )
-
-      ActiveRecord::Base.transaction do
-        shard_user.update_current_location!(resolved_location)
-        user_ship&.update!(location_name: resolved_location.name)
+      TravelLifecycle.with_status_ship(user_ship, shard_user) do
+        sync = StatusLocationSync.new(ship: user_ship, player: shard_user,
+          reported_location: resolved_location)
+        sync.log(request_id: request_id)
+        shard_user.update_current_location!(sync.player_location) if sync.player_location
+        user_ship&.update!(location_name: sync.ship_location.name) if sync.ship_location
+        sync
       end
-
-      Rails.logger.info(
-        "[TradeService.status] location_update applied " \
-        "player=#{player_name.inspect} shard_uuid=#{shard_uuid.inspect} " \
-        "ship_guid=#{ship_guid.inspect} incoming_location=#{location_name.inspect} " \
-        "resolved_location_id=#{resolved_location.id} resolved_location_name=#{resolved_location.name.inspect}"
-      )
     end
 
     def self.legacy_status(username:, location: nil, wallet_balance: nil, shard:, request_id: nil)
@@ -282,27 +274,21 @@ class TradeService
       raise ActiveRecord::RecordNotFound, 'Shard user not found' unless shard_user
       user_ship = shard_user.user_ships.order(updated_at: :desc).first
 
-      update_status_location!(
-        shard_user: shard_user,
-        user_ship: user_ship,
-        location_name: location,
-        resolved_location: resolved_location,
-        player_name: username,
-        shard_uuid: shard,
-        ship_guid: user_ship&.guid
-      )
-
-      status_response_for(
-        shard_user: shard_user,
-        user_ship: user_ship,
-        wallet_balance: wallet_balance,
-        request_id: request_id
-      )
-
-      # ✅ Check if user already has a ship
-      
-    
-      # Gather Cargo Information
+      UserShip.transaction do
+        location_sync = update_status_location!(
+          shard_user: shard_user, user_ship: user_ship, location_name: location,
+          resolved_location: resolved_location, player_name: username,
+          shard_uuid: shard, ship_guid: user_ship&.guid, request_id: request_id
+        )
+        # A location-free request still needs locks and the managed-ship check.
+        unless location_sync
+          TravelLifecycle.with_status_ship(user_ship, shard_user) do
+            location_sync = StatusLocationSync.new(ship: user_ship, player: shard_user, reported_location: nil)
+          end
+        end
+        status_response_for(shard_user: shard_user, user_ship: user_ship,
+          wallet_balance: wallet_balance, request_id: request_id, location_sync: location_sync)
+      end
     end
 
     def self.find_ship_by_model!(ship_model)
@@ -386,7 +372,7 @@ class TradeService
       0
     end
 
-    def self.status_response_for(shard_user:, user_ship:, wallet_balance:, request_id: nil)
+    def self.status_response_for(shard_user:, user_ship:, wallet_balance:, request_id: nil, location_sync: nil)
       update_status_wallet_balance!(shard_user, wallet_balance)
 
       return no_ship_status_response(shard_user) if user_ship.nil?
@@ -399,7 +385,7 @@ class TradeService
         active_travel: active_travel
       )
       user_ship.reload
-      user_ship.touch
+      user_ship.touch unless location_sync&.managed_ship?
 
       cargo = user_ship_cargo_json(user_ship)
       ship_travel = active_travel || latest_relevant_ship_travel(user_ship)
@@ -426,6 +412,8 @@ class TradeService
         ships: ships_availability_json(shard_user),
         cargo: cargo,
       }
+
+      response[:location_sync] = location_sync.payload if location_sync&.payload
 
       response[:ship].merge!(TravelState.new(ship_travel,tick:current_tick).payload) if ship_travel
 

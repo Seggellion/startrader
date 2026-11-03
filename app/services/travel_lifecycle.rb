@@ -18,6 +18,18 @@ class TravelLifecycle
     end
   end
 
+  # Status locks a persisted ship before old/new players in ID order, and
+  # retains those locks through response construction.
+  def self.with_status_ship(ship, player)
+    UserShip.transaction do
+      ship.lock! if ship&.persisted?
+      ids = [ship&.shard_user_id, player.id].compact.uniq.sort
+      ShardUser.where(id: ids).order(:id).lock.load
+      player.reload
+      yield
+    end
+  end
+
   def self.deadline!(tick, duration)
     unless tick.is_a?(Integer) && tick >= 0 && duration.is_a?(Integer) && duration > 0 &&
         tick + duration <= MAX_TICK
