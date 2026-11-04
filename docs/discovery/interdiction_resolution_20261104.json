@@ -1,6 +1,6 @@
 {
   "recorded_at_utc": "2026-11-04T16:16:05.032177+00:00",
-  "status": "qualified_for_additive_migration_and_deployment",
+  "status": "deployed_named_journeys_resumed_and_natural_arrivals_verified",
   "authorization": "Owner requested further analysis and resolution for Soundboy3113 and Samasulee who remain interdicted, and a usable admin resolution path. Prior preservation remains in effect for 5071 and unrelated valid interdictions.",
   "cause": "Both named journeys are coherent pauses, not expired or corrupt arrival timers. Soundboy3113 journey 5007 paused October 20 with 25 ticks left. Samasulee journey 5161 paused November 4 with 36 ticks left. No automatic expiry is intended; the previous admin implementation exposed read-only diagnostics and no supported resume action.",
   "targets": [
@@ -364,5 +364,506 @@
       }
     ]
   },
-  "execution": null
+  "execution": {
+    "source_commit": "26a17ff9c517f8d17b7c83e909a00e5b8ab38ee5",
+    "release": 174,
+    "platform_before": {
+      "at_utc": "2026-11-04T16:18:53.308133+00:00",
+      "phase": "before",
+      "app_id": "6b362b75-1732-42a4-9888-669a393f7f82",
+      "release": 173,
+      "status": "succeeded",
+      "sha": "ccf02b2885efda7f8b110140bd101f15d01e7439",
+      "slug_id": "c5371d01-38f2-42e4-9213-f3708189eca8",
+      "maintenance": false,
+      "config_sha256": "cdd9b18e21b22b2b4d23725c2587111f64541cde34684b1edc35c558aea810c3",
+      "formation": [
+        {
+          "type": "worker",
+          "quantity": 1,
+          "size": "Basic"
+        },
+        {
+          "type": "web",
+          "quantity": 1,
+          "size": "Basic"
+        },
+        {
+          "type": "rake",
+          "quantity": 0,
+          "size": "Basic"
+        },
+        {
+          "type": "console",
+          "quantity": 0,
+          "size": "Basic"
+        }
+      ],
+      "dynos": [
+        {
+          "name": "web.1",
+          "state": "up",
+          "release": {
+            "id": "c85912b9-6612-43ec-a690-2bc0c84b895c",
+            "version": 173
+          }
+        },
+        {
+          "name": "worker.1",
+          "state": "up",
+          "release": {
+            "id": "c85912b9-6612-43ec-a690-2bc0c84b895c",
+            "version": 173
+          }
+        }
+      ]
+    },
+    "platform_after": {
+      "at_utc": "2026-11-04T16:25:18.948509+00:00",
+      "phase": "after",
+      "app_id": "6b362b75-1732-42a4-9888-669a393f7f82",
+      "release": 174,
+      "status": "succeeded",
+      "sha": "26a17ff9c517f8d17b7c83e909a00e5b8ab38ee5",
+      "slug_id": "2ec7f49b-fea9-4a77-8478-e54b93d50b98",
+      "maintenance": false,
+      "config_sha256": "cdd9b18e21b22b2b4d23725c2587111f64541cde34684b1edc35c558aea810c3",
+      "formation": [
+        {
+          "type": "worker",
+          "quantity": 1,
+          "size": "Basic"
+        },
+        {
+          "type": "web",
+          "quantity": 1,
+          "size": "Basic"
+        },
+        {
+          "type": "rake",
+          "quantity": 0,
+          "size": "Basic"
+        },
+        {
+          "type": "console",
+          "quantity": 0,
+          "size": "Basic"
+        }
+      ],
+      "dynos": [
+        {
+          "name": "web.1",
+          "state": "up",
+          "release": {
+            "id": "9db2541e-34d4-49bd-b7e2-6b7128e2ff92",
+            "version": 174
+          }
+        },
+        {
+          "name": "worker.1",
+          "state": "up",
+          "release": {
+            "id": "9db2541e-34d4-49bd-b7e2-6b7128e2ff92",
+            "version": 174
+          }
+        }
+      ],
+      "config_unchanged": true,
+      "formation_unchanged": true
+    },
+    "migration_rehearsal": [
+      {
+        "at_utc": "2026-11-04T16:16:53Z",
+        "source_sha": "26a17ff9c517f8d17b7c83e909a00e5b8ab38ee5",
+        "mode": "dry_run",
+        "version": "20261104010000",
+        "protected_ids": [],
+        "action": "pending",
+        "protected_unchanged": true,
+        "protected_hashes": {
+          "travel": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "ships": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "players": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "cargo": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        }
+      },
+      {
+        "at_utc": "2026-11-04T16:17:02Z",
+        "source_sha": "26a17ff9c517f8d17b7c83e909a00e5b8ab38ee5",
+        "mode": "apply",
+        "version": "20261104010000",
+        "protected_ids": [],
+        "action": "applied",
+        "protected_unchanged": true,
+        "protected_hashes": {
+          "travel": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "ships": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "players": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "cargo": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        }
+      },
+      {
+        "at_utc": "2026-11-04T16:17:07Z",
+        "source_sha": "26a17ff9c517f8d17b7c83e909a00e5b8ab38ee5",
+        "mode": "apply",
+        "version": "20261104010000",
+        "protected_ids": [],
+        "action": "already_applied",
+        "protected_unchanged": true,
+        "protected_hashes": {
+          "travel": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "ships": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "players": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "cargo": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        }
+      },
+      {
+        "at_utc": "2026-11-04T16:17:18Z",
+        "source_sha": "26a17ff9c517f8d17b7c83e909a00e5b8ab38ee5",
+        "mode": "dry_run",
+        "version": "20261104010000",
+        "protected_ids": [],
+        "action": "already_applied",
+        "protected_unchanged": true,
+        "protected_hashes": {
+          "travel": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "ships": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "players": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "cargo": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        }
+      }
+    ],
+    "migration_dry_run": {
+      "at_utc": "2026-11-04T16:19:53Z",
+      "source_sha": "26a17ff9c517f8d17b7c83e909a00e5b8ab38ee5",
+      "mode": "dry_run",
+      "version": "20261104010000",
+      "protected_ids": [
+        4607,
+        5007,
+        5028,
+        5042,
+        5043,
+        5071,
+        5090,
+        5121,
+        5161,
+        5162,
+        5166
+      ],
+      "action": "pending",
+      "protected_unchanged": true,
+      "protected_hashes": {
+        "travel": "776fae4e46987309517b0ef6e597e9397ad43442f7d9e5e50a980fb513a80b6b",
+        "ships": "c96644e81dc18655fe49254deae38c320f8449e8fe1dc161443f39ef3cd219dd",
+        "players": "c1e5aca55f5cec16564c654e484e3dc66d4a0584bb29302dc4cbdcd2cac585d2",
+        "cargo": "c91685a90ff359ec05ff76f1aafa18cf93e6d3ceca033bfb5ba021a27a6da555"
+      }
+    },
+    "migration_apply": {
+      "at_utc": "2026-11-04T16:20:47Z",
+      "source_sha": "26a17ff9c517f8d17b7c83e909a00e5b8ab38ee5",
+      "mode": "apply",
+      "version": "20261104010000",
+      "protected_ids": [
+        4607,
+        5007,
+        5028,
+        5042,
+        5043,
+        5071,
+        5090,
+        5121,
+        5161,
+        5162,
+        5166
+      ],
+      "action": "applied",
+      "protected_unchanged": true,
+      "protected_hashes": {
+        "travel": "776fae4e46987309517b0ef6e597e9397ad43442f7d9e5e50a980fb513a80b6b",
+        "ships": "c96644e81dc18655fe49254deae38c320f8449e8fe1dc161443f39ef3cd219dd",
+        "players": "c1e5aca55f5cec16564c654e484e3dc66d4a0584bb29302dc4cbdcd2cac585d2",
+        "cargo": "c91685a90ff359ec05ff76f1aafa18cf93e6d3ceca033bfb5ba021a27a6da555"
+      }
+    },
+    "production_admin_read_only_render": {
+      "at_utc": "2026-11-04T16:26:19Z",
+      "read_only": true,
+      "admin_role_checked": true,
+      "checks": [
+        {
+          "id": 5007,
+          "status": 200,
+          "resume_control": true,
+          "blocked": false
+        },
+        {
+          "id": 5161,
+          "status": 200,
+          "resume_control": true,
+          "blocked": false
+        },
+        {
+          "id": 5071,
+          "status": 200,
+          "resume_control": false,
+          "blocked": true
+        }
+      ],
+      "scope": "Internal role-checked production-data render against a read-only connection. No HTTP login session or POST was created."
+    },
+    "operator_preview": {
+      "at_utc": "2026-11-04T16:26:13Z",
+      "source_sha": "26a17ff9c517f8d17b7c83e909a00e5b8ab38ee5",
+      "mode": "preview",
+      "scope": "Only Soundboy3113 journey 5007 and Samasulee journey 5161. Existing resume service, no forced ticks or arrivals.",
+      "previews": [
+        {
+          "travel_id": 5007,
+          "user": "soundboy3113",
+          "duration_ticks": 25,
+          "destination": "Seraphim Station",
+          "broker": "dev"
+        },
+        {
+          "travel_id": 5161,
+          "user": "Samasulee",
+          "duration_ticks": 36,
+          "destination": "Area 18",
+          "broker": "dev"
+        }
+      ],
+      "results": [],
+      "protected_ids": [
+        4607,
+        5028,
+        5042,
+        5043,
+        5071,
+        5090,
+        5121,
+        5162
+      ],
+      "protected_hashes": {
+        "travel": "4449cad5326b6509bbc374776265cea65db25b484d913b140904b971c8f033dc",
+        "ships": "3557a7cecb711206b469b507f2fcbb51affa9510b6c313c0ee39ef2019095903",
+        "players": "a315617d5e5cc8593c255359f5de7835d7f1ba941a2ff954297b99409bcdaeed",
+        "cargo": "b5c593c85a556a0d9f3a86c2702db1140e4115a2f5771ac01917122e6282f2a1"
+      },
+      "unrelated_protected_unchanged": true,
+      "journey_5071": {
+        "is_paused": true,
+        "arrival_tick": 0,
+        "remaining_ticks_from_arrival": 40
+      }
+    },
+    "operator_apply": {
+      "at_utc": "2026-11-04T16:27:53Z",
+      "source_sha": "26a17ff9c517f8d17b7c83e909a00e5b8ab38ee5",
+      "mode": "apply",
+      "scope": "Only Soundboy3113 journey 5007 and Samasulee journey 5161. Existing resume service, no forced ticks or arrivals.",
+      "previews": [
+        {
+          "travel_id": 5007,
+          "user": "soundboy3113",
+          "duration_ticks": 25,
+          "destination": "Seraphim Station",
+          "broker": "dev"
+        },
+        {
+          "travel_id": 5161,
+          "user": "Samasulee",
+          "duration_ticks": 36,
+          "destination": "Area 18",
+          "broker": "dev"
+        }
+      ],
+      "results": [
+        {
+          "travel_id": 5007,
+          "ship_id": 455,
+          "user": "soundboy3113",
+          "audit_action_id": 1,
+          "resumed_at_tick": 763663,
+          "arrival_tick": 763688,
+          "duration_ticks": 25,
+          "destination": "Seraphim Station",
+          "broker": "dev",
+          "changed_travel_fields": [
+            "departure_tick",
+            "arrival_tick",
+            "updated_at",
+            "total_duration_ticks",
+            "is_paused",
+            "paused_at_tick"
+          ],
+          "changed_ship_fields": [
+            "updated_at",
+            "status"
+          ],
+          "player_cargo_user_unchanged": true
+        },
+        {
+          "travel_id": 5161,
+          "ship_id": 773,
+          "user": "Samasulee",
+          "audit_action_id": 2,
+          "resumed_at_tick": 763664,
+          "arrival_tick": 763700,
+          "duration_ticks": 36,
+          "destination": "Area 18",
+          "broker": "dev",
+          "changed_travel_fields": [
+            "departure_tick",
+            "arrival_tick",
+            "updated_at",
+            "total_duration_ticks",
+            "is_paused",
+            "paused_at_tick"
+          ],
+          "changed_ship_fields": [
+            "updated_at",
+            "status"
+          ],
+          "player_cargo_user_unchanged": true
+        }
+      ],
+      "protected_ids": [
+        4607,
+        5028,
+        5042,
+        5043,
+        5071,
+        5090,
+        5121,
+        5162
+      ],
+      "protected_hashes": {
+        "travel": "4449cad5326b6509bbc374776265cea65db25b484d913b140904b971c8f033dc",
+        "ships": "3557a7cecb711206b469b507f2fcbb51affa9510b6c313c0ee39ef2019095903",
+        "players": "a315617d5e5cc8593c255359f5de7835d7f1ba941a2ff954297b99409bcdaeed",
+        "cargo": "b5c593c85a556a0d9f3a86c2702db1140e4115a2f5771ac01917122e6282f2a1"
+      },
+      "unrelated_protected_unchanged": true,
+      "journey_5071": {
+        "is_paused": true,
+        "arrival_tick": 0,
+        "remaining_ticks_from_arrival": 40
+      }
+    },
+    "normal_arrival_verification": {
+      "at_utc": "2026-11-04T16:37:05Z",
+      "read_only": true,
+      "tick": 763700,
+      "results": [
+        {
+          "travel_id": 5007,
+          "user": "soundboy3113",
+          "ship_id": 455,
+          "state": "completed",
+          "remaining_ticks": null,
+          "ship_status": "docked",
+          "ship_location": "Seraphim Station",
+          "player_location": "Seraphim Station",
+          "receipt_outcome": "completed",
+          "completed_at_tick": 763688,
+          "receipt_has_actual_resumed_schedule": true,
+          "arrival_event": {
+            "id": 39,
+            "attempts": 1,
+            "sent_at": "2026-11-04 16:33:53.278988",
+            "last_error_class": null,
+            "broker": "dev",
+            "destination": "Seraphim Station",
+            "actual_schedule": true,
+            "travel_identity_matches": true
+          },
+          "cargo_unchanged": true,
+          "wallet_unchanged": true,
+          "inventory_unchanged": true
+        },
+        {
+          "travel_id": 5161,
+          "user": "Samasulee",
+          "ship_id": 773,
+          "state": "completed",
+          "remaining_ticks": null,
+          "ship_status": "landed",
+          "ship_location": "Area 18",
+          "player_location": "Area 18",
+          "receipt_outcome": "completed",
+          "completed_at_tick": 763700,
+          "receipt_has_actual_resumed_schedule": true,
+          "arrival_event": {
+            "id": 40,
+            "attempts": 1,
+            "sent_at": "2026-11-04 16:36:56.053297",
+            "last_error_class": null,
+            "broker": "dev",
+            "destination": "Area 18",
+            "actual_schedule": true,
+            "travel_identity_matches": true
+          },
+          "cargo_unchanged": true,
+          "wallet_unchanged": true,
+          "inventory_unchanged": true
+        }
+      ],
+      "unrelated_protected_unchanged": true,
+      "journey_5071": {
+        "is_paused": true,
+        "arrival_tick": 0,
+        "remaining_ticks_from_arrival": 40
+      },
+      "tick_control": {
+        "running": true,
+        "failure_count": 0,
+        "last_tick_error_class": null,
+        "last_tick_completed_at": "2026-11-04 16:36:56.068451"
+      },
+      "failed_jobs": 0
+    },
+    "monitor_samples": 7,
+    "resume_history_render": {
+      "at_utc": "2026-11-04T16:37:58Z",
+      "status": 200,
+      "read_only": true,
+      "recent_history_for_both_targets": true,
+      "csrf_enabled": true,
+      "scope": "Internal admin-role render; no authenticated HTTP login or gameplay action."
+    },
+    "health": {
+      "at_utc": "2026-11-04T16:37:37.582587+00:00",
+      "http": [
+        {
+          "path": "/up",
+          "status": 200,
+          "final_path": "/up"
+        },
+        {
+          "path": "/admin/ship_travels",
+          "status": 200,
+          "final_path": "/login"
+        }
+      ],
+      "release_created_at_utc": "2026-11-04T16:22:47Z",
+      "retained_since_release": 1500,
+      "platform_error_count": 0,
+      "http_5xx_count": 0,
+      "deadlock_or_lock_timeout_count": 0,
+      "lifecycle_error_markers": 0,
+      "ignored_location_events": 0,
+      "production_broker_connected": 0,
+      "development_broker_expected_offline_markers": 0,
+      "limits": "Bounded logs and read-only HTTP checks; no synthetic status mutation, new production jump, forced tick or publication. Two owner-authorized existing journeys were resumed through the audited service; saved broker routes/configuration retained."
+    },
+    "inventory_check_correction": "The first monitor compared ActiveRecord store normalization ({}) against SQL NULL and reported false. A direct SQL comparison to the original raw before-image confirmed both stored inventories remained NULL and unchanged. The corrected monitor compares raw SQL before-images; no inventory write occurred.",
+    "preservation": "Named players kept cargo, wallet/inventory and original broker route; normal arrival alone moved their ships/players. All eight unrelated paused journeys and their ship/player/cargo fingerprints remained unchanged, including 5071 with arrival zero and 40 remaining ticks.",
+    "limits": "Two real owner-authorized journeys were resumed and observed through normal ticks, completion, durable receipts and publisher confirmations on dev. No forced ticks, forced arrival, new synthetic production journey, refund, cargo restoration, teleport or broker reroute. External bot consumption was not directly observed.",
+    "rollback": "Code rollback can retain the additive audit table; do not drop populated travel_resume_actions. Completed journeys are not recreated or undone as rollback.",
+    "admin_path": "/admin/ship_travels -> View journey -> Resolve interdiction -> Resume saved journey",
+    "source_hashes_rechecked": true
+  },
+  "closed_at_utc": "2026-11-04T16:39:55.199992+00:00"
 }
