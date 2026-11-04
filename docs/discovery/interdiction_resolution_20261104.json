@@ -1,0 +1,368 @@
+{
+  "recorded_at_utc": "2026-11-04T16:16:05.032177+00:00",
+  "status": "qualified_for_additive_migration_and_deployment",
+  "authorization": "Owner requested further analysis and resolution for Soundboy3113 and Samasulee who remain interdicted, and a usable admin resolution path. Prior preservation remains in effect for 5071 and unrelated valid interdictions.",
+  "cause": "Both named journeys are coherent pauses, not expired or corrupt arrival timers. Soundboy3113 journey 5007 paused October 20 with 25 ticks left. Samasulee journey 5161 paused November 4 with 36 ticks left. No automatic expiry is intended; the previous admin implementation exposed read-only diagnostics and no supported resume action.",
+  "targets": [
+    {
+      "user": "soundboy3113",
+      "user_id": 371,
+      "ship_id": 455,
+      "travel_id": 5007,
+      "remaining_ticks": 25,
+      "broker": "dev",
+      "destination": "Seraphim Station"
+    },
+    {
+      "user": "Samasulee",
+      "user_id": 628,
+      "ship_id": 773,
+      "travel_id": 5161,
+      "remaining_ticks": 36,
+      "broker": "dev",
+      "destination": "Area 18"
+    }
+  ],
+  "policy": "Explicit admin POST resumes one reviewed coherent pause from saved remaining ticks. Role and CSRF protection, expiring signed review, location-match/duplicate guards, atomic resume plus durable audit, unique action per pause cycle and idempotent retries. No force-resume for player mismatch, generic timing edit, teleport, automatic expiry or broker rerouting.",
+  "receipt_fix": "Final receipt snapshots retain actual resumed departure/arrival schedule so completed GUID replay does not show the superseded pre-pause schedule.",
+  "migration": {
+    "version": "20261104010000",
+    "scope": "Create travel_resume_actions only, including actor, reason, before/after timing and uniqueness per travel/pause cycle. Empty-table rollback allowed; populated audit rollback refused. No existing gameplay rows changed by migration."
+  },
+  "source_hashes": {
+    "app/controllers/admin/ship_travels_controller.rb": "22c01d137092cbaa8bf2ae458a00f40a35de520f5a76977969a2d4a194bd198a",
+    "app/models/travel_request_receipt.rb": "194d3512775e855f8ccd2a2c8d042e9ef14c176dd91774d1bd59a7706651738b",
+    "app/models/travel_resume_action.rb": "0f9d83d00dc80e667f5115856b1901390f5642a530bbaaa2eb1fa8ba40141fb0",
+    "app/services/resume_interdiction.rb": "d14a2b3f9448b1ad6b2c932ac1fc661913b52b6fc92ad26000877442c37cec57",
+    "app/views/admin/ship_travels/index.html.erb": "cb16ef5621d3d0bcccc7e99e88ab5b0436b8f15396fb2622072a0ca268bcbfe8",
+    "app/views/admin/ship_travels/show.html.erb": "69964b5af43329b923e38c8ded348e554af83e5dab44cfb360433a25bf817516",
+    "app/views/admin/ship_travels/_resume.html.erb": "cda83f926d4374bffc2a3a6ce0daf4244e57a8888a58dcb962a9da71be5f5af8",
+    "app/views/admin/ship_travels/_feedback.html.erb": "0adc2c9a10946071c51239d99f0293c78052581e0d8493ce15d06e5817e4a4f9",
+    "config/routes.rb": "6647f0de67b4569b7c86d5b86d9d81052eeda18dd45f8749ba67efbc66aefa6c",
+    "db/schema.rb": "0e932ba6733b5333b8a04b661ff03ebbdc0955337a6ecfe0e2786618501f36be",
+    "db/migrate/20261104010000_create_travel_resume_actions.rb": "c69a449fde926c5177a91da4cab88850f390777696662e7dbb44760f0132277b",
+    "script/apply_travel_resume_migration.rb": "2e0dcc08ef7ba52dd1e6723e8d3ae74c0a123ac5ee1e6f4193f28c4d68c8d6f4",
+    "test/support/travel_repair_fixtures.rb": "79a60aa8e8d50a51422a7e37ccfa806a1c129b686f3d7be2eb878a037a2dbb01",
+    "test/services/resume_interdiction_test.rb": "2feababe29923f12df23a201252dd706975792e609757717d9a3f79ee2bc50e9",
+    "test/services/resume_interdiction_concurrency_test.rb": "da5e896892d3c4c50a76bcb7c4d29951f193be179dc9028075a6d4db767db617",
+    "test/controllers/admin/travel_resume_test.rb": "ce78e2cc2fd606ddb7fc67ac03f01ce8f9b29787602e3892655051f93364a112",
+    "test/migrations/travel_resume_actions_test.rb": "5db82889d435dc3dadd1e900ce776bbcb889ec596e06f9c7c2c3defdc215bb2b"
+  },
+  "parent_commit": "05e48edb99e9bf58170c5c85e8005cb1a919d687",
+  "qualification": {
+    "summary": "218 runs, 1862 assertions, 0 failures, 0 errors, 0 skips",
+    "focused": "19 tests,120 assertions passed",
+    "postgresql": "Synthetic dedicated loopback PostgreSQL18 database; real broker connections disabled. No production fixtures or clock acceleration.",
+    "tailwind_build": "passed",
+    "chrome": {
+      "at_utc": "2026-11-04T16:14:11.964783+00:00",
+      "browser": "Google Chrome",
+      "checks": [
+        {
+          "state": "ready",
+          "passed": true,
+          "expected_text": "Resume saved journey",
+          "screenshot": "C:/Users/dusti/.codex/visualizations/2026/11/01/01a19769-cb11-72f2-90ef-4c956245ea63/travel-resume-ready.png",
+          "html_sha256": "be9ca56481cddbdd9bfc83d3cfff58dc7591219431871e5c6bb0683b4cfe4615"
+        },
+        {
+          "state": "blocked",
+          "passed": true,
+          "expected_text": "Resume unavailable:",
+          "screenshot": "C:/Users/dusti/.codex/visualizations/2026/11/01/01a19769-cb11-72f2-90ef-4c956245ea63/travel-resume-blocked.png",
+          "html_sha256": "3a9962fb3d1b177b06612c661e82a435815bfa8f0c3c73004935ece06968f4b9"
+        }
+      ],
+      "scope": "Static authenticated Rails-rendered synthetic admin pages, scripts removed and local compiled CSS inlined. Real resume POST/auth/CSRF/state assertions are integration tests, not browser end-to-end claims."
+    },
+    "baseline": "Previously recorded 3 status-group failures remain outside this focused 218-test qualification; no new unrelated fixes.",
+    "diff_check": "passed"
+  },
+  "preflight_audit": {
+    "at_utc": "2026-11-04T15:56:49Z",
+    "read_only": "on",
+    "users": [
+      {
+        "id": 371,
+        "username": "soundboy3113"
+      },
+      {
+        "id": 628,
+        "username": "Samasulee"
+      }
+    ],
+    "journeys": [
+      {
+        "id": 5007,
+        "user_ship_id": 455,
+        "from_location_id": 1412,
+        "to_location_id": 1413,
+        "departure_tick": 678312,
+        "arrival_tick": 0,
+        "created_at": "2026-10-20 15:34:36 +0000",
+        "updated_at": "2026-10-20 15:35:14 +0000",
+        "total_duration_ticks": 27,
+        "is_paused": true,
+        "paused_at_tick": 678314,
+        "remaining_ticks_from_arrival": 25,
+        "interdict_window_percent": 15,
+        "interdiction_count": 1,
+        "last_interdicted_tick": 678314,
+        "ship_travel_type": null,
+        "completed_at_tick": null,
+        "rabbitmq_environment": "dev",
+        "ship_id": 455,
+        "ship_status": "interdicted",
+        "location_name": "Terra Gateway (Stanton)",
+        "model": "C2",
+        "shard_user_id": 352,
+        "shard_id": 1,
+        "shard_name": "Seggellion",
+        "username": "soundboy3113",
+        "origin": "Terra Gateway (Stanton)",
+        "destination": "Seraphim Station",
+        "cargo_rows": 1,
+        "player_location": {
+          "id": 1412,
+          "name": "Terra Gateway (Stanton)",
+          "location_name": "Terra Gateway (Stanton)",
+          "star_system_name": "Stanton",
+          "classification": "space_station"
+        },
+        "guid_sha256": "ed4d0910d3e791e4b82ae1b28100d0c65d22c7c6e4bb2aca7fccaa793a4d49ec"
+      },
+      {
+        "id": 5071,
+        "user_ship_id": 767,
+        "from_location_id": 1399,
+        "to_location_id": 1406,
+        "departure_tick": 702296,
+        "arrival_tick": 0,
+        "created_at": "2026-10-24 21:01:44 +0000",
+        "updated_at": "2026-10-24 21:03:32 +0000",
+        "total_duration_ticks": 47,
+        "is_paused": true,
+        "paused_at_tick": 702303,
+        "remaining_ticks_from_arrival": 40,
+        "interdict_window_percent": 15,
+        "interdiction_count": 1,
+        "last_interdicted_tick": 702303,
+        "ship_travel_type": null,
+        "completed_at_tick": null,
+        "rabbitmq_environment": "dev",
+        "ship_id": 767,
+        "ship_status": "interdicted",
+        "location_name": "HUR-L2 Faithful Dream Station",
+        "model": "Hull C",
+        "shard_user_id": 595,
+        "shard_id": 34,
+        "shard_name": "MaidenAriana",
+        "username": "Uboo",
+        "origin": "HUR-L2 Faithful Dream Station",
+        "destination": "MIC-L4 Red Crossroads Station",
+        "cargo_rows": 0,
+        "player_location": {
+          "id": 1398,
+          "name": "HUR-L1 Green Glade Station",
+          "location_name": "HUR-L1 Green Glade Station",
+          "star_system_name": "Stanton",
+          "classification": "space_station"
+        },
+        "guid_sha256": "4ee5a07c910f0f810596f0693cdf324a387ae4c4bd0b25fa35106900649ac1f1"
+      },
+      {
+        "id": 5161,
+        "user_ship_id": 773,
+        "from_location_id": 1395,
+        "to_location_id": 1189,
+        "departure_tick": 763384,
+        "arrival_tick": 0,
+        "created_at": "2026-11-04 15:16:54 +0000",
+        "updated_at": "2026-11-04 15:17:54 +0000",
+        "total_duration_ticks": 40,
+        "is_paused": true,
+        "paused_at_tick": 763388,
+        "remaining_ticks_from_arrival": 36,
+        "interdict_window_percent": 15,
+        "interdiction_count": 1,
+        "last_interdicted_tick": 763388,
+        "ship_travel_type": null,
+        "completed_at_tick": null,
+        "rabbitmq_environment": "dev",
+        "ship_id": 773,
+        "ship_status": "interdicted",
+        "location_name": "CRU-L5 Beautiful Glen Station",
+        "model": "Constellation Taurus",
+        "shard_user_id": 602,
+        "shard_id": 1,
+        "shard_name": "Seggellion",
+        "username": "Samasulee",
+        "origin": "CRU-L5 Beautiful Glen Station",
+        "destination": "Area 18",
+        "cargo_rows": 1,
+        "player_location": {
+          "id": 1395,
+          "name": "CRU-L5 Beautiful Glen Station",
+          "location_name": "CRU-L5 Beautiful Glen Station",
+          "star_system_name": "Stanton",
+          "classification": "space_station"
+        },
+        "guid_sha256": "be037b1b4353e97473afd4f51e696741eeba5c5c5d162cadb61c00beaddaffd3"
+      }
+    ],
+    "target_ships": [
+      {
+        "id": 455,
+        "shard_user_id": 352,
+        "shard_name": "Seggellion",
+        "location_name": "Terra Gateway (Stanton)",
+        "status": "interdicted",
+        "updated_at": "2026-10-30 15:30:02.161309",
+        "model": "C2"
+      },
+      {
+        "id": 768,
+        "shard_user_id": 600,
+        "shard_name": "MaidenAriana",
+        "location_name": "Lorville",
+        "status": "docked",
+        "updated_at": "2026-10-24 21:51:33.654511",
+        "model": "Nomad"
+      },
+      {
+        "id": 769,
+        "shard_user_id": 600,
+        "shard_name": "MaidenAriana",
+        "location_name": "CRU-L1 Ambitious Dream Station",
+        "status": "docked",
+        "updated_at": "2026-10-24 23:14:59.251335",
+        "model": "Constellation Taurus"
+      },
+      {
+        "id": 772,
+        "shard_user_id": 602,
+        "shard_name": "Seggellion",
+        "location_name": "Area 18",
+        "status": "landed",
+        "updated_at": "2026-11-04 14:49:00.721169",
+        "model": "Nomad"
+      },
+      {
+        "id": 773,
+        "shard_user_id": 602,
+        "shard_name": "Seggellion",
+        "location_name": "CRU-L5 Beautiful Glen Station",
+        "status": "interdicted",
+        "updated_at": "2026-11-04 15:44:47.564406",
+        "model": "Constellation Taurus"
+      }
+    ],
+    "settings": [
+      {
+        "key": "interdiction_window_percent",
+        "value": "15"
+      },
+      {
+        "key": "seconds_per_tick",
+        "value": "15"
+      }
+    ],
+    "tick": [
+      {
+        "current_tick": 763542,
+        "processed_at": "2026-11-04 15:56:44.369923"
+      }
+    ],
+    "all_journeys": [
+      {
+        "id": 4607,
+        "is_paused": true,
+        "arrival_tick": 0,
+        "remaining_ticks_from_arrival": 2,
+        "completed_at_tick": null
+      },
+      {
+        "id": 5007,
+        "is_paused": true,
+        "arrival_tick": 0,
+        "remaining_ticks_from_arrival": 25,
+        "completed_at_tick": null
+      },
+      {
+        "id": 5028,
+        "is_paused": true,
+        "arrival_tick": 0,
+        "remaining_ticks_from_arrival": 32,
+        "completed_at_tick": null
+      },
+      {
+        "id": 5042,
+        "is_paused": true,
+        "arrival_tick": 0,
+        "remaining_ticks_from_arrival": 1,
+        "completed_at_tick": null
+      },
+      {
+        "id": 5043,
+        "is_paused": true,
+        "arrival_tick": 0,
+        "remaining_ticks_from_arrival": 23,
+        "completed_at_tick": null
+      },
+      {
+        "id": 5071,
+        "is_paused": true,
+        "arrival_tick": 0,
+        "remaining_ticks_from_arrival": 40,
+        "completed_at_tick": null
+      },
+      {
+        "id": 5090,
+        "is_paused": true,
+        "arrival_tick": 0,
+        "remaining_ticks_from_arrival": 59,
+        "completed_at_tick": null
+      },
+      {
+        "id": 5121,
+        "is_paused": true,
+        "arrival_tick": 0,
+        "remaining_ticks_from_arrival": 62,
+        "completed_at_tick": null
+      },
+      {
+        "id": 5161,
+        "is_paused": true,
+        "arrival_tick": 0,
+        "remaining_ticks_from_arrival": 36,
+        "completed_at_tick": null
+      },
+      {
+        "id": 5162,
+        "is_paused": true,
+        "arrival_tick": 0,
+        "remaining_ticks_from_arrival": 46,
+        "completed_at_tick": null
+      }
+    ],
+    "jobs": [
+      {
+        "total": 3,
+        "failed": 0
+      }
+    ],
+    "events": [
+      {
+        "rabbitmq_environment": "prod",
+        "total": 4,
+        "pending": 0
+      },
+      {
+        "rabbitmq_environment": "dev",
+        "total": 32,
+        "pending": 0
+      }
+    ]
+  },
+  "execution": null
+}

@@ -1,0 +1,19 @@
+<section class="border rounded p-4 mt-6" aria-labelledby="resume-heading">
+  <h2 id="resume-heading" class="text-xl font-bold">Resolve interdiction</h2>
+  <% if @resume_review.allowed %>
+    <p>Resume the existing journey to <strong><%= @ship_travel.to_location.name %></strong>
+      using <strong><%= @resume_review.duration_ticks %> remaining ticks</strong>
+      (about <%= (@resume_review.duration_ticks * Tick.seconds_per_tick / 60.0).round(2) %> minutes after resume).</p>
+    <p>The ship continues from its saved progress. Cargo, destination and notification route are preserved.
+      Arrival occurs through the normal tick process.</p>
+    <%= form_with url: admin_resume_ship_travel_path(@ship_travel), method: :post, local: true, data: {turbo: false} do |form| %>
+      <%= form.hidden_field :review_token, value: @resume_review.token %>
+      <%= form.label :reason, 'Reason for resuming', class: 'block font-bold mt-3' %>
+      <%= form.text_area :reason, required: true, minlength: 3, maxlength: 1000, rows: 2, class: 'w-full border rounded p-2' %>
+      <%= form.submit 'Resume saved journey', class: 'bg-blue-700 text-white font-bold py-2 px-4 rounded mt-3' %>
+    <% end %>
+  <% else %>
+    <p role="status"><strong>Resume unavailable:</strong> <%= @resume_review.reason %></p>
+    <p>Review the discrepancy before making a gameplay change.</p>
+  <% end %>
+</section>

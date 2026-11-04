@@ -1,3 +1,11 @@
+<%= render 'admin/ship_travels/feedback' %>
 <h1 class="text-2xl font-bold">Travel diagnostics</h1>
 <%= link_to 'All unfinished journeys', admin_ship_travels_path %>
 <%= render 'admin/ship_travels/state',travel:@ship_travel,state:@state %>
+<%= render 'admin/ship_travels/resume' %>
+<% if @resume_actions.any? %>
+  <h2 class="text-xl font-bold mt-6">Resume history</h2>
+  <% @resume_actions.each do |action| %>
+    <p><%= action.created_at.utc %> · <%= action.actor_label %> · <%= action.reason %> · resumed with <%= action.remaining_ticks %> ticks remaining.</p>
+  <% end %>
+<% end %>

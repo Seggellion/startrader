@@ -1,0 +1,21 @@
+{
+  "at_utc": "2026-11-04T16:14:11.964783+00:00",
+  "browser": "Google Chrome",
+  "checks": [
+    {
+      "state": "ready",
+      "passed": true,
+      "expected_text": "Resume saved journey",
+      "screenshot": "C:/Users/dusti/.codex/visualizations/2026/11/01/01a19769-cb11-72f2-90ef-4c956245ea63/travel-resume-ready.png",
+      "html_sha256": "be9ca56481cddbdd9bfc83d3cfff58dc7591219431871e5c6bb0683b4cfe4615"
+    },
+    {
+      "state": "blocked",
+      "passed": true,
+      "expected_text": "Resume unavailable:",
+      "screenshot": "C:/Users/dusti/.codex/visualizations/2026/11/01/01a19769-cb11-72f2-90ef-4c956245ea63/travel-resume-blocked.png",
+      "html_sha256": "3a9962fb3d1b177b06612c661e82a435815bfa8f0c3c73004935ece06968f4b9"
+    }
+  ],
+  "scope": "Static authenticated Rails-rendered synthetic admin pages, scripts removed and local compiled CSS inlined. Real resume POST/auth/CSRF/state assertions are integration tests, not browser end-to-end claims."
+}

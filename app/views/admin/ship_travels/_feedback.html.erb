@@ -1,0 +1,6 @@
+<% if flash[:notice].present? %>
+  <p role="status" class="border rounded bg-blue-50 p-3 my-3"><%= flash[:notice] %></p>
+<% end %>
+<% if flash[:alert].present? %>
+  <p role="alert" class="border rounded bg-red-50 p-3 my-3"><%= flash[:alert] %></p>
+<% end %>

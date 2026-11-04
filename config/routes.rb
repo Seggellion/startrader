@@ -148,6 +148,7 @@ Rails.application.routes.draw do
   # Admin Namespace
   namespace :admin do
     get "ship_travels/:id", to: "ship_travels#show"
+    post "ship_travels/:id/resume", to: "ship_travels#resume", as: :resume_ship_travel
     root to: 'dashboard#index'
   post "tick/start", to: "tick_controls#start", as: :start_tick
   post "tick/stop",  to: "tick_controls#stop",  as: :stop_tick

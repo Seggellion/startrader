@@ -1,3 +1,4 @@
+<%= render 'admin/ship_travels/feedback' %>
 <div class="bg-white p-6 rounded shadow">
   <h1 class="text-2xl font-bold">Ship travel diagnostics</h1>
   <nav aria-label="Travel state filters">
@@ -5,7 +6,7 @@
       <%= link_to label, admin_ship_travels_path(state:value), class:'underline mr-4' %>
     <% end %>
   </nav>
-  <p>Read-only diagnostics. Showing at most 100 journeys per page. Review warnings may overlap a paused state.</p>
+  <p>Showing at most 100 journeys per page. Open a journey to review and resume a valid interdiction. Review warnings may overlap a paused state.</p>
   <% @ship_travels.each do |travel| %>
     <article class="border rounded p-4 mt-4">
       <%= render 'admin/ship_travels/state', travel:travel, state:@states.fetch(travel.id) %>
@@ -15,3 +16,11 @@
   <% if @ship_travels.empty? %><p>No matching journeys on this page.</p><% end %>
   <% if @next_id %><%= link_to 'Next page', admin_ship_travels_path(state:@filter,after:@next_id) %><% end %>
 </div>
+<% if @recent_resumes.any? %>
+  <section class="border rounded p-4 mt-6">
+    <h2 class="text-xl font-bold">Recent resumes</h2>
+    <% @recent_resumes.each do |action| %>
+      <p>Journey <%= action.ship_travel_id %> · <%= action.created_at.utc %> · <%= action.actor_label %> · <%= action.reason %> · <%= action.remaining_ticks %> ticks remaining at resume.</p>
+    <% end %>
+  </section>
+<% end %>

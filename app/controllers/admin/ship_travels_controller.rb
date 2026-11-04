@@ -1,7 +1,9 @@
 module Admin
   class ShipTravelsController < ApplicationController
-    before_action :read_only_diagnostics
+    before_action :private_response
+    protect_from_forgery with: :exception
     def index
+      @recent_resumes=TravelResumeAction.order(id: :desc).limit(20)
       @tick=Tick.order(:id).pick(:current_tick) || 0
       scope=ShipTravel.where(completed_at_tick:nil)
       @filter=params[:state].to_s
@@ -23,6 +25,25 @@ module Admin
       @ship_travel=ShipTravel.includes(:from_location,:to_location,user_ship:[:user,:ship,:shard_user]).find(params[:id])
       duplicate=ShipTravel.where(user_ship_id:@ship_travel.user_ship_id,completed_at_tick:nil).count>1
       @state=TravelState.new(@ship_travel,duplicate:duplicate)
+      @resume_review=ResumeInterdiction.review(@ship_travel)
+      @resume_actions=TravelResumeAction.where(ship_travel_id:@ship_travel.id).order(id: :desc).limit(20)
+    end
+    def resume
+      result=ResumeInterdiction.call(id:params[:id],review_token:params[:review_token],
+        actor:current_user,reason:params[:reason])
+      notice=result.replayed ? 'This interdiction was already resumed; no further change was made.' :
+        "Journey resumed with #{result.action.remaining_ticks} ticks remaining. Arrival tick #{result.action.arrival_tick}."
+      redirect_to admin_ship_travels_path,notice:notice,status: :see_other
+    rescue TravelLifecycle::Error => error
+      begin
+        show
+      rescue ActiveRecord::RecordNotFound
+        return redirect_to admin_ship_travels_path,alert:error.message,status: :see_other
+      end
+      flash.now[:alert]=error.message
+      render :show,status: :unprocessable_entity
+    rescue ActiveRecord::RecordNotFound
+      redirect_to admin_ship_travels_path,alert:'Journey is no longer available. Check the recent resume history.',status: :see_other
     end
     def edit
       show
@@ -34,7 +55,7 @@ module Admin
     def destroy; head :method_not_allowed; end
     def delete_all; head :method_not_allowed; end
     private
-    def read_only_diagnostics
+    def private_response
       response.set_header('Cache-Control','no-store')
     end
   end

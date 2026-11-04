@@ -42,6 +42,6 @@ class TravelRequestReceipt < ApplicationRecord
     unless receipt.user_ship_id==travel.user_ship_id
       raise TravelLifecycle::Error.new('request_conflict','Travel identity needs review.')
     end
-    receipt.update!(outcome:outcome,completed_at_tick:tick)
+    receipt.update!(outcome:outcome,completed_at_tick:tick,travel_snapshot:travel.attributes)
   end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_11_01_010300) do
+ActiveRecord::Schema[8.0].define(version: 2026_11_04_010000) do
   create_schema "cable"
 
   # These are extensions that must be enabled in order to support this database
@@ -685,6 +685,30 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_01_010300) do
     t.index ["user_ship_id"], name: "index_travel_request_receipts_on_user_ship_id"
   end
 
+  create_table "travel_resume_actions", force: :cascade do |t|
+    t.string "travel_guid", null: false
+    t.bigint "ship_travel_id", null: false
+    t.bigint "user_ship_id", null: false
+    t.integer "interdiction_count", null: false
+    t.integer "last_interdicted_tick", null: false
+    t.string "actor_kind", null: false
+    t.bigint "admin_user_id"
+    t.string "actor_label", null: false
+    t.text "reason", null: false
+    t.integer "resumed_at_tick", null: false
+    t.integer "remaining_ticks", null: false
+    t.integer "arrival_tick", null: false
+    t.string "rabbitmq_environment", null: false
+    t.jsonb "before_state", null: false
+    t.jsonb "after_state", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["admin_user_id"], name: "index_travel_resume_actions_on_admin_user_id"
+    t.index ["ship_travel_id"], name: "index_travel_resume_actions_on_ship_travel_id"
+    t.index ["travel_guid", "interdiction_count"], name: "index_one_resume_action_per_interdiction", unique: true
+    t.index ["user_ship_id"], name: "index_travel_resume_actions_on_user_ship_id"
+  end
+
   create_table "user_ship_cargos", force: :cascade do |t|
     t.bigint "user_ship_id", null: false
     t.bigint "commodity_id", null: false
@@ -761,6 +785,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_01_010300) do
   add_foreign_key "star_bitizen_runs", "locations", column: "sell_location_id"
   add_foreign_key "star_bitizen_runs", "user_ship_cargos"
   add_foreign_key "star_bitizen_runs", "users", on_delete: :cascade
+  add_foreign_key "travel_resume_actions", "users", column: "admin_user_id", on_delete: :nullify
   add_foreign_key "user_ship_cargos", "commodities"
   add_foreign_key "user_ship_cargos", "user_ships"
   add_foreign_key "user_ships", "shard_users"

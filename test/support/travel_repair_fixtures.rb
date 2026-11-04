@@ -1,6 +1,7 @@
 require 'minitest/mock'
 module TravelRepairFixtures
   def setup_travel_repair
+    TravelResumeAction.delete_all
     StarBitizenRun.delete_all
     ShipTravel.delete_all
     UserShipCargo.delete_all
@@ -33,6 +34,7 @@ module TravelRepairFixtures
     @cargo=UserShipCargo.create!(user_ship:@hull,commodity:commodity,commodity_name:commodity.name,scu:7,buy_price:12.34,sell_price:15.67)
   end
   def cleanup_travel_repair
+    TravelResumeAction.delete_all
     ShipTravel.delete_all
     TravelArrivalEvent.delete_all
     TravelRequestReceipt.delete_all
