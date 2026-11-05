@@ -1,6 +1,6 @@
 {
   "recorded_at_utc": "2026-11-05T15:28:05.058427+00:00",
-  "status": "qualified_for_deployment",
+  "status": "v176_deployed_and_dev_default_verified_catchup_awaiting_owner_authorization",
   "authorization": "Owner: Use dev for Seggellion\u2019s new jumps.",
   "source_parent": "c4ecf6b15f9ca65ce5e6635cb8dc94aeae47c720",
   "incident": {
@@ -300,7 +300,286 @@
     "scope": "One explicit shard default; no credentials, endpoints, saved journeys, queued messages or other shard defaults changed."
   },
   "migrations": [],
-  "deployment": null,
+  "deployment": {
+    "source_commit": "eacc1e7a9572efb6d58425aae3728c1c52ea7bb1",
+    "release": 176,
+    "platform": {
+      "at_utc": "2026-11-05T15:30:43.900711+00:00",
+      "phase": "after",
+      "app_id": "6b362b75-1732-42a4-9888-669a393f7f82",
+      "release": 176,
+      "status": "succeeded",
+      "sha": "eacc1e7a9572efb6d58425aae3728c1c52ea7bb1",
+      "slug_id": "63ac6f29-f554-48e7-8150-918dfa3d20a6",
+      "maintenance": false,
+      "config_sha256": "cdd9b18e21b22b2b4d23725c2587111f64541cde34684b1edc35c558aea810c3",
+      "formation": [
+        {
+          "type": "worker",
+          "quantity": 1,
+          "size": "Basic"
+        },
+        {
+          "type": "web",
+          "quantity": 1,
+          "size": "Basic"
+        },
+        {
+          "type": "rake",
+          "quantity": 0,
+          "size": "Basic"
+        },
+        {
+          "type": "console",
+          "quantity": 0,
+          "size": "Basic"
+        }
+      ],
+      "dynos": [
+        {
+          "name": "web.1",
+          "state": "up",
+          "release": {
+            "id": "42fd5ba4-2a2d-4358-97a6-427a48fd1823",
+            "version": 176
+          }
+        },
+        {
+          "name": "worker.1",
+          "state": "up",
+          "release": {
+            "id": "42fd5ba4-2a2d-4358-97a6-427a48fd1823",
+            "version": 176
+          }
+        }
+      ],
+      "config_unchanged": true,
+      "formation_unchanged": true
+    },
+    "configuration": {
+      "at_utc": "2026-11-05T15:30:50Z",
+      "mode": "apply",
+      "shard": {
+        "id": "1",
+        "name": "Seggellion"
+      },
+      "key": "gate_rabbitmq_default_shard_1",
+      "before": null,
+      "intended_value": "dev",
+      "after": {
+        "key": "gate_rabbitmq_default_shard_1",
+        "value": "dev",
+        "setting_type": "text"
+      },
+      "other_settings_unchanged": true,
+      "authorization": "Owner: Use dev for Seggellion\u2019s new jumps.",
+      "scope": "One explicit shard default; no credentials, endpoints, saved journeys, queued messages or other shard defaults changed."
+    },
+    "live_policy": {
+      "at_utc": "2026-11-05T15:31:51Z",
+      "read_only": "on",
+      "checks": {
+        "new_unqualified": {
+          "environment": "dev",
+          "source": "shard_default"
+        },
+        "saved_retry": {
+          "environment": "prod",
+          "source": "receipt"
+        },
+        "explicit_prod": {
+          "environment": "prod",
+          "source": "request"
+        },
+        "other_shard": {
+          "environment": "prod",
+          "source": "global_default"
+        }
+      },
+      "current_ship_location": "Pyro Gateway (Stanton)",
+      "player_location": "Pyro Gateway (Stanton)",
+      "scope": "Pure route selection against read-only production data. No new journey, publication, retry, queue or gameplay mutation."
+    },
+    "protected_after": {
+      "at_utc": "2026-11-05T15:33:12Z",
+      "phase": "after",
+      "paused_ids": [
+        5183
+      ],
+      "read_only": true,
+      "hashes": {
+        "paused": "f33c5df2ede2f65ac99109be04a2c070f811601a66c1dabb29065abf9319a810",
+        "paused_ships": "217e9c9ef6bdc86f7447aaca7476ca35128faeb3c493fc7b56bc53659acde73e",
+        "paused_players": "11d2f2495d07e0e0c2d0a54c32c3b8cd985e8bbf2c471d53e192162f1549c272",
+        "paused_cargo": "6467e071204ca11c41e1a327c19c0341292e0cfc3917b2ac69778080803ead0f",
+        "ac3_ship": "009ca9ee78aa72a101ff4ef1660634ad4d6f24876ddac1a568a0b5d662705cf0",
+        "ac3_player": "5bebb1c6e42272538f3e17e8f8fe038e59ce8108dcc1c317ac8264b74d79ea42",
+        "ac3_cargo": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "receipt_64": "77138fbcfa889e214e8c655a9c5710ccb205481699f477bc9f90598f945e82ff",
+        "event_61": "189a099937f06f4b439ac3426952833613c57a294aa3b8daf472a8ed1c016c73",
+        "ship_767": "c467857494fa8af2e9d972518e5a3a8c7dacb99869fb8e380a444e2d578fea11",
+        "player_595": "3f31dc71cca9c209f41d352e0423060cd74c134ebed964c824bf52f34bc26ef1",
+        "existing_broker_settings": "29fd28cddfb1066da0e2ed46e66c0c52adce15edd9ebe87cc36cf44ed997b32a"
+      },
+      "unchanged": {
+        "paused": true,
+        "paused_ships": true,
+        "paused_players": true,
+        "paused_cargo": true,
+        "ac3_ship": true,
+        "ac3_player": true,
+        "ac3_cargo": true,
+        "receipt_64": true,
+        "event_61": true,
+        "ship_767": true,
+        "player_595": true,
+        "existing_broker_settings": true
+      },
+      "routing_setting": [
+        {
+          "key": "gate_rabbitmq_default_shard_1",
+          "value": "dev",
+          "setting_type": "text"
+        }
+      ],
+      "tick_control": {
+        "running": "t",
+        "failure_count": "0",
+        "last_tick_error_class": null
+      }
+    },
+    "health": {
+      "at_utc": "2026-11-05T15:33:16.374192+00:00",
+      "http": [
+        {
+          "path": "/up",
+          "status": 200,
+          "final_path": "/up"
+        },
+        {
+          "path": "/api/location/635",
+          "status": 200,
+          "final_path": "/api/location/635",
+          "state": {
+            "in_transit": false,
+            "paused": null,
+            "location": "Pyro Gateway (Stanton)",
+            "travel_state": null
+          }
+        },
+        {
+          "path": "/admin/ship_travels",
+          "status": 200,
+          "final_path": "/login"
+        }
+      ],
+      "release_created_at_utc": "2026-11-05T15:29:05Z",
+      "retained_since_release": 687,
+      "platform_error_count": 0,
+      "http_5xx_count": 0,
+      "deadlock_or_lock_timeout_count": 0,
+      "lifecycle_error_markers": 0,
+      "ignored_location_events": 0,
+      "production_broker_connected": 0,
+      "development_broker_failure_markers": 0,
+      "completed_replay_trace_count": 0,
+      "limits": "Bounded logs and read-only HTTP checks. No production journey or old notification replayed. One explicit shard default changed to dev; existing credentials/endpoints and saved routes remain unchanged."
+    }
+  },
   "current_client_reconciliation": "New routing does not retroactively deliver the already-completed arrival to the active bot. Ac3\u2019s client still reports the origin while saved server state is Stanton. No old arrival has been replayed or ship/player teleported.",
-  "rollback": "Code rollback removes the explicit shard default support; keep saved journey routes. Delete or restore only the new shard-default key if rolling back configuration. Do not alter prod backlog or saved receipts."
+  "rollback": "Code rollback removes the explicit shard default support; keep saved journey routes. Delete or restore only the new shard-default key if rolling back configuration. Do not alter prod backlog or saved receipts.",
+  "updated_at_utc": "2026-11-05T15:36:16.280620+00:00",
+  "consumer_followup": {
+    "observations": [
+      {
+        "environment": "prod",
+        "at_utc": "2026-11-05T15:34:30Z",
+        "matching_queues": [
+          {
+            "name": "MB0T_events_queue_seggellion",
+            "status": 200,
+            "metadata": {
+              "consumers": 0,
+              "messages": 19,
+              "messages_ready": 19,
+              "messages_unacknowledged": 0,
+              "state": "running"
+            },
+            "consumer_details": []
+          }
+        ]
+      },
+      {
+        "environment": "dev",
+        "at_utc": "2026-11-05T15:34:30Z",
+        "matching_queues": [
+          {
+            "name": "MB0T_events_queue_seggellion",
+            "status": 200,
+            "metadata": {
+              "consumers": 2,
+              "messages": 0,
+              "messages_ready": 0,
+              "messages_unacknowledged": 0,
+              "state": "running"
+            },
+            "consumer_details": [
+              {
+                "connection_sha256": "ac0c101e3d2d111cf9664ee77f1d55316ca6f706d2f163466f64a20e82dec480",
+                "channel_number": 1,
+                "active": true,
+                "ack_required": false,
+                "client": {
+                  "product": "RabbitMQ",
+                  "version": "6.2.1+01c07c87f19019b30f368db3575d066858387077",
+                  "platform": ".NET",
+                  "connection_name": "undefined"
+                }
+              },
+              {
+                "connection_sha256": "fa7a664ad775c970267916e9b03ec7ba153e81be7b26e2326b574e75658ea129",
+                "channel_number": 1,
+                "active": true,
+                "ack_required": false,
+                "client": {
+                  "product": "RabbitMQ",
+                  "version": "6.2.1+01c07c87f19019b30f368db3575d066858387077",
+                  "platform": ".NET",
+                  "connection_name": "undefined"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "finding": "Two separate active .NET connections consume the same dev queue with automatic acknowledgement. Their application identities are undefined; cannot prove whether they share a bot state.",
+    "implication": "If these are independent bot instances, queue delivery distributes messages between them rather than broadcasting each arrival to both.",
+    "source": "https://www.rabbitmq.com/docs/consumers",
+    "action": "No consumer disconnected and no queue bindings/messages changed."
+  },
+  "prepared_catchup": {
+    "status": "awaiting explicit owner authorization; no catch-up publication performed",
+    "preview": {
+      "at_utc": "2026-11-05T15:31:52Z",
+      "mode": "preview",
+      "event_id": 61,
+      "receipt_id": 64,
+      "ship_id": 635,
+      "source_broker": "prod",
+      "delivery_broker": "dev",
+      "current_ship_location": "Pyro Gateway (Stanton)",
+      "current_player_location": "Pyro Gateway (Stanton)",
+      "destination": "Pyro Gateway (Stanton)",
+      "reuse_original_event_and_travel_identity": true,
+      "source_rows_and_prod_queue_untouched": true
+    },
+    "scope": "Exactly one copy of event61/receipt64 to dev, using original event_guid/travel_guid. Existing prod queue copy and all source rows remain untouched. No automatic retry after a started/uncertain attempt.",
+    "qualification": "3 runs,22 assertions,0 failures,0 errors,0 skips",
+    "helper": "docs/discovery/ac3_catchup_arrival_operator.rb",
+    "helper_sha256": "d62aef3acc8d5f1ec5d2c7fefab61d1a484826123acebcbe4ececa5b46c9023d",
+    "test": "docs/discovery/ac3_catchup_arrival_operator_test.rb",
+    "test_sha256": "259cfedcb73035dfaba8d0cf2aad01418b158d230285e1a92adcefe918690c1f",
+    "limits": "Broker confirmation cannot prove that the intended bot applied the event. The prod copy remains queued and may be delivered later if a prod consumer is restored."
+  }
 }
