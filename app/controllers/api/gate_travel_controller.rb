@@ -1,8 +1,8 @@
 module Api
   class GateTravelController < BaseController
     def gate_travel
-      environment = RabbitmqConnection.normalize(first_present_param(:rabbitmq)) || RabbitmqConnection::DEFAULT_ENVIRONMENT
-      unless RabbitmqConnection.valid_environment?(environment)
+      environment = RabbitmqConnection.normalize(first_present_param(:rabbitmq))
+      if environment && !RabbitmqConnection.valid_environment?(environment)
         return render json:{status:'error', code:'invalid_rabbitmq',
           message:'rabbitmq must be one of: prod, dev.'}, status: :unprocessable_entity
       end
@@ -24,7 +24,7 @@ module Api
         trace = "event=gate_request_#{result.travel.request_replayed ? 'replayed' : 'accepted'} " \
           "request_id=#{request.request_id.inspect} user_ship_id=#{result.user_ship.id} receipt_id=#{receipt.id} " \
           "from_location_id=#{result.origin_location.id} to_location_id=#{result.arrival_location.id} " \
-          "rabbitmq=#{journey.rabbitmq_environment} lifecycle_status=#{outcome} " \
+          "rabbitmq=#{journey.rabbitmq_environment} routing_source=#{result.routing_source} lifecycle_status=#{outcome} " \
           "gateway_selected=#{gateway_name_param.present?} request_guid_supplied=#{first_present_param(:travel_guid).present?}"
         ActiveRecord.after_all_transactions_commit { Rails.logger.info(trace) }
         render json: {
@@ -38,6 +38,7 @@ module Api
           arrival_tick: journey.arrival_tick,
           time_remaining: finalized ? 0 : journey.seconds_remaining(tick),
           rabbitmq: journey.rabbitmq_environment,
+          rabbitmq_source: result.routing_source,
           origin_location: result.origin_location.name,
           origin_star_system: result.origin_star_system,
           arrival_location: result.arrival_location.name,

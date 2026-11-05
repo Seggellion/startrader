@@ -1,0 +1,306 @@
+{
+  "recorded_at_utc": "2026-11-05T15:28:05.058427+00:00",
+  "status": "qualified_for_deployment",
+  "authorization": "Owner: Use dev for Seggellion\u2019s new jumps.",
+  "source_parent": "c4ecf6b15f9ca65ce5e6635cb8dc94aeae47c720",
+  "incident": {
+    "user": "Ac3Nigthmare",
+    "ship_id": 635,
+    "shard": "Seggellion",
+    "accepted_at_utc": "2026-11-05T15:05:30Z",
+    "completed_at_utc": "2026-11-05T15:07:18Z",
+    "receipt_id": 64,
+    "arrival_event_id": 61,
+    "origin": "Stanton Gateway (Pyro)",
+    "destination": "Pyro Gateway (Stanton)",
+    "saved_broker": "prod",
+    "subsequent_client_report_at_utc": "2026-11-05T15:11:15Z",
+    "subsequent_client_location": "Stanton Gateway (Pyro)",
+    "server_preserved_location": "Pyro Gateway (Stanton)",
+    "captured_request": {
+      "requests": [
+        {
+          "request_id": "a7cbf830-f9f3-6c25-a8ad-3bdf3841dc3e",
+          "timestamp": "2026-11-05T15:05:30.877081+00:00",
+          "http_statuses": [
+            "200"
+          ],
+          "parameter_keys": [
+            "gate_travel",
+            "secret_guid",
+            "ship_guid"
+          ],
+          "traces": [
+            "event=gate_request_accepted request_id=\"a7cbf830-f9f3-6c25-a8ad-3bdf3841dc3e\" user_ship_id=635 receipt_id=64 from_location_id=1436 to_location_id=1410 rabbitmq=prod lifecycle_status=pending gateway_selected=false request_guid_supplied=false"
+          ]
+        },
+        {
+          "request_id": "46e6a1fb-8295-886d-b5e1-772f5c0ae201",
+          "timestamp": "2026-11-05T15:11:15.631604+00:00",
+          "http_statuses": [
+            "200"
+          ],
+          "parameter_keys": [
+            "location",
+            "player_guid",
+            "player_name",
+            "secret_guid",
+            "shard_uuid",
+            "ship_guid",
+            "ship_model",
+            "trade",
+            "wallet_balance"
+          ],
+          "traces": [
+            "event=status_location_ignored request_id=\"46e6a1fb-8295-886d-b5e1-772f5c0ae201\" user_ship_id=635 shard_user_id=337 reported_location_id=1436 ignored_for=ship,player"
+          ]
+        }
+      ]
+    },
+    "broker_metadata": [
+      {
+        "environment": "prod",
+        "at_utc": "2026-11-05T15:18:35Z",
+        "matching_queues": [
+          {
+            "name": "MB0T_events_queue_seggellion",
+            "status": 200,
+            "metadata": {
+              "consumers": 0,
+              "messages": 19,
+              "messages_ready": 19,
+              "messages_unacknowledged": 0,
+              "state": "running",
+              "message_stats": {
+                "ack": 0,
+                "ack_details": {
+                  "rate": 0.0
+                },
+                "deliver": 0,
+                "deliver_details": {
+                  "rate": 0.0
+                },
+                "deliver_get": 5642,
+                "deliver_get_details": {
+                  "rate": 0.0
+                },
+                "deliver_no_ack": 5642,
+                "deliver_no_ack_details": {
+                  "rate": 0.0
+                },
+                "get": 0,
+                "get_details": {
+                  "rate": 0.0
+                },
+                "get_empty": 0,
+                "get_empty_details": {
+                  "rate": 0.0
+                },
+                "get_no_ack": 0,
+                "get_no_ack_details": {
+                  "rate": 0.0
+                },
+                "publish": 5661,
+                "publish_details": {
+                  "rate": 0.0
+                },
+                "redeliver": 0,
+                "redeliver_details": {
+                  "rate": 0.0
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "environment": "dev",
+        "at_utc": "2026-11-05T15:18:35Z",
+        "matching_queues": [
+          {
+            "name": "MB0T_events_queue_seggellion",
+            "status": 200,
+            "metadata": {
+              "consumers": 2,
+              "messages": 0,
+              "messages_ready": 0,
+              "messages_unacknowledged": 0,
+              "state": "running",
+              "message_stats": {
+                "ack": 0,
+                "ack_details": {
+                  "rate": 0.0
+                },
+                "deliver": 0,
+                "deliver_details": {
+                  "rate": 0.0
+                },
+                "deliver_get": 90,
+                "deliver_get_details": {
+                  "rate": 0.2
+                },
+                "deliver_no_ack": 90,
+                "deliver_no_ack_details": {
+                  "rate": 0.2
+                },
+                "get": 0,
+                "get_details": {
+                  "rate": 0.0
+                },
+                "get_empty": 0,
+                "get_empty_details": {
+                  "rate": 0.0
+                },
+                "get_no_ack": 0,
+                "get_no_ack_details": {
+                  "rate": 0.0
+                },
+                "publish": 90,
+                "publish_details": {
+                  "rate": 0.2
+                },
+                "redeliver": 0,
+                "redeliver_details": {
+                  "rate": 0.0
+                }
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "cause": "The unqualified jump defaulted to prod while this shard\u2019s ordinary requests use dev. The prod binding exists but its Seggellion queue has zero consumers and nineteen ready messages; the corresponding dev queue has two active consumers and no backlog. This explains missing arrival processing. No queue message bodies were fetched to attribute individual backlog entries.",
+  "change": {
+    "new_requests": "An explicit text setting gate_rabbitmq_default_shard_1=dev selects dev for new Seggellion gate requests without a broker selector.",
+    "precedence": "Explicit request > owned gate receipt\u2019s saved broker > explicit shard setting > global prod default.",
+    "retries": "Omitted selector on retries inherits the original pending/completed receipt route. A conflicting explicit route still fails, and historical receipt fields stay unchanged.",
+    "observability": "rabbitmq_source is returned and logged.",
+    "invalid_setting": "Invalid shard default fails closed for new unqualified requests; explicit routes and saved receipts remain usable.",
+    "preserved": "No automatic inference from ordinary travel history or consumer availability, other-shard overrides, physical broker/credential changes, saved-journey rerouting, queued-message alteration or forced movement."
+  },
+  "validation": {
+    "summary": "244 runs,2053 assertions,0 failures,0 errors,0 skips",
+    "focused": "9 runs,55 assertions,0 failures/errors/skips",
+    "environment": "Dedicated synthetic loopback PostgreSQL18, single worker, real Bunny connections disabled.",
+    "run": {
+      "at_utc": "2026-11-05T15:25:38.532429+00:00",
+      "synthetic": true,
+      "loopback": true,
+      "database": "star_trader_ac3_jump_diagnostic_test",
+      "steps": [
+        {
+          "step": "schema",
+          "exit_code": 0,
+          "log": "tmp/gate-route-qualification-0.log"
+        }
+      ]
+    },
+    "browser": "API-only change; no browser launched. Chrome-only instruction retained."
+  },
+  "source_sha256": {
+    "README.md": "ed6cd8ff83ee5244e0afbd07c624ac20398b5aa10e6ef23616c02331f3b27a3c",
+    "app/controllers/api/gate_travel_controller.rb": "44cc2988f6238613e446fe1e032b12ec080677b50367e55f9fc407e4ecf2c4d5",
+    "app/services/gate_travel_service.rb": "96d0666819826d9b4e3863688638b078e0a8771e3f9886b334d464656f0f1452",
+    "app/services/gate_travel_routing.rb": "a078f9e5ab257f128d3fd06afe5e9dbc28d95ffd8c0cd00e8d172f19b055063f",
+    "test/controllers/api/gate_routing_test.rb": "dab27e0a3fe557dd45a5f3b05ef6829d00a0ea956da1589c5b276bd891af3ccd"
+  },
+  "preflight_platform": {
+    "at_utc": "2026-11-05T15:26:38.350547+00:00",
+    "phase": "before",
+    "app_id": "6b362b75-1732-42a4-9888-669a393f7f82",
+    "release": 175,
+    "status": "succeeded",
+    "sha": "4d9d70a631700093e3a3414e1a653b70ba7ea957",
+    "slug_id": "b26cd407-8467-420c-a595-80771b0a14b6",
+    "maintenance": false,
+    "config_sha256": "cdd9b18e21b22b2b4d23725c2587111f64541cde34684b1edc35c558aea810c3",
+    "formation": [
+      {
+        "type": "worker",
+        "quantity": 1,
+        "size": "Basic"
+      },
+      {
+        "type": "web",
+        "quantity": 1,
+        "size": "Basic"
+      },
+      {
+        "type": "rake",
+        "quantity": 0,
+        "size": "Basic"
+      },
+      {
+        "type": "console",
+        "quantity": 0,
+        "size": "Basic"
+      }
+    ],
+    "dynos": [
+      {
+        "name": "web.1",
+        "state": "up",
+        "release": {
+          "id": "1f596ff3-ede5-43ef-aadf-4853c5f06d31",
+          "version": 175
+        }
+      },
+      {
+        "name": "worker.1",
+        "state": "up",
+        "release": {
+          "id": "1f596ff3-ede5-43ef-aadf-4853c5f06d31",
+          "version": 175
+        }
+      }
+    ]
+  },
+  "preflight_protection": {
+    "at_utc": "2026-11-05T15:26:44Z",
+    "phase": "before",
+    "paused_ids": [
+      5183
+    ],
+    "read_only": true,
+    "hashes": {
+      "paused": "f33c5df2ede2f65ac99109be04a2c070f811601a66c1dabb29065abf9319a810",
+      "paused_ships": "217e9c9ef6bdc86f7447aaca7476ca35128faeb3c493fc7b56bc53659acde73e",
+      "paused_players": "11d2f2495d07e0e0c2d0a54c32c3b8cd985e8bbf2c471d53e192162f1549c272",
+      "paused_cargo": "6467e071204ca11c41e1a327c19c0341292e0cfc3917b2ac69778080803ead0f",
+      "ac3_ship": "009ca9ee78aa72a101ff4ef1660634ad4d6f24876ddac1a568a0b5d662705cf0",
+      "ac3_player": "5bebb1c6e42272538f3e17e8f8fe038e59ce8108dcc1c317ac8264b74d79ea42",
+      "ac3_cargo": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "receipt_64": "77138fbcfa889e214e8c655a9c5710ccb205481699f477bc9f90598f945e82ff",
+      "event_61": "189a099937f06f4b439ac3426952833613c57a294aa3b8daf472a8ed1c016c73",
+      "ship_767": "c467857494fa8af2e9d972518e5a3a8c7dacb99869fb8e380a444e2d578fea11",
+      "player_595": "3f31dc71cca9c209f41d352e0423060cd74c134ebed964c824bf52f34bc26ef1",
+      "existing_broker_settings": "29fd28cddfb1066da0e2ed46e66c0c52adce15edd9ebe87cc36cf44ed997b32a"
+    },
+    "routing_setting": [],
+    "tick_control": {
+      "running": "t",
+      "failure_count": "0",
+      "last_tick_error_class": null
+    }
+  },
+  "planned_configuration": {
+    "at_utc": "2026-11-05T15:26:50Z",
+    "mode": "dry_run",
+    "shard": {
+      "id": "1",
+      "name": "Seggellion"
+    },
+    "key": "gate_rabbitmq_default_shard_1",
+    "before": null,
+    "intended_value": "dev",
+    "after": null,
+    "other_settings_unchanged": true,
+    "authorization": "Owner: Use dev for Seggellion\u2019s new jumps.",
+    "scope": "One explicit shard default; no credentials, endpoints, saved journeys, queued messages or other shard defaults changed."
+  },
+  "migrations": [],
+  "deployment": null,
+  "current_client_reconciliation": "New routing does not retroactively deliver the already-completed arrival to the active bot. Ac3\u2019s client still reports the origin while saved server state is Stanton. No old arrival has been replayed or ship/player teleported.",
+  "rollback": "Code rollback removes the explicit shard default support; keep saved journey routes. Delete or restore only the new shard-default key if rolling back configuration. Do not alter prod backlog or saved receipts."
+}

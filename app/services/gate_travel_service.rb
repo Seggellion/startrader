@@ -21,6 +21,7 @@ class GateTravelService
     :target_star_system,
     :travel,
     :travel_time_seconds,
+    :routing_source,
     keyword_init: true
   )
 
@@ -29,6 +30,7 @@ class GateTravelService
     @gateway_name = gateway_name
     @travel_guid = travel_guid.presence || SecureRandom.uuid
     @start_tick = start_tick
+    @requested_rabbitmq_environment = RabbitmqConnection.normalize(rabbitmq_environment)
     @rabbitmq_environment = RabbitmqConnection.normalize!(rabbitmq_environment)
     @expected_origin_location = expected_origin_location.presence
     @expected_destination_location = expected_destination_location.presence
@@ -48,17 +50,20 @@ class GateTravelService
     raise StandardError, "No ship found for ship_guid #{ship_guid}" unless ship
     raise StandardError, "No shard found for ship_guid #{ship_guid}" unless shard
 
-    context = {kind:'gate_travel', gateway:TravelRequestReceipt.normalize_name(gateway_name),
-      rabbitmq_environment:rabbitmq_environment}
-    context[:expected_origin_location] = expected_origin_location.to_s.strip.downcase.squish if expected_origin_location
-    context[:expected_destination_location] = expected_destination_location.to_s.strip.downcase.squish if expected_destination_location
     intent_error = nil
     result = TravelLifecycle.with_ship(user_ship) do
+      selection = GateTravelRouting.resolve(user_ship:user_ship,shard:shard,travel_guid:travel_guid,
+        requested_environment:@requested_rabbitmq_environment)
+      @rabbitmq_environment = selection.environment
+      context = {kind:'gate_travel', gateway:TravelRequestReceipt.normalize_name(gateway_name),
+        rabbitmq_environment:rabbitmq_environment}
+      context[:expected_origin_location] = expected_origin_location.to_s.strip.downcase.squish if expected_origin_location
+      context[:expected_destination_location] = expected_destination_location.to_s.strip.downcase.squish if expected_destination_location
       if (replay = TravelRequestReceipt.replay!(travel_guid,user_ship,context))
         return Result.new(user_ship:user_ship,user:user,ship:ship,shard:shard,
           origin_location:replay.from_location,arrival_location:replay.to_location,
           origin_star_system:replay.from_location.star_system_name,target_star_system:replay.to_location.star_system_name,
-          travel:replay,travel_time_seconds:TRAVEL_TIME_SECONDS)
+          travel:replay,travel_time_seconds:TRAVEL_TIME_SECONDS,routing_source:selection.source)
       end
       availability = ShipAvailability.new(shard_user: user_ship.shard_user, user_ship: user_ship).validate_usable!
       current_location = availability.ship_location
@@ -93,7 +98,8 @@ class GateTravelService
         origin_star_system: origin_star_system,
         target_star_system: target_star_system,
         travel: travel,
-        travel_time_seconds: TRAVEL_TIME_SECONDS
+        travel_time_seconds: TRAVEL_TIME_SECONDS,
+        routing_source: selection.source
       )
     rescue IntentError => error
       # A due arrival discovered by this request is a completed movement of its

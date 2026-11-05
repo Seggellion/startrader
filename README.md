@@ -96,9 +96,17 @@ Everything outside the ShipTravel workflow (for example the streamer
 ## Jump request safety
 
 `POST /api/gate_travel?rabbitmq=prod|dev` now uses the same explicit broker selector
-as ordinary travel; omitted means production and invalid values return 422 before
+as ordinary travel; invalid values return 422 before
 lifecycle work. A top-level JSON `rabbitmq` key also works. The selected broker is
 saved on the journey, returned in the response, and bound to its request identity.
+For a new request without a selector, an explicit text setting
+`gate_rabbitmq_default_shard_<shard_id>` may select `prod` or `dev`; otherwise the
+default is production. A retry without a selector inherits its original receipt
+broker, even if the shard default has since changed. Explicit request selectors
+always win. An invalid configured default blocks new unqualified jumps instead of
+falling back silently. This setting never rewrites saved trips or queued messages.
+The `rabbitmq_source` response field identifies request, receipt, shard_default,
+or global_default selection.
 Retry with the same environment and `travel_guid`; saved older receipts retain
 their original route.
 
