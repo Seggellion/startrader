@@ -1,6 +1,6 @@
 {
   "recorded_at_utc": "2026-11-05T15:56:20.660680+00:00",
-  "status": "qualified_for_deployment",
+  "status": "v177_legacy_bare_jumps_restored_and_two_approved_catchups_broker_confirmed",
   "authorization": "Ongoing owner-directed travel repair and deployment; latest report that nobody can travel.",
   "regression": "v175 added jump_destination_required for a new bare jump after a completed gate trip. Actual legacy bot requests contain only ship_guid and auth, with no gateway, preconditions or travel_guid. The guard therefore rejects legitimate returns and subsequent jumps.",
   "repair": "Remove the history-based mandatory-direction rejection. Restore bare jumps from saved current gateway, including a return after completion and same-request lazy arrival. Optional explicit canonical origin/destination checks, idempotent same-GUID retries, named-only gateway matching and manual dev shard routing remain intact.",
@@ -559,7 +559,448 @@
     }
   },
   "migrations": [],
-  "deployment": null,
-  "remaining_delivery_issue": "Historical prod arrivals for RightyBird and metaphyzikal1 were not received by the active dev bot. A targeted catch-up needs separate review/authorization. Active dual .NET consumers remain an application-side concern; no consumer was disconnected.",
-  "rollback": "Code rollback to v176 restores the incompatible mandatory-direction guard. No schema/configuration rollback is needed; prefer a forward fix."
+  "deployment": {
+    "source_commit": "cb276310c33e50d6c844fa80a013755771f693bc",
+    "release": 177,
+    "platform": {
+      "at_utc": "2026-11-05T15:59:28.806600+00:00",
+      "phase": "after",
+      "app_id": "6b362b75-1732-42a4-9888-669a393f7f82",
+      "release": 177,
+      "status": "succeeded",
+      "sha": "cb276310c33e50d6c844fa80a013755771f693bc",
+      "slug_id": "704944b6-f815-4d11-a8e0-b9698780484e",
+      "maintenance": false,
+      "config_sha256": "cdd9b18e21b22b2b4d23725c2587111f64541cde34684b1edc35c558aea810c3",
+      "formation": [
+        {
+          "type": "worker",
+          "quantity": 1,
+          "size": "Basic"
+        },
+        {
+          "type": "web",
+          "quantity": 1,
+          "size": "Basic"
+        },
+        {
+          "type": "rake",
+          "quantity": 0,
+          "size": "Basic"
+        },
+        {
+          "type": "console",
+          "quantity": 0,
+          "size": "Basic"
+        }
+      ],
+      "dynos": [
+        {
+          "name": "web.1",
+          "state": "up",
+          "release": {
+            "id": "3d34dd85-1699-4f67-9b49-32df85ca3cff",
+            "version": 177
+          }
+        },
+        {
+          "name": "worker.1",
+          "state": "up",
+          "release": {
+            "id": "3d34dd85-1699-4f67-9b49-32df85ca3cff",
+            "version": 177
+          }
+        }
+      ],
+      "config_unchanged": true,
+      "formation_unchanged": true
+    },
+    "live_read_only_policy": {
+      "at_utc": "2026-11-05T15:59:47Z",
+      "read_only": "on",
+      "results": [
+        {
+          "ship_id": 480,
+          "user": "RightyBird",
+          "current_location": "Stanton Gateway (Pyro)",
+          "proposed_destination": "Pyro Gateway (Stanton)",
+          "blank_intent_permitted": true,
+          "new_request_broker": "dev",
+          "routing_source": "shard_default"
+        },
+        {
+          "ship_id": 551,
+          "user": "metaphyzikal1",
+          "current_location": "Stanton Gateway (Nyx)",
+          "proposed_destination": "Nyx Gateway (Stanton)",
+          "blank_intent_permitted": true,
+          "new_request_broker": "dev",
+          "routing_source": "shard_default"
+        }
+      ],
+      "scope": "Pure intent/routing policy against live read-only data. No lifecycle entrypoint, locks, new journey, movement or publication."
+    },
+    "protected_after": {
+      "at_utc": "2026-11-05T16:03:07Z",
+      "phase": "after",
+      "paused_ids": [],
+      "read_only": true,
+      "hashes": {
+        "affected_ships": "15e2fd1c3f9ad29714952fec6a5ff5a000afa10397d94ae05f2236f055c48cc6",
+        "affected_players": "9a4ce1ee41cadd3934bacd60fbafd0af442e299cd5c7fd15d65dbd06cb9eaee9",
+        "affected_cargo": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "affected_receipts": "ed965db9eb878c64de1796179dbd5952335511efcdbbe7ce187556468feb54a6",
+        "affected_events": "5c28270173c4d545b0137b7382a9de60559fc036c743377c67c9267f1030cefe",
+        "paused": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "paused_ships": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "paused_players": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "paused_cargo": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "ac3_ship": "009ca9ee78aa72a101ff4ef1660634ad4d6f24876ddac1a568a0b5d662705cf0",
+        "ac3_player": "5bebb1c6e42272538f3e17e8f8fe038e59ce8108dcc1c317ac8264b74d79ea42",
+        "ac3_cargo": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "receipt_64": "77138fbcfa889e214e8c655a9c5710ccb205481699f477bc9f90598f945e82ff",
+        "event_61": "189a099937f06f4b439ac3426952833613c57a294aa3b8daf472a8ed1c016c73",
+        "ship_767": "c467857494fa8af2e9d972518e5a3a8c7dacb99869fb8e380a444e2d578fea11",
+        "player_595": "3f31dc71cca9c209f41d352e0423060cd74c134ebed964c824bf52f34bc26ef1",
+        "existing_broker_settings": "29fd28cddfb1066da0e2ed46e66c0c52adce15edd9ebe87cc36cf44ed997b32a"
+      },
+      "unchanged": {
+        "affected_ships": true,
+        "affected_players": true,
+        "affected_cargo": true,
+        "affected_receipts": true,
+        "affected_events": true,
+        "paused": true,
+        "paused_ships": true,
+        "paused_players": true,
+        "paused_cargo": true,
+        "ac3_ship": true,
+        "ac3_player": true,
+        "ac3_cargo": true,
+        "receipt_64": true,
+        "event_61": true,
+        "ship_767": true,
+        "player_595": true,
+        "existing_broker_settings": true
+      },
+      "routing_setting": [
+        {
+          "key": "gate_rabbitmq_default_shard_1",
+          "value": "dev",
+          "setting_type": "text"
+        }
+      ],
+      "tick_control": {
+        "running": "t",
+        "failure_count": "0",
+        "last_tick_error_class": null
+      }
+    },
+    "health": {
+      "at_utc": "2026-11-05T15:59:40.244121+00:00",
+      "http": [
+        {
+          "path": "/up",
+          "status": 200,
+          "final_path": "/up"
+        },
+        {
+          "path": "/api/location/635",
+          "status": 200,
+          "final_path": "/api/location/635",
+          "state": {
+            "in_transit": false,
+            "paused": null,
+            "location": "Pyro Gateway (Stanton)",
+            "travel_state": null
+          }
+        },
+        {
+          "path": "/admin/ship_travels",
+          "status": 200,
+          "final_path": "/login"
+        }
+      ],
+      "release_created_at_utc": "2026-11-05T15:57:24Z",
+      "retained_since_release": 389,
+      "platform_error_count": 0,
+      "http_5xx_count": 0,
+      "deadlock_or_lock_timeout_count": 0,
+      "lifecycle_error_markers": 0,
+      "ignored_location_events": 0,
+      "production_broker_connected": 0,
+      "development_broker_failure_markers": 0,
+      "completed_replay_trace_count": 0,
+      "limits": "Bounded logs and read-only HTTP checks; no authenticated status mutation, production jump or notification manufactured. Broker configuration and saved routes are unchanged."
+    },
+    "post_deploy_logs": {
+      "at_utc": "2026-11-05T16:03:13.862321+00:00",
+      "retained_lines": 376,
+      "log_start": "2026-11-05T15:53:41.154086+00:00",
+      "log_end": "2026-11-05T16:02:55.517503+00:00",
+      "travel_requests": []
+    }
+  },
+  "remaining_delivery_issue": "The two reviewed historical arrivals were copied once to active dev as explicitly approved. Both broker confirms succeeded and the dev queue is empty. Bot display/application still needs real-user confirmation; no additional copy is automatic.",
+  "rollback": "Code rollback to v176 restores the incompatible mandatory-direction guard. No schema/configuration rollback is needed; prefer a forward fix.",
+  "closed_at_utc": "2026-11-05T16:09:41.511723+00:00",
+  "reviewed_catchups": {
+    "owner_authorization": {
+      "approved": true,
+      "event_ids": [
+        35,
+        64
+      ],
+      "delivery_broker": "dev",
+      "owner_reply": "Send one per reviewed player",
+      "approved_at_utc": "2026-11-05T16:01:45.551866+00:00",
+      "reason": "Owner explicitly approved one catch-up copy per reviewed player: RightyBird event35 and metaphyzikal1 event64 to dev, retaining original event/travel IDs, source records and production copies."
+    },
+    "results": {
+      "at_utc": "2026-11-05T16:01:59Z",
+      "mode": "apply",
+      "targets": [
+        {
+          "event_id": 35,
+          "receipt_id": 38,
+          "ship_id": 480,
+          "user_id": 383,
+          "shard_id": 1,
+          "player_id": 329,
+          "to_location_id": 1436,
+          "origin": "Pyro Gateway (Stanton)",
+          "destination": "Stanton Gateway (Pyro)",
+          "user": "RightyBird",
+          "delivery": {
+            "event_id": 35,
+            "receipt_id": 38,
+            "ship_id": 480,
+            "reason": "Owner explicitly approved one catch-up copy per reviewed player: RightyBird event35 and metaphyzikal1 event64 to dev, retaining original event/travel IDs, source records and production copies.",
+            "started_at_utc": "2026-11-05T16:02:00Z",
+            "state": "broker_confirmed",
+            "source_broker": "prod",
+            "delivery_broker": "dev",
+            "source_fingerprint": "2313ea242dc955f501d13b45ff4530cad8c8e1b9c6d27d608342c0552e247833",
+            "message_identity": "Reuse original event_guid and travel_guid.",
+            "confirmed_at_utc": "2026-11-05T16:02:02Z"
+          }
+        },
+        {
+          "event_id": 64,
+          "receipt_id": 67,
+          "ship_id": 551,
+          "user_id": 367,
+          "shard_id": 1,
+          "player_id": 332,
+          "to_location_id": 1441,
+          "origin": "Nyx Gateway (Stanton)",
+          "destination": "Stanton Gateway (Nyx)",
+          "user": "metaphyzikal1",
+          "delivery": {
+            "event_id": 64,
+            "receipt_id": 67,
+            "ship_id": 551,
+            "reason": "Owner explicitly approved one catch-up copy per reviewed player: RightyBird event35 and metaphyzikal1 event64 to dev, retaining original event/travel IDs, source records and production copies.",
+            "started_at_utc": "2026-11-05T16:02:04Z",
+            "state": "broker_confirmed",
+            "source_broker": "prod",
+            "delivery_broker": "dev",
+            "source_fingerprint": "ac6918aab04c2005061f178e5c728783887cfd302eddb86b60afde9e5a70f263",
+            "message_identity": "Reuse original event_guid and travel_guid.",
+            "confirmed_at_utc": "2026-11-05T16:02:04Z"
+          }
+        }
+      ],
+      "skipped": []
+    },
+    "queue_check": {
+      "at_utc": "2026-11-05T16:03:07.987539+00:00",
+      "queues": {
+        "prod": {
+          "consumers": 0,
+          "messages": 19,
+          "messages_ready": 19,
+          "messages_unacknowledged": 0,
+          "state": "running"
+        },
+        "dev": {
+          "consumers": 2,
+          "messages": 0,
+          "messages_ready": 0,
+          "messages_unacknowledged": 0,
+          "state": "running"
+        }
+      },
+      "prod_backlog_unchanged": true,
+      "dev_no_pending": true,
+      "client_application_limit": "Publisher confirmation and empty queue do not prove that both external bot instances updated their state."
+    },
+    "helper": "docs/discovery/reviewed_arrival_catchup_operator.rb",
+    "helper_sha256": "2b79bca2c053783e23a7d3789ebf7f1762346a8d4c06baab14f968df4f6eb1b1",
+    "test": "docs/discovery/reviewed_arrival_catchup_operator_test.rb",
+    "test_sha256": "3aced4a0345b6ef53425fc48cb33ed09cb4dd7d5c19ffb1814390fd78d7744a0",
+    "qualification": "3 runs,22 assertions,0 failures,0 errors,0 skips",
+    "scope": "One owner-approved copy for each reviewed player, preserving original event/travel IDs and all source records. Production queue copies remain untouched; journal prevents automatic retry after a started attempt."
+  },
+  "latest_affected_state": {
+    "at_utc": "2026-11-05T16:03:08Z",
+    "ships": [
+      {
+        "request_id": "0070b3b1-bb48-0d3f-8f73-48568bd00339",
+        "from_location": "Nyx Gateway (Stanton)",
+        "to_location": "Everus Harbor",
+        "id": 551,
+        "user_id": 367,
+        "shard_user_id": 332,
+        "shard_id": 1,
+        "location_name": "Stanton Gateway (Nyx)",
+        "status": "docked",
+        "username": "metaphyzikal1",
+        "player_location": {
+          "id": 1441,
+          "name": "Stanton Gateway (Nyx)",
+          "location_name": "Stanton Gateway (Nyx)",
+          "star_system_name": "Nyx",
+          "classification": "space_station"
+        },
+        "current_ship_system": {
+          "star_system_name": "Nyx"
+        },
+        "unfinished": [],
+        "latest_receipts": [
+          {
+            "id": 67,
+            "outcome": "completed",
+            "created_at": "2026-11-05 15:12:47.06081",
+            "updated_at": "2026-11-05 15:14:40.532408",
+            "kind": "gate_travel",
+            "origin": "Nyx Gateway (Stanton)",
+            "destination": "Stanton Gateway (Nyx)",
+            "destination_system": "Nyx",
+            "broker": "prod"
+          },
+          {
+            "id": 56,
+            "outcome": "completed",
+            "created_at": "2026-11-05 14:04:15.277071",
+            "updated_at": "2026-11-05 14:04:15.277071",
+            "kind": null,
+            "origin": "HDMS-Woodruff",
+            "destination": "Nyx Gateway (Stanton)",
+            "destination_system": "Stanton",
+            "broker": "dev"
+          }
+        ]
+      },
+      {
+        "request_id": "5800ced9-cef4-dded-8bab-dd3e407e5983",
+        "id": 480,
+        "user_id": 383,
+        "shard_user_id": 329,
+        "shard_id": 1,
+        "location_name": "Stanton Gateway (Pyro)",
+        "status": "docked",
+        "username": "RightyBird",
+        "player_location": {
+          "id": 1436,
+          "name": "Stanton Gateway (Pyro)",
+          "location_name": "Stanton Gateway (Pyro)",
+          "star_system_name": "Pyro",
+          "classification": "space_station"
+        },
+        "current_ship_system": {
+          "star_system_name": "Pyro"
+        },
+        "unfinished": [],
+        "latest_receipts": [
+          {
+            "id": 38,
+            "outcome": "completed",
+            "created_at": "2026-11-04 15:50:49.375559",
+            "updated_at": "2026-11-04 15:52:40.788082",
+            "kind": "gate_travel",
+            "origin": "Pyro Gateway (Stanton)",
+            "destination": "Stanton Gateway (Pyro)",
+            "destination_system": "Pyro",
+            "broker": "prod"
+          }
+        ]
+      },
+      {
+        "request_id": "71915d14-917a-65a7-1f7a-c9a158eb4449",
+        "from_location": "MIC-L2 Long Forest Station",
+        "to_location": "HUR-L1 Green Glade Station",
+        "id": 611,
+        "user_id": 398,
+        "shard_user_id": 343,
+        "shard_id": 1,
+        "location_name": "HUR-L1 Green Glade Station",
+        "status": "docked",
+        "username": "Uboo",
+        "player_location": {
+          "id": 1398,
+          "name": "HUR-L1 Green Glade Station",
+          "location_name": "HUR-L1 Green Glade Station",
+          "star_system_name": "Stanton",
+          "classification": "space_station"
+        },
+        "current_ship_system": {
+          "star_system_name": "Stanton"
+        },
+        "unfinished": [],
+        "latest_receipts": [
+          {
+            "id": 66,
+            "outcome": "completed",
+            "created_at": "2026-11-05 15:12:19.544836",
+            "updated_at": "2026-11-05 16:00:53.179414",
+            "kind": null,
+            "origin": "MIC-L2 Long Forest Station",
+            "destination": "HUR-L1 Green Glade Station",
+            "destination_system": "Stanton",
+            "broker": "dev"
+          },
+          {
+            "id": 65,
+            "outcome": "completed",
+            "created_at": "2026-11-05 15:05:41.631633",
+            "updated_at": "2026-11-05 15:11:22.326215",
+            "kind": null,
+            "origin": "ARC-L1 Wide Forest Station",
+            "destination": "MIC-L2 Long Forest Station",
+            "destination_system": "Stanton",
+            "broker": "dev"
+          },
+          {
+            "id": 37,
+            "outcome": "completed",
+            "created_at": "2026-11-04 15:50:00.72106",
+            "updated_at": "2026-11-05 14:00:57.037016",
+            "kind": null,
+            "origin": "CRU-L5 Beautiful Glen Station",
+            "destination": "ARC-L1 Wide Forest Station",
+            "destination_system": "Stanton",
+            "broker": "dev"
+          }
+        ]
+      }
+    ],
+    "global_travel": {
+      "total": 0,
+      "paused": 0
+    },
+    "tick_control": {
+      "running": true,
+      "failure_count": 0,
+      "last_tick_error_class": null
+    }
+  },
+  "ubo_update": "The new Uboo journey5183/interdiction cleared through activity outside this repair; receipt66 completed normally at 16:00:53 UTC and ship611/player343 now agree at HUR-L1. This repair did not resume or relocate that journey.",
+  "client_validation": {
+    "status": "Real bot acceptance result requested; no post-deployment travel request was present in the bounded log sample.",
+    "remaining_limit": "Two active .NET consumers share the dev queue; identities are undefined. Both connections have the same peer-host fingerprint, opened roughly a day apart. This does not establish whether they share application state, and no consumer was disconnected.",
+    "read_only_connection_correlation": "tmp/consumer-caller-match.json",
+    "acceptance_question": "Can RightyBird or metaphyzikal1 check location and try normal jump/travel now?",
+    "no_false_end_to_end_claim": true
+  }
 }

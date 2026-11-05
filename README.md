@@ -116,8 +116,8 @@ jump. A request without a travel_guid gets a new identity; the server cannot
 distinguish a repeated user command from an automatic retry without that ID.
 For retry safety, clients should retain the original travel_guid. Optional
 canonical origin/destination preconditions reject stale intent when provided.
-For a deliberate new leg, supply `gateway_name` (the departure gateway in the
-current system), or `expected_origin_location` / `expected_destination_location`
+To select a particular departure gateway, supply `gateway_name`. Optionally include
+`expected_origin_location` / `expected_destination_location`
 using the full canonical names from the response. Direction aliases
 `destination_gateway`, `destination`, `to_gateway`, and `to_location` still select
 a gateway. `from_location` and `origin_location` alias the origin precondition.
