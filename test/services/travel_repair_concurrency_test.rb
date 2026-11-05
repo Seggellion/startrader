@@ -165,4 +165,51 @@ class TravelRepairConcurrencyTest < ActiveSupport::TestCase
     assert_operator TravelArrivalEvent.count,:<=,1
   end
 
+
+  test 'completed replay racing an unqualified new jump cannot reverse the ship' do
+    t=gate_start('completed-race')
+    ShipTravelArrivalProcessor.new(travel:t,current_tick:108).call
+    before=assets
+    results=race(-> {gate_start('completed-race')},
+      -> {GateTravelService.new(ship_guid:@hull.guid,travel_guid:'ambiguous-race').call})
+    assert_equal 1,results.count{|r|r.first==:ok}
+    assert_equal 1,results.count{|r|r.first==:refused}
+    assert_empty ShipTravel.all
+    assert_equal 1,TravelRequestReceipt.count
+    assert_equal @destination.name,@hull.reload.location_name
+    assert_equal before,assets
+  end
+
+  test 'completion and publication traces appear only after their transactions commit' do
+    require 'stringio'
+    output=StringIO.new
+    logger=ActiveSupport::Logger.new(output)
+    Rails.stub(:logger,logger) do
+      ActiveRecord::Base.transaction do
+        t=gate_start('rolled-back')
+        ShipTravelArrivalProcessor.new(travel:t,current_tick:108).call
+        raise ActiveRecord::Rollback
+      end
+      refute_includes output.string,'event=travel_completed'
+      assert_empty TravelRequestReceipt.all
+      t=gate_start('committed')
+      ShipTravelArrivalProcessor.new(travel:t,current_tick:108).call
+      assert_includes output.string,"event=travel_completed receipt_id=#{TravelRequestReceipt.sole.id}"
+      event=TravelArrivalEvent.sole
+      RabbitmqSender.stub(:send_arrival_event,nil) do
+        ActiveRecord::Base.transaction do
+          event.deliver!
+          raise ActiveRecord::Rollback
+        end
+        refute_includes output.string,'event=arrival_published'
+        assert_nil event.reload.sent_at
+        event.deliver!
+      end
+      assert_includes output.string,"event=arrival_published arrival_event_id=#{event.id}"
+      traces=output.string.lines.grep(/event=(travel_completed|arrival_published)/).join
+      refute_includes traces,'repair-secret'
+      refute_includes traces,t.travel_guid
+      refute_includes traces,@hull.guid
+    end
+  end
 end

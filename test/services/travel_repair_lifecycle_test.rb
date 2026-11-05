@@ -14,7 +14,7 @@ class TravelRepairLifecycleTest < ActiveSupport::TestCase
     assert_equal @gate.name,@player.reload.current_location_name
     complete(travel)
     assert_equal @destination.name,@player.reload.current_location_name
-    result=GateTravelService.new(ship_guid:@hull.guid,travel_guid:'return').call
+    result=GateTravelService.new(ship_guid:@hull.guid,travel_guid:'return',gateway_name:'Repair A Gateway').call
     assert_equal @gate,result.arrival_location
     assert_equal before,assets
   end
@@ -32,7 +32,7 @@ class TravelRepairLifecycleTest < ActiveSupport::TestCase
   test 'lazy completion refreshes player and departs in same request' do
     travel=gate_start
     Tick.instance.update_columns(current_tick:travel.arrival_tick,sequence:109)
-    result=GateTravelService.new(ship_guid:@hull.guid,travel_guid:'lazy-return').call
+    result=GateTravelService.new(ship_guid:@hull.guid,travel_guid:'lazy-return',gateway_name:'Repair A Gateway').call
     assert_equal @destination,result.origin_location
     assert_equal @destination.name,@player.reload.current_location_name
     assert_equal 1,ShipTravel.count

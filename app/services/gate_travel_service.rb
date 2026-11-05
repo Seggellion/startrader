@@ -1,4 +1,12 @@
 class GateTravelService
+  class IntentError < TravelLifecycle::Error
+    attr_reader :state
+    def initialize(code, message, state)
+      @state = state
+      super(code, message)
+    end
+  end
+
   TRAVEL_TIME_SECONDS = 120
   GATEWAY_SUFFIX = " Gateway"
 
@@ -16,11 +24,14 @@ class GateTravelService
     keyword_init: true
   )
 
-  def initialize(ship_guid:, gateway_name: nil, travel_guid: nil, start_tick: nil)
+  def initialize(ship_guid:, gateway_name: nil, travel_guid: nil, start_tick: nil, rabbitmq_environment: nil, expected_origin_location: nil, expected_destination_location: nil)
     @ship_guid = ship_guid
     @gateway_name = gateway_name
     @travel_guid = travel_guid.presence || SecureRandom.uuid
     @start_tick = start_tick
+    @rabbitmq_environment = RabbitmqConnection.normalize!(rabbitmq_environment)
+    @expected_origin_location = expected_origin_location.presence
+    @expected_destination_location = expected_destination_location.presence
   end
 
   def call
@@ -37,8 +48,12 @@ class GateTravelService
     raise StandardError, "No ship found for ship_guid #{ship_guid}" unless ship
     raise StandardError, "No shard found for ship_guid #{ship_guid}" unless shard
 
-    context = {kind:'gate_travel', gateway:TravelRequestReceipt.normalize_name(gateway_name)}
-    TravelLifecycle.with_ship(user_ship) do
+    context = {kind:'gate_travel', gateway:TravelRequestReceipt.normalize_name(gateway_name),
+      rabbitmq_environment:rabbitmq_environment}
+    context[:expected_origin_location] = expected_origin_location.to_s.strip.downcase.squish if expected_origin_location
+    context[:expected_destination_location] = expected_destination_location.to_s.strip.downcase.squish if expected_destination_location
+    intent_error = nil
+    result = TravelLifecycle.with_ship(user_ship) do
       if (replay = TravelRequestReceipt.replay!(travel_guid,user_ship,context))
         return Result.new(user_ship:user_ship,user:user,ship:ship,shard:shard,
           origin_location:replay.from_location,arrival_location:replay.to_location,
@@ -56,6 +71,8 @@ class GateTravelService
       target_star_system = target_star_system_from(origin_location)
       arrival_gateway_name = "#{origin_star_system} Gateway"
       arrival_location = resolve_gateway!(arrival_gateway_name, target_star_system)
+
+      validate_intent!(user_ship, current_location, arrival_location)
 
       TravelRequestReceipt.lock_guid!(travel_guid)
       travel = TravelRequestReceipt.replay!(travel_guid,user_ship,context) || create_gate_travel!(
@@ -78,12 +95,57 @@ class GateTravelService
         travel: travel,
         travel_time_seconds: TRAVEL_TIME_SECONDS
       )
+    rescue IntentError => error
+      # A due arrival discovered by this request is a completed movement of its
+      # own. Commit that arrival, then refuse the ambiguous new departure.
+      intent_error = error
+      nil
     end
+    raise intent_error if intent_error
+    result
   end
 
   private
 
-  attr_reader :ship_guid, :gateway_name, :travel_guid, :start_tick
+  attr_reader :ship_guid, :gateway_name, :travel_guid, :start_tick, :rabbitmq_environment,
+    :expected_origin_location, :expected_destination_location
+
+  def validate_intent!(user_ship, current_location, arrival_location)
+    state = {user_ship_id:user_ship.id, current_location:current_location.name, player_location:user_ship.shard_user&.current_location_name,
+      current_star_system:current_location.star_system_name, proposed_destination:arrival_location.name,
+      proposed_star_system:arrival_location.star_system_name}
+    if expected_origin_location && !matches_intent_location?(expected_origin_location, current_location)
+      raise IntentError.new('stale_jump_origin',
+        "Jump was not started. Ship is at #{current_location.name}; refresh its location before jumping.", state)
+    end
+    if expected_destination_location && !matches_intent_location?(expected_destination_location, arrival_location)
+      raise IntentError.new('jump_destination_mismatch',
+        "Jump was not started. This gateway leads to #{arrival_location.name}; confirm the intended destination.", state)
+    end
+    return if gateway_name.present? || expected_origin_location || expected_destination_location
+
+    latest = TravelRequestReceipt.where(user_ship_id:user_ship.id, outcome:'completed')
+      .order(completed_at_tick: :desc, id: :desc).first
+    return unless latest && latest.travel_snapshot['ship_travel_type'] == 'gate_travel' &&
+      latest.travel_snapshot['to_location_id'].to_i == current_location.id
+
+    raise IntentError.new('jump_destination_required',
+      "Previous jump already completed at #{current_location.name}. Jump was not started. " \
+      "Choose a gateway for a new trip, or retry the original travel_guid to retrieve its result.",
+      state.merge(previous_travel_guid:latest.travel_guid, lifecycle_status:'completed',
+        route_confirmation_required:true))
+  end
+
+  def matches_intent_location?(input, location)
+    # Preconditions are canonical names, never fuzzy searches that could resolve
+    # a stale gateway in another system to the current gateway.
+    input.to_s.strip.downcase.squish == location.name.to_s.strip.downcase.squish
+  end
+
+  def find_named_gateway!(input_name:, star_system_name:)
+    LocationResolver.find_named_in_star_system(input_name:input_name, star_system_name:star_system_name) ||
+      raise(ActiveRecord::RecordNotFound, "Location not found in #{star_system_name}.")
+  end
 
   def resolved_shard_for(user_ship)
     user_ship.shard || user_ship.shard_user&.shard || Shard.find_by(name: user_ship.shard_name)
@@ -98,7 +160,7 @@ class GateTravelService
   def resolved_origin_gateway(current_location)
     return current_location if gateway_name.blank?
 
-    LocationResolver.find_in_star_system!(
+    find_named_gateway!(
       input_name: gateway_name,
       star_system_name: current_location.star_system_name
     )
@@ -115,7 +177,7 @@ class GateTravelService
   end
 
   def resolve_gateway!(name, star_system_name)
-    LocationResolver.find_in_star_system!(
+    find_named_gateway!(
       input_name: name,
       star_system_name: star_system_name
     )
@@ -142,6 +204,7 @@ class GateTravelService
         arrival_tick: TravelLifecycle.deadline!(current_tick, duration_ticks),
         total_duration_ticks: duration_ticks,
         interdict_window_percent: Setting.get("interdiction_window_percent").presence || TravelService::DEFAULT_WINDOW_PERCENT,
+        rabbitmq_environment: rabbitmq_environment,
         ship_travel_type: "gate_travel"
       )
 

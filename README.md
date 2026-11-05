@@ -93,6 +93,44 @@ used later, when the arrival is actually published. Omitting the parameter means
 Everything outside the ShipTravel workflow (for example the streamer
 `CheckStatus` event) always publishes to production.
 
+## Jump request safety
+
+`POST /api/gate_travel?rabbitmq=prod|dev` now uses the same explicit broker selector
+as ordinary travel; omitted means production and invalid values return 422 before
+lifecycle work. A top-level JSON `rabbitmq` key also works. The selected broker is
+saved on the journey, returned in the response, and bound to its request identity.
+Retry with the same environment and `travel_guid`; saved older receipts retain
+their original route.
+
+After a completed jump, an unqualified new jump at that saved arrival gateway
+returns 422 `jump_destination_required` rather than silently reversing the trip.
+For a deliberate new leg, supply `gateway_name` (the departure gateway in the
+current system), or `expected_origin_location` / `expected_destination_location`
+using the full canonical names from the response. Direction aliases
+`destination_gateway`, `destination`, `to_gateway`, and `to_location` still select
+a gateway. `from_location` and `origin_location` alias the origin precondition.
+Gateway selection uses named matches; fuzzy matching cannot substitute a different
+gateway. Existing remote gateway selection remains available.
+
+Example: from `Stanton Gateway (Pyro)`, select `gateway_name=Stanton Gateway` to
+reach `Pyro Gateway (Stanton)`. A deliberate return selects
+`gateway_name=Pyro Gateway`. Repeating a failed or uncertain command must keep the
+original `travel_guid`, rather than create a new leg.
+
+Gate responses expose canonical `current_location`, `player_location`,
+`current_star_system`, and `ship_status` alongside the saved route. Completed
+replays return `lifecycle_status=completed`, zero `time_remaining`, and a completed
+message. The saved route describes the original trip; `current_location` describes
+the ship now, even when replaying an older trip. Status responses also keep a root
+`current_location` after server travel completes.
+
+Operational logs correlate `gate_request_accepted`, `gate_request_replayed`,
+`gate_request_blocked`, `travel_completed`, and `arrival_published` by request,
+ship, receipt and event IDs. Success traces are emitted after the outer transaction
+commits. Publisher confirmation still requires a matching consumer trace to prove
+that the external bot applied the arrival. These changes do not resume paused
+journeys or reconcile existing ship/player discrepancies.
+
 ### Required Railpress settings
 
 Create these under **Admin → Settings** as `text` settings. Each key falls back

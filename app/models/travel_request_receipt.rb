@@ -19,13 +19,24 @@ class TravelRequestReceipt < ApplicationRecord
     end
     lock_guid!(guid)
     receipt.reload
-    unless receipt.user_ship_id == ship.id && receipt.request_context == context.deep_stringify_keys
+    unless receipt.user_ship_id == ship.id && receipt.matches_context?(context)
       raise TravelLifecycle::Error.new('request_conflict','Travel request identifier conflicts with an earlier request.')
     end
     travel=ShipTravel.find_by(travel_guid:guid) || ShipTravel.instantiate(receipt.travel_snapshot)
     travel.request_replayed=true
     travel.request_outcome=receipt.outcome
     travel
+  end
+
+  def matches_context?(context)
+    requested = context.deep_stringify_keys
+    return true if request_context == requested
+    # Gate receipts created before explicit broker selection had only kind/gateway.
+    # Their saved broker remains authoritative; never rewrite or reroute them.
+    request_context['kind'] == 'gate_travel' &&
+      !request_context.key?('rabbitmq_environment') &&
+      requested.except('rabbitmq_environment') == request_context &&
+      requested['rabbitmq_environment'] == RabbitmqConnection.normalize!(travel_snapshot['rabbitmq_environment'])
   end
 
   def self.record!(travel, context)

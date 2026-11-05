@@ -26,6 +26,9 @@ class TravelArrivalEvent < ApplicationRecord
       begin
         RabbitmqSender.send_arrival_event(event)
         event.update!(sent_at:Time.current,attempts:event.attempts+1,last_error_class:nil)
+        trace = "event=arrival_published arrival_event_id=#{event.id} " \
+          "attempts=#{event.attempts} rabbitmq=#{event.rabbitmq_environment}"
+        ActiveRecord.after_all_transactions_commit { Rails.logger.info(trace) }
       rescue StandardError => error
         event.update!(attempts:event.attempts+1,last_error_class:error.class.name,
           next_attempt_at:Time.current+[2**[event.attempts,8].min,300].min.seconds)

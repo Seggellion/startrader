@@ -413,6 +413,9 @@ class TradeService
         cargo: cargo,
       }
 
+      if !active_travel && StatusLocationSync.travel_exists?(UserShip.where(id:user_ship.id))
+        response[:current_location] = user_ship.location_name
+      end
       response[:location_sync] = location_sync.payload if location_sync&.payload
 
       response[:ship].merge!(TravelState.new(ship_travel,tick:current_tick).payload) if ship_travel

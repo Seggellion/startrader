@@ -74,7 +74,7 @@ class StatusLocationSyncTest < ActiveSupport::TestCase
   test 'a fresh return journey remains possible after rejecting stale status' do
     complete_gate
     report(@gate.name)
-    returning = GateTravelService.new(ship_guid: @hull.guid, travel_guid: 'guarded-return').call
+    returning = GateTravelService.new(ship_guid: @hull.guid, travel_guid: 'guarded-return', gateway_name: 'Repair A Gateway').call
     assert_equal @destination, returning.origin_location
     assert_equal @gate, returning.arrival_location
     ShipTravelArrivalProcessor.new(travel: returning.travel, current_tick: returning.travel.arrival_tick).call

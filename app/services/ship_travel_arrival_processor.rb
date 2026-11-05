@@ -23,7 +23,12 @@ class ShipTravelArrivalProcessor
         TravelArrivalEvent.create!(event_guid:SecureRandom.uuid,travel_guid:@travel.travel_guid,
           rabbitmq_environment:@travel.rabbitmq_environment,payload:RabbitmqSender.ship_report_payload(@travel))
       end
+      receipt_id = TravelRequestReceipt.find_by!(travel_guid:@travel.travel_guid).id
+      trace = "event=travel_completed receipt_id=#{receipt_id} user_ship_id=#{@travel.user_ship_id} " \
+        "from_location_id=#{@travel.from_location_id} to_location_id=#{@travel.to_location_id} " \
+        "completed_at_tick=#{@current_tick} rabbitmq=#{@travel.rabbitmq_environment}"
       @travel.cleanup_after_arrival!(@current_tick)
+      ActiveRecord.after_all_transactions_commit { Rails.logger.info(trace) }
     end
     @travel
   rescue ActiveRecord::RecordNotFound
