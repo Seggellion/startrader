@@ -110,8 +110,12 @@ or global_default selection.
 Retry with the same environment and `travel_guid`; saved older receipts retain
 their original route.
 
-After a completed jump, an unqualified new jump at that saved arrival gateway
-returns 422 `jump_destination_required` rather than silently reversing the trip.
+Bare jump commands remain compatible: a new request without a gateway uses the
+ship's current saved gateway, including a deliberate return after a completed
+jump. A request without a travel_guid gets a new identity; the server cannot
+distinguish a repeated user command from an automatic retry without that ID.
+For retry safety, clients should retain the original travel_guid. Optional
+canonical origin/destination preconditions reject stale intent when provided.
 For a deliberate new leg, supply `gateway_name` (the departure gateway in the
 current system), or `expected_origin_location` / `expected_destination_location`
 using the full canonical names from the response. Direction aliases

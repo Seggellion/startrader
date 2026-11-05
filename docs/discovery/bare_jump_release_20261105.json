@@ -1,0 +1,565 @@
+{
+  "recorded_at_utc": "2026-11-05T15:56:20.660680+00:00",
+  "status": "qualified_for_deployment",
+  "authorization": "Ongoing owner-directed travel repair and deployment; latest report that nobody can travel.",
+  "regression": "v175 added jump_destination_required for a new bare jump after a completed gate trip. Actual legacy bot requests contain only ship_guid and auth, with no gateway, preconditions or travel_guid. The guard therefore rejects legitimate returns and subsequent jumps.",
+  "repair": "Remove the history-based mandatory-direction rejection. Restore bare jumps from saved current gateway, including a return after completion and same-request lazy arrival. Optional explicit canonical origin/destination checks, idempotent same-GUID retries, named-only gateway matching and manual dev shard routing remain intact.",
+  "client_contract": "A missing travel_guid denotes a new command and gets a fresh ID. The server cannot safely infer retry versus deliberate new jump from an unversioned command. Clients should retain IDs for retries and use optional preconditions for causal intent.",
+  "ordinary_rejections": {
+    "at_utc": "2026-11-05T15:50:03Z",
+    "read_only": true,
+    "requests": [
+      {
+        "request_id": "fe1b2426-592c-fae6-22a8-761d627f7070",
+        "id": 551,
+        "user_id": 367,
+        "shard_user_id": 332,
+        "shard_id": 1,
+        "location_name": "Stanton Gateway (Nyx)",
+        "status": "docked",
+        "username": "metaphyzikal1",
+        "player_location": {
+          "id": 1441,
+          "name": "Stanton Gateway (Nyx)",
+          "location_name": "Stanton Gateway (Nyx)",
+          "star_system_name": "Nyx",
+          "classification": "space_station"
+        },
+        "current_ship_system": {
+          "star_system_name": "Nyx"
+        },
+        "unfinished": [],
+        "latest_receipts": [
+          {
+            "id": 67,
+            "outcome": "completed",
+            "created_at": "2026-11-05 15:12:47.06081",
+            "updated_at": "2026-11-05 15:14:40.532408",
+            "kind": "gate_travel",
+            "origin": "Nyx Gateway (Stanton)",
+            "destination": "Stanton Gateway (Nyx)",
+            "destination_system": "Nyx",
+            "broker": "prod"
+          },
+          {
+            "id": 56,
+            "outcome": "completed",
+            "created_at": "2026-11-05 14:04:15.277071",
+            "updated_at": "2026-11-05 14:04:15.277071",
+            "kind": null,
+            "origin": "HDMS-Woodruff",
+            "destination": "Nyx Gateway (Stanton)",
+            "destination_system": "Stanton",
+            "broker": "dev"
+          }
+        ]
+      },
+      {
+        "request_id": "2c424eef-fc38-6ecb-07a3-972f0b0159a1",
+        "from_location": "Nyx Gateway (Stanton)",
+        "to_location": "Everus Harbor",
+        "id": 551,
+        "user_id": 367,
+        "shard_user_id": 332,
+        "shard_id": 1,
+        "location_name": "Stanton Gateway (Nyx)",
+        "status": "docked",
+        "username": "metaphyzikal1",
+        "player_location": {
+          "id": 1441,
+          "name": "Stanton Gateway (Nyx)",
+          "location_name": "Stanton Gateway (Nyx)",
+          "star_system_name": "Nyx",
+          "classification": "space_station"
+        },
+        "current_ship_system": {
+          "star_system_name": "Nyx"
+        },
+        "unfinished": [],
+        "latest_receipts": [
+          {
+            "id": 67,
+            "outcome": "completed",
+            "created_at": "2026-11-05 15:12:47.06081",
+            "updated_at": "2026-11-05 15:14:40.532408",
+            "kind": "gate_travel",
+            "origin": "Nyx Gateway (Stanton)",
+            "destination": "Stanton Gateway (Nyx)",
+            "destination_system": "Nyx",
+            "broker": "prod"
+          },
+          {
+            "id": 56,
+            "outcome": "completed",
+            "created_at": "2026-11-05 14:04:15.277071",
+            "updated_at": "2026-11-05 14:04:15.277071",
+            "kind": null,
+            "origin": "HDMS-Woodruff",
+            "destination": "Nyx Gateway (Stanton)",
+            "destination_system": "Stanton",
+            "broker": "dev"
+          }
+        ]
+      },
+      {
+        "request_id": "f50086dd-9ec1-a01b-0d6c-2305e40cff49",
+        "id": 551,
+        "user_id": 367,
+        "shard_user_id": 332,
+        "shard_id": 1,
+        "location_name": "Stanton Gateway (Nyx)",
+        "status": "docked",
+        "username": "metaphyzikal1",
+        "player_location": {
+          "id": 1441,
+          "name": "Stanton Gateway (Nyx)",
+          "location_name": "Stanton Gateway (Nyx)",
+          "star_system_name": "Nyx",
+          "classification": "space_station"
+        },
+        "current_ship_system": {
+          "star_system_name": "Nyx"
+        },
+        "unfinished": [],
+        "latest_receipts": [
+          {
+            "id": 67,
+            "outcome": "completed",
+            "created_at": "2026-11-05 15:12:47.06081",
+            "updated_at": "2026-11-05 15:14:40.532408",
+            "kind": "gate_travel",
+            "origin": "Nyx Gateway (Stanton)",
+            "destination": "Stanton Gateway (Nyx)",
+            "destination_system": "Nyx",
+            "broker": "prod"
+          },
+          {
+            "id": 56,
+            "outcome": "completed",
+            "created_at": "2026-11-05 14:04:15.277071",
+            "updated_at": "2026-11-05 14:04:15.277071",
+            "kind": null,
+            "origin": "HDMS-Woodruff",
+            "destination": "Nyx Gateway (Stanton)",
+            "destination_system": "Stanton",
+            "broker": "dev"
+          }
+        ]
+      },
+      {
+        "request_id": "c2fe6fae-d854-07e9-73e6-392501828fb0",
+        "from_location": "Nyx Gateway (Stanton)",
+        "to_location": "HDMS-Woodruff",
+        "id": 551,
+        "user_id": 367,
+        "shard_user_id": 332,
+        "shard_id": 1,
+        "location_name": "Stanton Gateway (Nyx)",
+        "status": "docked",
+        "username": "metaphyzikal1",
+        "player_location": {
+          "id": 1441,
+          "name": "Stanton Gateway (Nyx)",
+          "location_name": "Stanton Gateway (Nyx)",
+          "star_system_name": "Nyx",
+          "classification": "space_station"
+        },
+        "current_ship_system": {
+          "star_system_name": "Nyx"
+        },
+        "unfinished": [],
+        "latest_receipts": [
+          {
+            "id": 67,
+            "outcome": "completed",
+            "created_at": "2026-11-05 15:12:47.06081",
+            "updated_at": "2026-11-05 15:14:40.532408",
+            "kind": "gate_travel",
+            "origin": "Nyx Gateway (Stanton)",
+            "destination": "Stanton Gateway (Nyx)",
+            "destination_system": "Nyx",
+            "broker": "prod"
+          },
+          {
+            "id": 56,
+            "outcome": "completed",
+            "created_at": "2026-11-05 14:04:15.277071",
+            "updated_at": "2026-11-05 14:04:15.277071",
+            "kind": null,
+            "origin": "HDMS-Woodruff",
+            "destination": "Nyx Gateway (Stanton)",
+            "destination_system": "Stanton",
+            "broker": "dev"
+          }
+        ]
+      },
+      {
+        "request_id": "5800ced9-cef4-dded-8bab-dd3e407e5983",
+        "id": 480,
+        "user_id": 383,
+        "shard_user_id": 329,
+        "shard_id": 1,
+        "location_name": "Stanton Gateway (Pyro)",
+        "status": "docked",
+        "username": "RightyBird",
+        "player_location": {
+          "id": 1436,
+          "name": "Stanton Gateway (Pyro)",
+          "location_name": "Stanton Gateway (Pyro)",
+          "star_system_name": "Pyro",
+          "classification": "space_station"
+        },
+        "current_ship_system": {
+          "star_system_name": "Pyro"
+        },
+        "unfinished": [],
+        "latest_receipts": [
+          {
+            "id": 38,
+            "outcome": "completed",
+            "created_at": "2026-11-04 15:50:49.375559",
+            "updated_at": "2026-11-04 15:52:40.788082",
+            "kind": "gate_travel",
+            "origin": "Pyro Gateway (Stanton)",
+            "destination": "Stanton Gateway (Pyro)",
+            "destination_system": "Pyro",
+            "broker": "prod"
+          }
+        ]
+      },
+      {
+        "request_id": "71915d14-917a-65a7-1f7a-c9a158eb4449",
+        "from_location": "MIC-L2 Long Forest Station",
+        "to_location": "HUR-L1 Green Glade Station",
+        "id": 611,
+        "user_id": 398,
+        "shard_user_id": 343,
+        "shard_id": 1,
+        "location_name": "MIC-L2 Long Forest Station",
+        "status": "interdicted",
+        "username": "Uboo",
+        "player_location": {
+          "id": 1404,
+          "name": "MIC-L2 Long Forest Station",
+          "location_name": "MIC-L2 Long Forest Station",
+          "star_system_name": "Stanton",
+          "classification": "space_station"
+        },
+        "current_ship_system": {
+          "star_system_name": "Stanton"
+        },
+        "unfinished": [
+          {
+            "id": 5183,
+            "is_paused": true,
+            "arrival_tick": 0,
+            "remaining_ticks_from_arrival": 39
+          }
+        ],
+        "latest_receipts": [
+          {
+            "id": 66,
+            "outcome": "pending",
+            "created_at": "2026-11-05 15:12:19.544836",
+            "updated_at": "2026-11-05 15:12:19.544836",
+            "kind": null,
+            "origin": "MIC-L2 Long Forest Station",
+            "destination": "HUR-L1 Green Glade Station",
+            "destination_system": "Stanton",
+            "broker": "dev"
+          },
+          {
+            "id": 65,
+            "outcome": "completed",
+            "created_at": "2026-11-05 15:05:41.631633",
+            "updated_at": "2026-11-05 15:11:22.326215",
+            "kind": null,
+            "origin": "ARC-L1 Wide Forest Station",
+            "destination": "MIC-L2 Long Forest Station",
+            "destination_system": "Stanton",
+            "broker": "dev"
+          },
+          {
+            "id": 37,
+            "outcome": "completed",
+            "created_at": "2026-11-04 15:50:00.72106",
+            "updated_at": "2026-11-05 14:00:57.037016",
+            "kind": null,
+            "origin": "CRU-L5 Beautiful Glen Station",
+            "destination": "ARC-L1 Wide Forest Station",
+            "destination_system": "Stanton",
+            "broker": "dev"
+          }
+        ]
+      },
+      {
+        "request_id": "0070b3b1-bb48-0d3f-8f73-48568bd00339",
+        "from_location": "Nyx Gateway (Stanton)",
+        "to_location": "Everus Harbor",
+        "id": 551,
+        "user_id": 367,
+        "shard_user_id": 332,
+        "shard_id": 1,
+        "location_name": "Stanton Gateway (Nyx)",
+        "status": "docked",
+        "username": "metaphyzikal1",
+        "player_location": {
+          "id": 1441,
+          "name": "Stanton Gateway (Nyx)",
+          "location_name": "Stanton Gateway (Nyx)",
+          "star_system_name": "Nyx",
+          "classification": "space_station"
+        },
+        "current_ship_system": {
+          "star_system_name": "Nyx"
+        },
+        "unfinished": [],
+        "latest_receipts": [
+          {
+            "id": 67,
+            "outcome": "completed",
+            "created_at": "2026-11-05 15:12:47.06081",
+            "updated_at": "2026-11-05 15:14:40.532408",
+            "kind": "gate_travel",
+            "origin": "Nyx Gateway (Stanton)",
+            "destination": "Stanton Gateway (Nyx)",
+            "destination_system": "Nyx",
+            "broker": "prod"
+          },
+          {
+            "id": 56,
+            "outcome": "completed",
+            "created_at": "2026-11-05 14:04:15.277071",
+            "updated_at": "2026-11-05 14:04:15.277071",
+            "kind": null,
+            "origin": "HDMS-Woodruff",
+            "destination": "Nyx Gateway (Stanton)",
+            "destination_system": "Stanton",
+            "broker": "dev"
+          }
+        ]
+      }
+    ],
+    "tick_control": {
+      "running": true,
+      "failure_count": 0,
+      "last_tick_error_class": null
+    },
+    "global_travel": {
+      "total": 1,
+      "paused": 1
+    }
+  },
+  "log_evidence": {
+    "at_utc": "2026-11-05T15:47:51.990005+00:00",
+    "retained_lines": 411,
+    "log_start": "2026-11-05T15:38:41.993685+00:00",
+    "log_end": "2026-11-05T15:47:35.634554+00:00",
+    "travel_requests": [
+      {
+        "request_id": "fe1b2426-592c-fae6-22a8-761d627f7070",
+        "at_utc": "2026-11-05T15:40:29.494289+00:00",
+        "statuses": [
+          "422"
+        ],
+        "params": {},
+        "traces": [
+          "event=gate_request_blocked request_id=\"fe1b2426-592c-fae6-22a8-761d627f7070\" code=jump_destination_required user_ship_id=551"
+        ]
+      },
+      {
+        "request_id": "2c424eef-fc38-6ecb-07a3-972f0b0159a1",
+        "at_utc": "2026-11-05T15:40:55.253154+00:00",
+        "statuses": [
+          "422"
+        ],
+        "params": {
+          "from_location": "Nyx Gateway (Stanton)",
+          "to_location": "Everus Harbor",
+          "rabbitmq": "dev"
+        },
+        "traces": []
+      },
+      {
+        "request_id": "f50086dd-9ec1-a01b-0d6c-2305e40cff49",
+        "at_utc": "2026-11-05T15:41:48.151086+00:00",
+        "statuses": [
+          "422"
+        ],
+        "params": {},
+        "traces": [
+          "event=gate_request_blocked request_id=\"f50086dd-9ec1-a01b-0d6c-2305e40cff49\" code=jump_destination_required user_ship_id=551"
+        ]
+      },
+      {
+        "request_id": "c2fe6fae-d854-07e9-73e6-392501828fb0",
+        "at_utc": "2026-11-05T15:42:07.827270+00:00",
+        "statuses": [
+          "422"
+        ],
+        "params": {
+          "from_location": "Nyx Gateway (Stanton)",
+          "to_location": "HDMS-Woodruff",
+          "rabbitmq": "dev"
+        },
+        "traces": []
+      },
+      {
+        "request_id": "5800ced9-cef4-dded-8bab-dd3e407e5983",
+        "at_utc": "2026-11-05T15:42:21.018643+00:00",
+        "statuses": [
+          "422"
+        ],
+        "params": {},
+        "traces": [
+          "event=gate_request_blocked request_id=\"5800ced9-cef4-dded-8bab-dd3e407e5983\" code=jump_destination_required user_ship_id=480"
+        ]
+      },
+      {
+        "request_id": "71915d14-917a-65a7-1f7a-c9a158eb4449",
+        "at_utc": "2026-11-05T15:46:13.193128+00:00",
+        "statuses": [
+          "422"
+        ],
+        "params": {
+          "from_location": "MIC-L2 Long Forest Station",
+          "to_location": "HUR-L1 Green Glade Station",
+          "rabbitmq": "dev"
+        },
+        "traces": []
+      },
+      {
+        "request_id": "0070b3b1-bb48-0d3f-8f73-48568bd00339",
+        "at_utc": "2026-11-05T15:46:27.569598+00:00",
+        "statuses": [
+          "422"
+        ],
+        "params": {
+          "from_location": "Nyx Gateway (Stanton)",
+          "to_location": "Everus Harbor",
+          "rabbitmq": "dev"
+        },
+        "traces": []
+      }
+    ]
+  },
+  "scope": "No ordinary travel validation relaxed, player relocated, paused journey resumed, old notification replayed, broker/default setting or endpoint changed.",
+  "validation": {
+    "summary": "245 runs,2072 assertions,0 failures,0 errors,0 skips",
+    "run": {
+      "at_utc": "2026-11-05T15:53:36.732670+00:00",
+      "synthetic": true,
+      "loopback": true,
+      "database": "star_trader_ac3_jump_diagnostic_test",
+      "steps": [
+        {
+          "step": "schema",
+          "exit_code": 0,
+          "log": "tmp/bare-jump-qualification-0.log"
+        }
+      ]
+    },
+    "cases": "Captured legacy no-guid/no-gateway request completes outbound and return via configured dev; optional stale intent still refuses; concurrent completed replay and new bare return leave exactly one new journey.",
+    "environment": "Dedicated synthetic PostgreSQL18, one worker, real RabbitMQ prohibited; no production test journeys.",
+    "browser": "API-only; no browser launched. Chrome-only preference retained."
+  },
+  "source_sha256": {
+    "README.md": "0f4e0b5a44d5b107cf69efb0487802eb23ec92f46cc673b0e59bc876f24fc172",
+    "app/services/gate_travel_service.rb": "d8953fbed8f178ae7878ccbbc12313616accda840949507fff4de911ce8a78ce",
+    "test/controllers/api/gate_intent_test.rb": "229a20826f9d5d6bcf477cd85e3e6cbc95874442c0e36eebe3401dc3d5b7d62b",
+    "test/controllers/api/gate_routing_test.rb": "37278b03b2636380c403f3b55c6188b765f4d12ff9410428488266d0cb2ba57d",
+    "test/services/travel_repair_concurrency_test.rb": "7fbf59b68b1218c49d2a212e3e1fa7f4f23ae009524e1bdb417ce0d2eecec073"
+  },
+  "preflight_platform": {
+    "at_utc": "2026-11-05T15:55:16.214983+00:00",
+    "phase": "before",
+    "app_id": "6b362b75-1732-42a4-9888-669a393f7f82",
+    "release": 176,
+    "status": "succeeded",
+    "sha": "eacc1e7a9572efb6d58425aae3728c1c52ea7bb1",
+    "slug_id": "63ac6f29-f554-48e7-8150-918dfa3d20a6",
+    "maintenance": false,
+    "config_sha256": "cdd9b18e21b22b2b4d23725c2587111f64541cde34684b1edc35c558aea810c3",
+    "formation": [
+      {
+        "type": "worker",
+        "quantity": 1,
+        "size": "Basic"
+      },
+      {
+        "type": "web",
+        "quantity": 1,
+        "size": "Basic"
+      },
+      {
+        "type": "rake",
+        "quantity": 0,
+        "size": "Basic"
+      },
+      {
+        "type": "console",
+        "quantity": 0,
+        "size": "Basic"
+      }
+    ],
+    "dynos": [
+      {
+        "name": "web.1",
+        "state": "up",
+        "release": {
+          "id": "42fd5ba4-2a2d-4358-97a6-427a48fd1823",
+          "version": 176
+        }
+      },
+      {
+        "name": "worker.1",
+        "state": "up",
+        "release": {
+          "id": "42fd5ba4-2a2d-4358-97a6-427a48fd1823",
+          "version": 176
+        }
+      }
+    ]
+  },
+  "preflight_protected": {
+    "at_utc": "2026-11-05T15:55:13Z",
+    "phase": "before",
+    "paused_ids": [],
+    "read_only": true,
+    "hashes": {
+      "affected_ships": "15e2fd1c3f9ad29714952fec6a5ff5a000afa10397d94ae05f2236f055c48cc6",
+      "affected_players": "9a4ce1ee41cadd3934bacd60fbafd0af442e299cd5c7fd15d65dbd06cb9eaee9",
+      "affected_cargo": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "affected_receipts": "ed965db9eb878c64de1796179dbd5952335511efcdbbe7ce187556468feb54a6",
+      "affected_events": "5c28270173c4d545b0137b7382a9de60559fc036c743377c67c9267f1030cefe",
+      "paused": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "paused_ships": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "paused_players": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "paused_cargo": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "ac3_ship": "009ca9ee78aa72a101ff4ef1660634ad4d6f24876ddac1a568a0b5d662705cf0",
+      "ac3_player": "5bebb1c6e42272538f3e17e8f8fe038e59ce8108dcc1c317ac8264b74d79ea42",
+      "ac3_cargo": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "receipt_64": "77138fbcfa889e214e8c655a9c5710ccb205481699f477bc9f90598f945e82ff",
+      "event_61": "189a099937f06f4b439ac3426952833613c57a294aa3b8daf472a8ed1c016c73",
+      "ship_767": "c467857494fa8af2e9d972518e5a3a8c7dacb99869fb8e380a444e2d578fea11",
+      "player_595": "3f31dc71cca9c209f41d352e0423060cd74c134ebed964c824bf52f34bc26ef1",
+      "existing_broker_settings": "29fd28cddfb1066da0e2ed46e66c0c52adce15edd9ebe87cc36cf44ed997b32a"
+    },
+    "routing_setting": [
+      {
+        "key": "gate_rabbitmq_default_shard_1",
+        "value": "dev",
+        "setting_type": "text"
+      }
+    ],
+    "tick_control": {
+      "running": "t",
+      "failure_count": "0",
+      "last_tick_error_class": null
+    }
+  },
+  "migrations": [],
+  "deployment": null,
+  "remaining_delivery_issue": "Historical prod arrivals for RightyBird and metaphyzikal1 were not received by the active dev bot. A targeted catch-up needs separate review/authorization. Active dual .NET consumers remain an application-side concern; no consumer was disconnected.",
+  "rollback": "Code rollback to v176 restores the incompatible mandatory-direction guard. No schema/configuration rollback is needed; prefer a forward fix."
+}

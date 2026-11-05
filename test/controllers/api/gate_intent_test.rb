@@ -45,19 +45,18 @@ class Api::GateIntentTest < ActionDispatch::IntegrationTest
     assert_equal 'prod',ShipTravel.sole.rabbitmq_environment
   end
 
-  test 'completed outbound followed by another blank fresh request is refused without reversing' do
+  test 'legacy bare jump accepts a deliberate new return after completed outbound' do
     jump
     complete
-    before=state
-    data=jump(guid:'unqualified-repeat')
-    assert_response :unprocessable_entity
-    assert_equal 'jump_destination_required',data['code']
+    before=assets
+    data=jump(guid:'new-bare-return')
+    assert_response :success
+    refute data['request_replayed']
+    assert_equal 'Pyro',data['arrival_star_system']
     assert_equal @destination.name,data['current_location']
-    assert_equal 'Stanton',data['current_star_system']
-    assert_equal 'completed',data['lifecycle_status']
-    assert data['route_confirmation_required']
-    assert_equal 'outbound',data['previous_travel_guid']
-    assert_equal before,state
+    assert_equal 1,ShipTravel.count
+    assert_equal 2,TravelRequestReceipt.count
+    assert_equal before,assets
   end
 
   test 'intentional return by selected gateway remains available with preserved assets' do
@@ -175,18 +174,19 @@ class Api::GateIntentTest < ActionDispatch::IntegrationTest
     assert_equal before,state
   end
 
-  test 'guard commits an independently due arrival without starting another departure' do
+  test 'legacy bare jump can lazily complete prior arrival and begin a new return' do
     jump
     travel=ShipTravel.sole
     Tick.instance.update_columns(current_tick:travel.arrival_tick,sequence:travel.arrival_tick+1)
-    data=jump(guid:'ambiguous-after-due')
-    assert_response :unprocessable_entity
-    assert_equal 'jump_destination_required',data['code']
+    data=jump(guid:'return-after-due')
+    assert_response :success
     assert_equal @destination.name,data['current_location']
+    assert_equal 'Pyro',data['arrival_star_system']
     assert_equal @destination.name,@hull.reload.location_name
     assert_equal @destination.name,@player.reload.current_location_name
-    assert_empty ShipTravel.all
-    assert_equal 'completed',TravelRequestReceipt.sole.outcome
+    assert_equal 1,ShipTravel.count
+    assert_equal 'completed',TravelRequestReceipt.find_by!(travel_guid:'outbound').outcome
+    assert_equal 'pending',TravelRequestReceipt.find_by!(travel_guid:'return-after-due').outcome
     assert_equal 1,TravelArrivalEvent.pending.count
   end
 

@@ -134,4 +134,27 @@ class Api::GateRoutingTest < ActionDispatch::IntegrationTest
     assert_equal before,ShipTravel.sole.attributes
     assert_equal 1,TravelRequestReceipt.count
   end
+  test 'captured legacy payload with no guid or gateway completes both legs on configured dev' do
+    configure('dev')
+    before=assets
+    first=jump(guid:nil)
+    assert_response :success
+    assert_equal 'dev',first['rabbitmq']
+    assert_equal 'shard_default',first['rabbitmq_source']
+    assert first['travel_guid'].present?
+    assert_equal ['dev'],finish.requested_environments
+    second=jump(guid:nil)
+    assert_response :success
+    refute second['request_replayed']
+    refute_equal first['travel_guid'],second['travel_guid']
+    assert_equal @gate.name,second['arrival_location']
+    assert_equal ['dev'],finish.requested_environments
+    assert_equal @gate.name,@hull.reload.location_name
+    assert_equal @gate.name,@player.reload.current_location_name
+    assert_empty ShipTravel.all
+    assert_equal 2,TravelRequestReceipt.where(outcome:'completed').count
+    assert_equal 2,TravelArrivalEvent.where.not(sent_at:nil).count
+    assert_equal before,assets
+  end
+
 end

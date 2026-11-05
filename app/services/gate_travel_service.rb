@@ -102,8 +102,8 @@ class GateTravelService
         routing_source: selection.source
       )
     rescue IntentError => error
-      # A due arrival discovered by this request is a completed movement of its
-      # own. Commit that arrival, then refuse the ambiguous new departure.
+      # A due arrival is a completed movement of its own. Commit it even when
+      # an explicit precondition refuses the next departure.
       intent_error = error
       nil
     end
@@ -128,18 +128,7 @@ class GateTravelService
       raise IntentError.new('jump_destination_mismatch',
         "Jump was not started. This gateway leads to #{arrival_location.name}; confirm the intended destination.", state)
     end
-    return if gateway_name.present? || expected_origin_location || expected_destination_location
 
-    latest = TravelRequestReceipt.where(user_ship_id:user_ship.id, outcome:'completed')
-      .order(completed_at_tick: :desc, id: :desc).first
-    return unless latest && latest.travel_snapshot['ship_travel_type'] == 'gate_travel' &&
-      latest.travel_snapshot['to_location_id'].to_i == current_location.id
-
-    raise IntentError.new('jump_destination_required',
-      "Previous jump already completed at #{current_location.name}. Jump was not started. " \
-      "Choose a gateway for a new trip, or retry the original travel_guid to retrieve its result.",
-      state.merge(previous_travel_guid:latest.travel_guid, lifecycle_status:'completed',
-        route_confirmation_required:true))
   end
 
   def matches_intent_location?(input, location)

@@ -166,16 +166,17 @@ class TravelRepairConcurrencyTest < ActiveSupport::TestCase
   end
 
 
-  test 'completed replay racing an unqualified new jump cannot reverse the ship' do
+  test 'completed replay racing a deliberate bare return leaves one new journey' do
     t=gate_start('completed-race')
     ShipTravelArrivalProcessor.new(travel:t,current_tick:108).call
     before=assets
     results=race(-> {gate_start('completed-race')},
-      -> {GateTravelService.new(ship_guid:@hull.guid,travel_guid:'ambiguous-race').call})
-    assert_equal 1,results.count{|r|r.first==:ok}
-    assert_equal 1,results.count{|r|r.first==:refused}
-    assert_empty ShipTravel.all
-    assert_equal 1,TravelRequestReceipt.count
+      -> {GateTravelService.new(ship_guid:@hull.guid,travel_guid:'bare-return-race').call})
+    assert_equal 2,results.count{|r|r.first==:ok}
+    assert_equal 1,ShipTravel.count
+    assert_equal 2,TravelRequestReceipt.count
+    assert_equal 'completed',TravelRequestReceipt.find_by!(travel_guid:'completed-race').outcome
+    assert_equal 'pending',TravelRequestReceipt.find_by!(travel_guid:'bare-return-race').outcome
     assert_equal @destination.name,@hull.reload.location_name
     assert_equal before,assets
   end
