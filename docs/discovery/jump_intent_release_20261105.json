@@ -1,6 +1,6 @@
 {
   "recorded_at_utc": "2026-11-05T13:37:21.816746+00:00",
-  "status": "qualified_for_authorized_deployment",
+  "status": "deployed_v175_and_verified",
   "authorization": "Owner: Establish fix, and deploy. Preserve 5071 and all paused interdictions.",
   "parent_commit": "be4be530e847453f88f78306493fb96c62f41076",
   "branch": "codex/jump-intent-guard",
@@ -209,7 +209,306 @@
       "20261101010300"
     ]
   },
-  "deployment": null,
+  "deployment": {
+    "source_commit": "4d9d70a631700093e3a3414e1a653b70ba7ea957",
+    "release": 175,
+    "before": {
+      "at_utc": "2026-11-05T13:36:17.663906+00:00",
+      "phase": "before",
+      "app_id": "6b362b75-1732-42a4-9888-669a393f7f82",
+      "release": 174,
+      "status": "succeeded",
+      "sha": "26a17ff9c517f8d17b7c83e909a00e5b8ab38ee5",
+      "slug_id": "2ec7f49b-fea9-4a77-8478-e54b93d50b98",
+      "maintenance": false,
+      "config_sha256": "cdd9b18e21b22b2b4d23725c2587111f64541cde34684b1edc35c558aea810c3",
+      "formation": [
+        {
+          "type": "worker",
+          "quantity": 1,
+          "size": "Basic"
+        },
+        {
+          "type": "web",
+          "quantity": 1,
+          "size": "Basic"
+        },
+        {
+          "type": "rake",
+          "quantity": 0,
+          "size": "Basic"
+        },
+        {
+          "type": "console",
+          "quantity": 0,
+          "size": "Basic"
+        }
+      ],
+      "dynos": [
+        {
+          "name": "web.1",
+          "state": "up",
+          "release": {
+            "id": "9db2541e-34d4-49bd-b7e2-6b7128e2ff92",
+            "version": 174
+          }
+        },
+        {
+          "name": "worker.1",
+          "state": "up",
+          "release": {
+            "id": "9db2541e-34d4-49bd-b7e2-6b7128e2ff92",
+            "version": 174
+          }
+        }
+      ]
+    },
+    "after": {
+      "at_utc": "2026-11-05T13:39:23.251916+00:00",
+      "phase": "after",
+      "app_id": "6b362b75-1732-42a4-9888-669a393f7f82",
+      "release": 175,
+      "status": "succeeded",
+      "sha": "4d9d70a631700093e3a3414e1a653b70ba7ea957",
+      "slug_id": "b26cd407-8467-420c-a595-80771b0a14b6",
+      "maintenance": false,
+      "config_sha256": "cdd9b18e21b22b2b4d23725c2587111f64541cde34684b1edc35c558aea810c3",
+      "formation": [
+        {
+          "type": "worker",
+          "quantity": 1,
+          "size": "Basic"
+        },
+        {
+          "type": "web",
+          "quantity": 1,
+          "size": "Basic"
+        },
+        {
+          "type": "rake",
+          "quantity": 0,
+          "size": "Basic"
+        },
+        {
+          "type": "console",
+          "quantity": 0,
+          "size": "Basic"
+        }
+      ],
+      "dynos": [
+        {
+          "name": "web.1",
+          "state": "up",
+          "release": {
+            "id": "1f596ff3-ede5-43ef-aadf-4853c5f06d31",
+            "version": 175
+          }
+        },
+        {
+          "name": "worker.1",
+          "state": "up",
+          "release": {
+            "id": "1f596ff3-ede5-43ef-aadf-4853c5f06d31",
+            "version": 175
+          }
+        }
+      ],
+      "config_unchanged": true,
+      "formation_unchanged": true
+    },
+    "live_http": {
+      "at_utc": "2026-11-05T13:39:28Z",
+      "checks": [
+        {
+          "check": "invalid_selector_rejected_before_lifecycle",
+          "http_status": 422,
+          "code": "invalid_rabbitmq",
+          "request_id": "1e59aff6-eed8-3af0-f1f4-5b511d8e16c8"
+        },
+        {
+          "check": "existing_completed_receipt_replay",
+          "http_status": 200,
+          "request_id": "e1d592ca-a6f3-de50-41d0-483cb1e5b24c",
+          "receipt_id": 39,
+          "ship_id": 635,
+          "lifecycle_status": "completed",
+          "time_remaining": 0,
+          "rabbitmq": "prod",
+          "current_location": "Patch City",
+          "saved_arrival": "Pyro Gateway (Stanton)",
+          "message": "Gate travel already completed. Saved arrival returned."
+        }
+      ],
+      "scope": "Invalid selector and existing completed historical request replay only; no new journey, arrival dispatch, notification replay, status writer or gameplay repair invoked."
+    },
+    "protected_after": {
+      "protected_ids": [
+        4607,
+        5028,
+        5042,
+        5043,
+        5071,
+        5090,
+        5121,
+        5162
+      ],
+      "at_utc": "2026-11-05T13:39:40Z",
+      "phase": "after",
+      "read_only": "on",
+      "hashes": {
+        "travel": "4449cad5326b6509bbc374776265cea65db25b484d913b140904b971c8f033dc",
+        "ships": "3557a7cecb711206b469b507f2fcbb51affa9510b6c313c0ee39ef2019095903",
+        "players": "a315617d5e5cc8593c255359f5de7835d7f1ba941a2ff954297b99409bcdaeed",
+        "cargo": "b5c593c85a556a0d9f3a86c2702db1140e4115a2f5771ac01917122e6282f2a1",
+        "users": "10f7f8a071118892e2076d2ee97136241264800b0ea1d8f81bfdd82425720dfc",
+        "timing": "9af433e0b6bb66050e41ff77077a183eb5aae019a2baedf862b0448f0e823b88",
+        "broker_settings": "fe2c401edf4a2425bf6362c05f1283abea4193c2a5edf160350aea03f698682b",
+        "ac3_ships": "217c82732b9b107aba492bf64c88174c3e7b153f7d43fa00e2ab27fce826e62b",
+        "ac3_players": "eb891900d3d03a82299f7f50b9d6634487b9b805428fb572b503b654711214f7",
+        "ac3_cargo": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "ac3_receipts": "b86dee344f7cc95992e97124e2d19aceb03c0ae05b2c89daa8a7ef6065a837db",
+        "ac3_events": "67fd1edf4f08bb7a1ce72a8bf76ba824f14478d4886dae0612de28d4af150c9a"
+      },
+      "protected_state": [
+        {
+          "id": "4607",
+          "is_paused": "t",
+          "arrival_tick": "0",
+          "remaining_ticks_from_arrival": "2",
+          "completed_at_tick": null
+        },
+        {
+          "id": "5028",
+          "is_paused": "t",
+          "arrival_tick": "0",
+          "remaining_ticks_from_arrival": "32",
+          "completed_at_tick": null
+        },
+        {
+          "id": "5042",
+          "is_paused": "t",
+          "arrival_tick": "0",
+          "remaining_ticks_from_arrival": "1",
+          "completed_at_tick": null
+        },
+        {
+          "id": "5043",
+          "is_paused": "t",
+          "arrival_tick": "0",
+          "remaining_ticks_from_arrival": "23",
+          "completed_at_tick": null
+        },
+        {
+          "id": "5071",
+          "is_paused": "t",
+          "arrival_tick": "0",
+          "remaining_ticks_from_arrival": "40",
+          "completed_at_tick": null
+        },
+        {
+          "id": "5090",
+          "is_paused": "t",
+          "arrival_tick": "0",
+          "remaining_ticks_from_arrival": "59",
+          "completed_at_tick": null
+        },
+        {
+          "id": "5121",
+          "is_paused": "t",
+          "arrival_tick": "0",
+          "remaining_ticks_from_arrival": "62",
+          "completed_at_tick": null
+        },
+        {
+          "id": "5162",
+          "is_paused": "t",
+          "arrival_tick": "0",
+          "remaining_ticks_from_arrival": "46",
+          "completed_at_tick": null
+        }
+      ],
+      "unchanged_categories": {
+        "travel": true,
+        "ships": true,
+        "players": true,
+        "cargo": true,
+        "users": true,
+        "timing": true,
+        "broker_settings": true,
+        "ac3_ships": true,
+        "ac3_players": true,
+        "ac3_cargo": true,
+        "ac3_receipts": true,
+        "ac3_events": true
+      },
+      "all_protected_unchanged": true,
+      "tick_control": [
+        {
+          "running": "t",
+          "failure_count": "0",
+          "last_tick_error_class": null,
+          "last_tick_started_at": "2026-11-05 13:39:37.254194",
+          "last_tick_completed_at": "2026-11-05 13:39:37.442578"
+        }
+      ],
+      "failed_jobs": "0",
+      "notifications": [
+        {
+          "total": "48",
+          "pending": "0",
+          "retrying": "0"
+        }
+      ],
+      "migrations": [
+        "20261101010000",
+        "20261101010100",
+        "20261101010200",
+        "20261101010300"
+      ]
+    },
+    "health": {
+      "at_utc": "2026-11-05T13:39:42.094720+00:00",
+      "http": [
+        {
+          "path": "/up",
+          "status": 200,
+          "final_path": "/up"
+        },
+        {
+          "path": "/api/location/635",
+          "status": 200,
+          "final_path": "/api/location/635",
+          "state": {
+            "in_transit": false,
+            "paused": null,
+            "location": "Patch City",
+            "travel_state": null
+          }
+        },
+        {
+          "path": "/admin/ship_travels",
+          "status": 200,
+          "final_path": "/login"
+        }
+      ],
+      "release_created_at_utc": "2026-11-05T13:38:40Z",
+      "retained_since_release": 180,
+      "platform_error_count": 0,
+      "http_5xx_count": 0,
+      "deadlock_or_lock_timeout_count": 0,
+      "lifecycle_error_markers": 0,
+      "ignored_location_events": 0,
+      "production_broker_connected": 0,
+      "development_broker_failure_markers": 0,
+      "completed_replay_trace_count": 1,
+      "limits": "Bounded logs and read-only HTTP checks; no authenticated status mutation, production jump or notification manufactured. Broker configuration and saved routes are unchanged."
+    },
+    "data_changes": "No manual game-state changes, new production journey, notification replay, broker/configuration changes or migration. Historical completed request replay verified through live authenticated HTTP without any target/protected row changes.",
+    "new_traces_verified": "The completed replay emitted its request-correlated gate_request_replayed lifecycle_status=completed trace in production.",
+    "external_validation_limit": "Actual bot command and consumer processing are not accessible. Full bot end-to-end completion remains unverified; the matching bounce mechanism and canonical status/receipt behavior passed synthetic integration tests.",
+    "reminder_5071": "Unchanged and paused, arrival_tick=0,40 saved ticks; preexisting ship/player location discrepancy still needs separate owner review."
+  },
   "remaining_external_limit": "External bot source/consumption remains unavailable. Server rejects an ambiguous reversal and returns canonical state; no claim of full external-bot end-to-end qualification.",
-  "rollback": "Code-only rollback can restore v174 without schema rollback. Existing saved journeys/receipts/events keep their recorded environment. Rollback removes the new ambiguity guard, so prefer a forward repair for isolated issues."
+  "rollback": "Code-only rollback can restore v174 without schema rollback. Existing saved journeys/receipts/events keep their recorded environment. Rollback removes the new ambiguity guard, so prefer a forward repair for isolated issues.",
+  "closed_at_utc": "2026-11-05T13:40:35.662687+00:00"
 }
