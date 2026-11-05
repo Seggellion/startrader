@@ -1,6 +1,6 @@
 {
   "recorded_at_utc": "2026-11-05T15:56:20.660680+00:00",
-  "status": "v177_legacy_bare_jumps_restored_and_two_approved_catchups_broker_confirmed",
+  "status": "v177_deployed_owner_confirmed_travel_working",
   "authorization": "Ongoing owner-directed travel repair and deployment; latest report that nobody can travel.",
   "regression": "v175 added jump_destination_required for a new bare jump after a completed gate trip. Actual legacy bot requests contain only ship_guid and auth, with no gateway, preconditions or travel_guid. The guard therefore rejects legitimate returns and subsequent jumps.",
   "repair": "Remove the history-based mandatory-direction rejection. Restore bare jumps from saved current gateway, including a return after completion and same-request lazy arrival. Optional explicit canonical origin/destination checks, idempotent same-GUID retries, named-only gateway matching and manual dev shard routing remain intact.",
@@ -997,10 +997,14 @@
   },
   "ubo_update": "The new Uboo journey5183/interdiction cleared through activity outside this repair; receipt66 completed normally at 16:00:53 UTC and ship611/player343 now agree at HUR-L1. This repair did not resume or relocate that journey.",
   "client_validation": {
-    "status": "Real bot acceptance result requested; no post-deployment travel request was present in the bounded log sample.",
+    "status": "Owner confirmed travel works now after the v177 deployment and approved catch-up deliveries.",
     "remaining_limit": "Two active .NET consumers share the dev queue; identities are undefined. Both connections have the same peer-host fingerprint, opened roughly a day apart. This does not establish whether they share application state, and no consumer was disconnected.",
     "read_only_connection_correlation": "tmp/consumer-caller-match.json",
     "acceptance_question": "Can RightyBird or metaphyzikal1 check location and try normal jump/travel now?",
-    "no_false_end_to_end_claim": true
-  }
+    "no_false_end_to_end_claim": true,
+    "owner_reply": "Travel works now",
+    "evidence_scope": "Owner-reported real-bot acceptance; specific player, command and request were not supplied, so this does not assert independent fleet-wide verification.",
+    "confirmation_recorded_at_utc": "2026-11-05T17:59:04.770454+00:00"
+  },
+  "updated_at_utc": "2026-11-05T17:59:04.770454+00:00"
 }
