@@ -22,4 +22,16 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
       credentials: false,
       max_age: 600
   end
+
+  allow do
+    origins "https://www.maidenbot.com"
+
+    resource "/api/ships",
+      headers: [],
+      methods: [:get, :head, :options],
+      credentials: false,
+      max_age: 600,
+      # rack-cors checks methods on preflight only; scope actual requests too.
+      if: ->(env) { %w[GET HEAD OPTIONS].include?(env["REQUEST_METHOD"]) }
+  end
 end
