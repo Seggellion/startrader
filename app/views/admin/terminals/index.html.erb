@@ -38,7 +38,7 @@
           
           <td class="py-2 px-4 border"><%= terminal.location&.name %></td>
           <td class="py-2 px-4 border"><%= terminal.code %></td>
-          <td class="py-2 px-4 border"><%= terminal.created_at.strftime('%Y-%m-%d') %></td>
+          <td class="py-2 px-4 border"><%= display_date(terminal.created_at) %></td>
           <td class="py-2 px-4 border">
             <%= link_to 'Edit', edit_admin_terminal_path(terminal), class: 'text-blue-500 hover:underline' %> |
             <%= link_to 'Delete', admin_terminal_path(terminal), method: :delete, data: { confirm: 'Are you sure?' }, class: 'text-red-500 hover:underline' %>

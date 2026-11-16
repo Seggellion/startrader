@@ -30,7 +30,7 @@
       <div>
         <%= link_to "Back to Users", admin_users_path, class: "text-sm font-semibold text-cyan-700 hover:text-cyan-900" %>
         <h1 class="mt-1 text-3xl font-bold text-slate-950"><%= @user.username.presence || "User ##{@user.id}" %></h1>
-        <p class="mt-1 text-sm text-slate-500">User #<%= @user.id %> · <%= role %> · times shown in UTC</p>
+        <p class="mt-1 text-sm text-slate-500">User #<%= @user.id %> · <%= role %> · times shown in <%= display_time_zone.tzinfo.name == "Etc/UTC" ? "UTC" : display_time_zone.name %></p>
       </div>
     </div>
     <div class="flex flex-wrap gap-2">

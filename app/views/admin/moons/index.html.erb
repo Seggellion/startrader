@@ -25,7 +25,7 @@
           <td class="py-2 px-4 border"><%= moon.name %></td>
           <td class="py-2 px-4 border"><%= moon.classification %></td>
           <td class="py-2 px-4 border"><%= moon.parent&.name %></td>
-          <td class="py-2 px-4 border"><%= moon.created_at.strftime('%Y-%m-%d') %></td>
+          <td class="py-2 px-4 border"><%= display_date(moon.created_at) %></td>
           <td class="py-2 px-4 border">
             <%= link_to 'Edit', edit_admin_moon_path(moon), class: 'text-blue-500 hover:underline' %> |
             <%= link_to 'Delete', admin_moon_path(moon), method: :delete, data: { confirm: 'Are you sure?' }, class: 'text-red-500 hover:underline' %>

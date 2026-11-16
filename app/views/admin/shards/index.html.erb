@@ -21,7 +21,7 @@
                     <td class="py-2 px-4 border"><%= shard.region %></td>
           <td class="py-2 px-4 border"><%= shard.shard_users.count %></td>
 
-          <td class="py-2 px-4 border"><%= shard.created_at.strftime('%Y-%m-%d') %></td>
+          <td class="py-2 px-4 border"><%= display_date(shard.created_at) %></td>
           <td class="py-2 px-4 border">
             <%= link_to 'Edit', edit_admin_shard_path(shard), class: 'text-blue-500 hover:underline' %> |
             <%= link_to 'Delete', admin_shard_path(shard), method: :delete, data: { confirm: 'Are you sure?' }, class: 'text-red-500 hover:underline' %>

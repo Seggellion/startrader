@@ -43,6 +43,7 @@ module Api
             buy: facility.sellable? ? facility.api_sell_price : 0,
             vice: facility.vice?,
             "updated-at": facility.updated_at.iso8601(3),
+            "updated-at-unix": facility.updated_at.to_i,
             "out-of-date": facility.out_of_date?
           }
         }

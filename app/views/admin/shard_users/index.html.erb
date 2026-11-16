@@ -22,7 +22,7 @@
           <td class="py-2 px-4 border"><%= shard_user.shard&.name || shard_user.shard_name || "No shard" %></td>
           <td class="py-2 px-4 border"><%= shard_user.user_ships.size %></td>
           <td class="py-2 px-4 border"><%= number_to_currency(shard_user.wallet_balance || 0) %></td>
-          <td class="py-2 px-4 border"><%= shard_user.created_at.strftime('%Y-%m-%d') %></td>
+          <td class="py-2 px-4 border"><%= display_date(shard_user.created_at) %></td>
           <td class="py-2 px-4 border">
             <%= link_to 'Edit', edit_admin_shard_user_path(shard_user), class: 'text-blue-500 hover:underline' %> |
             <%= link_to 'Delete', admin_shard_user_path(shard_user), method: :delete, data: { confirm: 'Are you sure?' }, class: 'text-red-500 hover:underline' %>

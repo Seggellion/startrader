@@ -30,7 +30,7 @@
   end
 
   timestamp = lambda do |value|
-    value.present? ? value.strftime("%b %d, %Y %H:%M") : "Not set"
+    display_time(value, format: "%b %d, %Y %H:%M %Z", missing: "Not set")
   end
 
   status_badge_class = lambda do |status|

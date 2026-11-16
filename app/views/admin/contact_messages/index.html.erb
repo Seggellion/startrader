@@ -21,7 +21,7 @@
         <td class="py-2 px-4 border"><%= message.first_name %> <%= message.last_name %></td>
         <td class="py-2 px-4 border"><%= message.email %></td>
         <td class="py-2 px-4 border"><%= message.subject %></td>
-        <td class="py-2 px-4 border"><%= message.created_at.strftime('%Y-%m-%d') %></td>
+        <td class="py-2 px-4 border"><%= display_date(message.created_at) %></td>
        
 
         <td class="py-2 px-4 border"><%= link_to 'View', admin_contact_message_path(message) %>

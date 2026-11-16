@@ -28,7 +28,7 @@
         <tr>
           <td class="py-2 px-4 border"><%= commodity.name %></td>
           <td class="py-2 px-4 border"><%= commodity.kind %></td>
-          <td class="py-2 px-4 border"><%= commodity.created_at.strftime('%Y-%m-%d') %></td>
+          <td class="py-2 px-4 border"><%= display_date(commodity.created_at) %></td>
           <td class="py-2 px-4 border">
             <%= link_to 'Edit', edit_admin_commodity_path(commodity), class: 'text-blue-500 hover:underline' %> |
             <%= link_to 'Delete', admin_commodity_path(commodity), method: :delete, data: { confirm: 'Are you sure?' }, class: 'text-red-500 hover:underline' %>

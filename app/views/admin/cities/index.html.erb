@@ -35,7 +35,7 @@
           <td class="py-2 px-4 border"><%= city.name %></td>
           <td class="py-2 px-4 border"><%= city.classification %></td>
           <td class="py-2 px-4 border"><%= city.parent&.name %></td>
-          <td class="py-2 px-4 border"><%= city.created_at.strftime('%Y-%m-%d') %></td>
+          <td class="py-2 px-4 border"><%= display_date(city.created_at) %></td>
           <td class="py-2 px-4 border">
             <%= link_to 'Edit', edit_admin_city_path(city), class: 'text-blue-500 hover:underline' %> |
             <%= link_to 'Delete', admin_city_path(city), method: :delete, data: { confirm: 'Are you sure?' }, class: 'text-red-500 hover:underline' %>

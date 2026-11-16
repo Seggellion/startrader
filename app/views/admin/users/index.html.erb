@@ -108,7 +108,7 @@
             wallet_value = user.wallet_balance || 0
             last_login_sort = user.last_login&.to_i || 0
             real_name = [user.first_name, user.last_name].compact_blank.join(" ")
-            last_login_label = user.last_login ? user.last_login.strftime("%b %d, %Y") : "Never"
+            last_login_label = display_time(user.last_login, format: "%b %d, %Y %Z", missing: "Never")
             search_text = [
               user.username,
               user.uid,
@@ -122,7 +122,7 @@
               active_ship&.location_name,
               destination_name,
               last_login_label,
-              user.created_at&.strftime("%b %d, %Y")
+              display_time(user.created_at, format: "%b %d, %Y %Z", missing: nil)
             ].compact.join(" ")
           %>
 

@@ -8,9 +8,10 @@ module Admin
       interdicted: ["Interdicted", "border-amber-200 bg-amber-50 text-amber-800"]
     }.freeze
 
-    # Explicit UTC with zone label. Missing values are labelled, never blank.
+    # Zone-labelled time in the configured admin display zone (UTC by default;
+    # see DisplayTimeHelper). Missing values are labelled, never blank.
     def admin_utc(time, missing: "Not recorded")
-      time.present? ? time.utc.strftime("%Y-%m-%d %H:%M:%S UTC") : missing
+      display_time(time, missing: missing)
     end
 
     def comparison_badge(status)

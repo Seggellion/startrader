@@ -26,7 +26,7 @@
           <td class="py-2 px-4 border"><%= vehicle.name_full %></td>
           <td class="py-2 px-4 border"><%= vehicle.scu %></td>
           <td class="py-2 px-4 border"><%= vehicle.crew %></td>
-          <td class="py-2 px-4 border"><%= vehicle.created_at.strftime('%Y-%m-%d') %></td>
+          <td class="py-2 px-4 border"><%= display_date(vehicle.created_at) %></td>
           <td class="py-2 px-4 border">
             <%= link_to 'Edit', edit_admin_vehicle_path(vehicle), class: 'text-blue-500 hover:underline' %> |
             <%= link_to 'Delete', admin_vehicle_path(vehicle), method: :delete, data: { confirm: 'Are you sure?' }, class: 'text-red-500 hover:underline' %>

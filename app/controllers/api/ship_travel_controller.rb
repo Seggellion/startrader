@@ -49,7 +49,8 @@ module Api
           travel_guid:replay.travel_guid,user_ship_id:user_ship.id,channel_name:shard.name,
           rabbitmq:replay.rabbitmq_environment,destination:replay.to_location.name,
           departure_tick:replay.departure_tick,arrival_tick:replay.arrival_tick,current_tick:response_tick,
-          time_remaining:replay.seconds_remaining(response_tick),player_location:shard_user.reload.current_location_name}
+          time_remaining:replay.seconds_remaining(response_tick),player_location:shard_user.reload.current_location_name,
+          arrival_at_unix:replay.arrival_at_unix(response_tick),server_time_at_unix:Time.current.to_i}
       end
 
       process_due_arrival_for(user_ship)
@@ -140,7 +141,9 @@ module Api
         departure_tick: travel.departure_tick,
         arrival_tick:  travel.arrival_tick,
         time_remaining: travel.seconds_remaining(response_tick),
-        player_location: availability.player_location&.name
+        player_location: availability.player_location&.name,
+        arrival_at_unix: travel.arrival_at_unix(response_tick),
+        server_time_at_unix: Time.current.to_i
       }.merge(timing)
       end
     rescue TravelLifecycle::Error => e
@@ -174,6 +177,8 @@ module Api
           departure_tick: active_travel.departure_tick,
           arrival_tick:   active_travel.arrival_tick,
           current_tick:   Tick.current,
+          arrival_at_unix: active_travel.arrival_at_unix(Tick.current),
+          server_time_at_unix: Time.current.to_i,
           progress:       active_travel.progress_fraction(Tick.current),  # 0.0..1.0
           interdictable:  !active_travel.is_paused && !phase.nil?,
           interdict_phase: phase,  # null, "departure" or "arrival"
@@ -192,6 +197,8 @@ module Api
             travel_guid: paused.travel_guid,
             paused_at_tick: paused.paused_at_tick,
             remaining_ticks_from_arrival: paused.remaining_ticks_from_arrival,
+            arrival_at_unix: nil,
+            server_time_at_unix: Time.current.to_i,
             from_location: paused.from_location.name,
             to_location: paused.to_location.name
           }

@@ -80,6 +80,24 @@ scope :interdictable_now_sql, ->(tick = Tick.current) {
     ((duration_ticks * interdict_window_percent) / 100.0).ceil
   end
 
+  # M05: derived absolute arrival as integer Unix epoch seconds (UTC), or nil.
+  # An ESTIMATE recomputed per response: the tick chain can stall, so it is never
+  # stored and no arrival decision reads it (arrival stays arrival_tick <= tick).
+  # nil for a paused journey, a completed one, or the arrival_tick = 0 sentinel,
+  # so interdiction is never rendered as 1970-01-01.
+  def arrival_at_unix(current_tick = Tick.current, seconds_per_tick: Tick.seconds_per_tick, now: Time.current)
+    return nil if is_paused? || completed_at_tick.present? || arrival_tick.to_i <= 0
+
+    now.to_i + ([arrival_tick.to_i - current_tick.to_i, 0].max * seconds_per_tick.to_f).round
+  end
+
+  # Paused-aware remaining duration in seconds (F-13): for an interdicted journey
+  # this is the saved remaining time after resume, never zero from the sentinel.
+  def remaining_travel_seconds(current_tick = Tick.current, seconds_per_tick: Tick.seconds_per_tick)
+    ticks = is_paused? ? remaining_ticks_from_arrival.to_i : [arrival_tick.to_i - current_tick.to_i, 0].max
+    (ticks * seconds_per_tick.to_f).round
+  end
+
   def seconds_remaining(current_tick)
     [arrival_tick - current_tick, 0].max * Tick.seconds_per_tick
   end

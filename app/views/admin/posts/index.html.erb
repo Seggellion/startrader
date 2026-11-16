@@ -17,7 +17,7 @@
         <tr>
           <td class="py-2 px-4 border"><%= post.title %></td>
           <td class="py-2 px-4 border"><%= post.user.first_name %></td>
-          <td class="py-2 px-4 border"><%= post.created_at.strftime('%Y-%m-%d') %></td>
+          <td class="py-2 px-4 border"><%= display_date(post.created_at) %></td>
           <td class="py-2 px-4 border">
             <%= link_to 'Edit', edit_admin_post_path(post), class: 'text-blue-500 hover:underline' %> |
             <%= link_to 'Delete', admin_post_path(post), method: :delete, data: { confirm: 'Are you sure?' }, class: 'text-red-500 hover:underline' %>

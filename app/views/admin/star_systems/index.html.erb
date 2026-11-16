@@ -35,7 +35,7 @@
           <td class="py-2 px-4 border"><%= star_system.name %></td>
                     <td class="py-2 px-4 border"><%= star_system.nickname %></td>
           <td class="py-2 px-4 border"><%= star_system.code %></td>
-          <td class="py-2 px-4 border"><%= star_system.created_at.strftime('%Y-%m-%d') %></td>
+          <td class="py-2 px-4 border"><%= display_date(star_system.created_at) %></td>
           <td class="py-2 px-4 border">
             <%= link_to 'Edit', edit_admin_star_system_path(star_system), class: 'text-blue-500 hover:underline' %> |
             <%= link_to 'Delete', admin_star_system_path(star_system), method: :delete, data: { confirm: 'Are you sure?' }, class: 'text-red-500 hover:underline' %>

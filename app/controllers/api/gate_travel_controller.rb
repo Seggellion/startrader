@@ -37,6 +37,8 @@ module Api
           current_tick: tick,
           arrival_tick: journey.arrival_tick,
           time_remaining: finalized ? 0 : journey.seconds_remaining(tick),
+          arrival_at_unix: finalized ? nil : journey.arrival_at_unix(tick),
+          server_time_at_unix: Time.current.to_i,
           rabbitmq: journey.rabbitmq_environment,
           rabbitmq_source: result.routing_source,
           origin_location: result.origin_location.name,

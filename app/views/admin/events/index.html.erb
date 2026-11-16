@@ -16,8 +16,8 @@
       <tr>
         <td class="py-2 px-4 border"><%= event.title %></td>
         <td class="py-2 px-4 border"><%= event.location%></td>
-        <td class="py-2 px-4 border"><%= event.start_time.strftime('%B %d, %Y %I:%M %p') %></td>
-        <td class="py-2 px-4 border"><%= event.end_time.strftime('%B %d, %Y %I:%M %p') %></td>
+        <td class="py-2 px-4 border"><%= display_time(event.start_time, format: '%B %d, %Y %I:%M %p %Z') %></td>
+        <td class="py-2 px-4 border"><%= display_time(event.end_time, format: '%B %d, %Y %I:%M %p %Z') %></td>
         <td class="py-2 px-4 border">
           <%= link_to 'Edit', edit_admin_event_path(event), class: 'text-blue-500 hover:underline' %> |
           <%= link_to 'Delete', admin_event_path(event), method: :delete, data: { confirm: 'Are you sure?' }, class: 'text-red-500 hover:underline' %>

@@ -476,7 +476,11 @@ class TradeService
           to_location: ship_travel&.to_location&.name,
           arrival_tick: ship_travel&.arrival_tick,
           current_tick: current_tick,
-          time_remaining: ship_travel&.seconds_remaining(current_tick)
+          # Legacy key, unchanged (Q6): reports 0 for an interdicted journey.
+          time_remaining: ship_travel&.seconds_remaining(current_tick),
+          # M05 additive keys: paused-aware duration and estimated arrival instant.
+          remaining_travel_seconds: ship_travel&.remaining_travel_seconds(current_tick),
+          arrival_at_unix: ship_travel&.arrival_at_unix(current_tick)
         },
         ships: ships_availability_json(shard_user),
         cargo: cargo,
@@ -565,7 +569,8 @@ class TradeService
         current_tick: current_tick,
         remaining_ticks: remaining_ticks,
         time_remaining: remaining_ticks * Tick.seconds_per_tick,
-        is_paused: travel.is_paused
+        is_paused: travel.is_paused,
+        arrival_at_unix: travel.arrival_at_unix(current_tick)
       }.merge(TravelState.new(travel,tick:current_tick).payload)
     end
 
@@ -622,7 +627,7 @@ class TradeService
         end
       warnings = notes.dup
       warnings << { code: 'stale_location', message: payload[:message], ignored_for: payload[:ignored_for] } if payload
-      keys = { warnings: warnings }
+      keys = { warnings: warnings, server_time_at_unix: Time.current.to_i }
       keys[:location_resolution] = resolution if resolution
       keys
     end
