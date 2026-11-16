@@ -273,7 +273,7 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
       TradeService.stub(:list_sellable_commodities, ->(username:, shard:) {
         called = true
         assert_equal @user.username, username
-        assert_equal @shard.name, shard
+        assert_equal @shard.channel_uuid, shard
         {
           status: "success",
           message: "Commodities available to sell at #{@location.name}.",
@@ -444,18 +444,22 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     post "/api/status", params: base_status_payload, as: :json
 
     assert_response :success
-    assert_equal ["cargo", "player_location", "ship", "ships", "status", "wallet_balance"], response_json.keys.sort
+    # Additive keys: location_resolution and warnings (M04), server_time_at_unix (M05).
+    assert_equal ["cargo", "location_resolution", "player_location", "server_time_at_unix", "ship", "ships", "status",
+      "wallet_balance", "warnings"], response_json.keys.sort
     assert_equal "success", response_json["status"]
     assert_equal 40_000, response_json["wallet_balance"]
     assert_equal(
       [
+        "arrival_at_unix",
         "arrival_tick",
-        "available_cargo_space",
         "available_at_player_location",
+        "available_cargo_space",
         "current_tick",
         "from_location",
         "location",
         "model",
+        "remaining_travel_seconds",
         "time_remaining",
         "to_location",
         "total_scu",

@@ -1,6 +1,8 @@
 require "test_helper"
 
 class Admin::CommoditiesControllerTest < ActionDispatch::IntegrationTest
+  setup { sign_in_admin }
+
   test "raw json import redirects with success flash when records import" do
     Admin::Data::CommoditiesImporter.stub :import_raw_json!, 2 do
       post import_raw_json_admin_commodities_url, params: { raw_json: "[]" }

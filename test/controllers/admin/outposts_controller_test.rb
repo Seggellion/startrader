@@ -1,6 +1,8 @@
 require "test_helper"
 
 class Admin::OutpostsControllerTest < ActionDispatch::IntegrationTest
+  setup { sign_in_admin }
+
   test "raw json import redirects with success flash when records import" do
     Admin::Data::OutpostsImporter.stub :import_raw_json!, 2 do
       post import_raw_json_admin_outposts_url, params: { raw_json: "[]" }

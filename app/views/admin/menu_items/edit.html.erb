@@ -1,7 +1,7 @@
 <!-- app/views/admin/menu_items/edit.html.erb -->
 
 <div class="container mx-auto px-4 py-8">
-  <h1 class="text-2xl font-bold mb-6">Edit Menu Item</h1>
+  <h1 class="text-2xl font-bold mb-6"><%= @menu_item.new_record? ? "New Menu Item" : "Edit Menu Item" %></h1>
 
   <%= form_with model: [:admin, @menu, @menu_item], local: true do |form| %>
     <div class="mb-4">
@@ -15,11 +15,11 @@
     </div>
 
     <div class="mb-4">
-      <%= form.label :parent_name, "Parent Menu Item", class: 'block text-gray-700' %>
-      <%= form.select :parent_name, options_for_select(@menu_items_options, selected: @menu_item.parent_name), { include_blank: true }, class: 'form-select mt-1 block w-full' %>
+      <%= form.label :parent_id, "Parent Menu Item", class: 'block text-gray-700' %>
+      <%= form.select :parent_id, options_for_select(@menu_items_options, selected: @menu_item.parent_id), { include_blank: true }, class: 'form-select mt-1 block w-full' %>
     </div>
 
-    <%= form.submit 'Save Changes', class: 'bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700' %>
+    <%= form.submit(@menu_item.new_record? ? "Create Menu Item" : "Save Changes", class: 'bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700') %>
     <%= link_to 'Cancel', edit_admin_menu_path(@menu), class: 'bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-700 ml-4' %>
   <% end %>
 </div>

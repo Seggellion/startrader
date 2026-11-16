@@ -13,7 +13,7 @@ class TickRunnerTest < ActiveSupport::TestCase
   test "lock unavailable skips without incrementing" do
     TickControl.instance.update!(running: true)
 
-    TickRunner.stub(:with_tick_lock, false) do
+    TickRunner.stub(:with_tick_lock, -> { false }) do
       assert_equal :locked, TickRunner.run_once!
     end
 

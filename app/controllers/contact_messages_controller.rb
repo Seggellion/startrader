@@ -31,13 +31,6 @@ class ContactMessagesController < ApplicationController
 
       if @contact_message.save
 
-        User.find_or_create_by(email: @contact_message.email.downcase, 
-        first_name:@contact_message.first_name,
-        last_name:@contact_message.last_name,
-        user_type:50, 
-        uid:0, 
-        provider:'contact')
-
         respond_to do |format|
           format.json { render json: { success: true } }
           format.html { redirect_to root_path, notice: 'Message was successfully sent.' }

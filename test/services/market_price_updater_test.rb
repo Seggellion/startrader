@@ -21,14 +21,20 @@ class MarketPriceUpdaterTest < ActiveSupport::TestCase
 
   test "updates prices without broadcasting each changed market row by default" do
     facilities = 3.times.map do |index|
-      create_facility(facility_name: "Market Facility #{index}", inventory: 0)
+      create_facility(facility_name: "Market Facility #{index}", inventory: 0, local_sell_price: 90)
     end
 
     assert_no_enqueued_jobs only: Turbo::Streams::ActionBroadcastJob do
       MarketPriceUpdater.update_prices!
     end
 
-    assert facilities.any? { |facility| facility.reload.local_sell_price > 100 }
+    assert facilities.any? { |facility| facility.reload.local_sell_price > 90 }
+  end
+
+  test "small smoothed changes stay inside the existing update threshold" do
+    facility = create_facility(inventory: 0, local_sell_price: 100)
+    MarketPriceUpdater.update_prices!
+    assert_equal 100.to_d, facility.reload.local_sell_price
   end
 
   private

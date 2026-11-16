@@ -273,16 +273,20 @@ class TradeServiceTest < ActiveSupport::TestCase
       **status_payload
     )
 
-    assert_equal [:cargo, :player_location, :ship, :ships, :status, :wallet_balance], response.keys.sort
+    # Additive keys: location_resolution and warnings (M04), server_time_at_unix (M05).
+    assert_equal [:cargo, :location_resolution, :player_location, :server_time_at_unix, :ship, :ships, :status,
+      :wallet_balance, :warnings], response.keys.sort
     assert_equal(
       [
+        :arrival_at_unix,
         :arrival_tick,
-        :available_cargo_space,
         :available_at_player_location,
+        :available_cargo_space,
         :current_tick,
         :from_location,
         :location,
         :model,
+        :remaining_travel_seconds,
         :time_remaining,
         :to_location,
         :total_scu,
@@ -807,6 +811,24 @@ class TradeServiceTest < ActiveSupport::TestCase
     end
 
     assert_equal "No matching facility found for Orison and Agricium.", error.message
+  end
+
+  test "shard UUID and legacy name resolve to the same sell listing after a rename" do
+    @shard.update!(name: "Renamed shard")
+    expected = TradeService.list_sellable_commodities(username: @user.username, shard: @shard.channel_uuid)
+    assert_equal "success", expected[:status]
+    assert_equal expected, TradeService.list_sellable_commodities(username: @user.username, shard: "renamed SHARD")
+  end
+
+  test "buy rejects an unknown shard without changing wallet or cargo" do
+    before = @shard_user.wallet_balance
+    assert_no_difference "UserShipCargo.count" do
+      assert_raises(ActiveRecord::RecordNotFound) do
+        TradeService.buy(username: @user.username, wallet_balance: 1, commodity_name: @terminal_buy_commodity.name,
+                         scu: 1, shard: "missing-shard", ship_guid: @user_ship.guid, ship_slug: @ship.slug)
+      end
+    end
+    assert_equal before, @shard_user.reload.wallet_balance
   end
 
   private

@@ -69,7 +69,7 @@ class Api::CommoditiesControllerTest < ActionDispatch::IntegrationTest
       local_buy_price: 2539.45,
       price_buy: 2400,
       status_buy: 1,
-      updated_at: Time.utc(2026, 6, 24, 7, 8, 58, 20_000)
+      updated_at: Time.current.change(usec: 20_000)
     )
 
     get "/api/commodities"
@@ -83,9 +83,9 @@ class Api::CommoditiesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "commodities", item["type"]
     assert_equal "https://ctd.altama.energy/commodities/3468", item.dig("links", "self")
     assert_equal "Agricium", item.dig("attributes", "name")
-    assert_equal "Area18 - TDD", item.dig("attributes", "location")
-    assert_equal 2539, item.dig("attributes", "buy")
-    assert_equal 0, item.dig("attributes", "sell")
+    assert_equal "Area18", item.dig("attributes", "location")
+    assert_equal 2539, item.dig("attributes", "sell")
+    assert_equal 0, item.dig("attributes", "buy")
     assert_equal true, item.dig("attributes", "vice")
     assert_equal facility.updated_at.iso8601(3), item.dig("attributes", "updated-at")
     assert_match(/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\z/, item.dig("attributes", "updated-at"))
@@ -116,12 +116,12 @@ class Api::CommoditiesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     records = response_json["data"].index_by { |item| item.dig("attributes", "name") }
 
-    assert_equal 11, records.fetch("Buy Only").dig("attributes", "buy")
-    assert_equal 0, records.fetch("Buy Only").dig("attributes", "sell")
-    assert_equal 0, records.fetch("Sell Only").dig("attributes", "buy")
-    assert_equal 22, records.fetch("Sell Only").dig("attributes", "sell")
-    assert_equal 33, records.fetch("Both").dig("attributes", "buy")
-    assert_equal 44, records.fetch("Both").dig("attributes", "sell")
+    assert_equal 11, records.fetch("Buy Only").dig("attributes", "sell")
+    assert_equal 0, records.fetch("Buy Only").dig("attributes", "buy")
+    assert_equal 0, records.fetch("Sell Only").dig("attributes", "sell")
+    assert_equal 22, records.fetch("Sell Only").dig("attributes", "buy")
+    assert_equal 33, records.fetch("Both").dig("attributes", "sell")
+    assert_equal 44, records.fetch("Both").dig("attributes", "buy")
   end
 
   test "uses production facilities as source of truth and does not require commodity records" do
@@ -167,9 +167,32 @@ class Api::CommoditiesControllerTest < ActionDispatch::IntegrationTest
       response_json["data"].map { |item| item.dig("attributes", "name") }
     )
     assert_equal(
-      ["Area18 - TDD", "Area18 - TDD", "Orison - Admin"],
+      ["Area18", "Area18", "Orison"],
       response_json["data"].map { |item| item.dig("attributes", "location") }
     )
+  end
+
+  test "system uses the resolved location metadata without requiring a star row" do
+    create_facility(local_buy_price: 1)
+    get "/api/commodities"
+    assert_response :success
+    assert_equal "Stanton", response_json.dig("data", 0, "attributes", "system")
+  end
+
+  test "a terminal can resolve context when the facility has no location" do
+    create_facility(location_name: nil, local_buy_price: 1)
+    get "/api/commodities"
+    assert_response :success
+    assert_equal "Stanton", response_json.dig("data", 0, "attributes", "system")
+    assert_equal "Area18", response_json.dig("data", 0, "attributes", "location")
+  end
+
+  test "missing location context returns an unknown system without crashing" do
+    create_facility(location_name: "Unmapped outpost", id_terminal: nil, local_buy_price: 1)
+    get "/api/commodities"
+    assert_response :success
+    assert_nil response_json.dig("data", 0, "attributes", "system")
+    assert_equal "Unmapped outpost", response_json.dig("data", 0, "attributes", "location")
   end
 
   private

@@ -716,8 +716,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_16_020000) do
     t.bigint "user_ship_id", null: false
     t.bigint "commodity_id", null: false
     t.integer "scu", default: 0
-    t.decimal "buy_price", precision: 10, scale: 2
-    t.decimal "sell_price", precision: 10, scale: 2
+    t.decimal "buy_price", precision: 15, scale: 2
+    t.decimal "sell_price", precision: 15, scale: 2
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "commodity_name"

@@ -3,7 +3,7 @@
 one:
   first_name: MyString
   last_name: MyString
-  email: MyString
+  email: contact@example.test
   subject: MyString
   body: MyText
   read_at: 2024-07-27 10:58:40
@@ -11,7 +11,7 @@ one:
 two:
   first_name: MyString
   last_name: MyString
-  email: MyString
+  email: contact@example.test
   subject: MyString
   body: MyText
   read_at: 2024-07-27 10:58:40

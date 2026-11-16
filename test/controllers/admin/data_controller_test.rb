@@ -1,6 +1,8 @@
 require "test_helper"
 
 class Admin::DataControllerTest < ActionDispatch::IntegrationTest
+  setup { sign_in_admin }
+
   test "star systems raw json import redirects with success flash when records import" do
     Admin::Data::StarSystemsImporter.stub :import_raw_json!, 2 do
       post import_star_systems_admin_data_url, params: { json_data: "[]" }
