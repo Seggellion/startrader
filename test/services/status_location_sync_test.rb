@@ -17,26 +17,27 @@ class StatusLocationSyncTest < ActiveSupport::TestCase
     travel
   end
 
+  # Q1 stale-origin guard: within the window, a report naming the completed
+  # journey's origin cannot undo the arrival.
   test 'stale status cannot undo a completed gate arrival or alter durable completion' do
     complete_gate
-    before = [@hull.reload.attributes, @player.reload.attributes, assets,
-      TravelRequestReceipt.sole.attributes, TravelArrivalEvent.sole.attributes]
+    before = [location_state, assets, TravelRequestReceipt.sole.attributes, TravelArrivalEvent.sole.attributes]
     response = report(@gate.name)
     assert_equal @destination.name, response.dig(:ship, :location)
     assert_equal @destination.name, response[:player_location]
     assert_equal 'stale_location', response.dig(:location_sync, :code)
+    assert_equal 'recent_origin', response.dig(:location_sync, :reason)
     assert_equal %w[ship player], response.dig(:location_sync, :ignored_for)
-    assert_equal before, [@hull.reload.attributes, @player.reload.attributes, assets,
-      TravelRequestReceipt.sole.attributes, TravelArrivalEvent.sole.attributes]
+    assert_equal before, [location_state, assets, TravelRequestReceipt.sole.attributes, TravelArrivalEvent.sole.attributes]
   end
 
   test 'matching report confirms canonical locations without changing response shape' do
     complete_gate
-    before = [@hull.reload.attributes, @player.reload.attributes]
+    before = location_state
     response = report(@destination.name)
     assert_equal 'success', response[:status]
     refute response.key?(:location_sync)
-    assert_equal before, [@hull.reload.attributes, @player.reload.attributes]
+    assert_equal before, location_state
   end
 
   test 'ordinary completion is protected even after journey cleanup and without an outbox' do
@@ -52,23 +53,23 @@ class StatusLocationSyncTest < ActiveSupport::TestCase
 
   test 'legacy status cannot undo a completed jump' do
     complete_gate
-    before = [@hull.reload.attributes, @player.reload.attributes]
+    before = location_state
     response = TradeService.status(username: @user.username, shard: @shard.channel_uuid, location: @gate.name)
     assert_equal @destination.name, response[:player_location]
     assert_equal @destination.name, response.dig(:ship, :location)
     assert_equal 'ignored', response.dig(:location_sync, :status)
-    assert_equal before, [@hull.reload.attributes, @player.reload.attributes]
+    assert_equal before, location_state
   end
 
   test 'location free status leaves completed state unchanged' do
     complete_gate
-    before = [@hull.reload.attributes, @player.reload.attributes]
+    before = location_state
     response = report(nil)
     assert_equal @destination.name, response[:player_location]
     refute response.key?(:location_sync)
-    assert_equal before, [@hull.reload.attributes, @player.reload.attributes]
+    assert_equal before, location_state
     TradeService.status(username: @user.username, shard: @shard.channel_uuid)
-    assert_equal before, [@hull.reload.attributes, @player.reload.attributes]
+    assert_equal before, location_state
   end
 
   test 'a fresh return journey remains possible after rejecting stale status' do
@@ -91,12 +92,31 @@ class StatusLocationSyncTest < ActiveSupport::TestCase
     assert_empty TravelRequestReceipt.all
   end
 
-  test 'completed receipt protection does not expire' do
-    complete_gate
+  # Q1 (N-01): v173's permanent protection is narrowed. Wall-clock age does not
+  # matter; the guard is measured in game ticks after completion.
+  test 'stale-origin guard ignores receipt age but expires after the tick window' do
+    travel = complete_gate
     TravelRequestReceipt.sole.update_columns(created_at: 2.years.ago, updated_at: 2.years.ago)
     report(@gate.name)
     assert_equal @destination.name, @hull.reload.location_name
     assert_equal @destination.name, @player.reload.current_location_name
+
+    Tick.instance.update_columns(current_tick: travel.arrival_tick + StatusLocationSync::STALE_ORIGIN_WINDOW_TICKS + 1)
+    response = report(@gate.name)
+    refute response.key?(:location_sync)
+    assert_equal @gate.name, @hull.reload.location_name
+    assert_equal @gate.name, @player.reload.current_location_name
+    assert_equal 'client_status', @player.location_source
+  end
+
+  test 'idle status after a completed journey updates locations again (N-01)' do
+    complete_gate
+    response = report(@origin.name)
+    refute response.key?(:location_sync)
+    assert_equal @origin.name, @hull.reload.location_name
+    assert_equal @origin.name, @player.reload.current_location_name
+    assert_equal 'client_status', @player.location_source
+    assert_not_nil @player.location_updated_at
   end
 
   test 'historical valid interdiction and mismatched player stay byte for byte unchanged' do
@@ -126,13 +146,15 @@ class StatusLocationSyncTest < ActiveSupport::TestCase
     assert_equal ['player'], response.dig(:location_sync, :ignored_for)
   end
 
+  # The stale value is now the jump's actual origin (the gateway): under Q2 the
+  # fixture walks to the gate, so the station is not a journey origin.
   test 'new ship initialization cannot bypass the saved player location' do
     complete_gate
-    before = [@hull.reload.attributes, @player.reload.attributes]
+    before = location_state
     response = TradeService.status(ship_guid: 'fresh-hull', ship_model: @catalog_ship.model,
-      shard_uuid: @shard.channel_uuid, player_guid: @user.uid, player_name: @user.username, location: @origin.name)
-    assert_equal before, [@hull.reload.attributes, @player.reload.attributes]
-    assert_equal @origin.name, response.dig(:ship, :location)
+      shard_uuid: @shard.channel_uuid, player_guid: @user.uid, player_name: @user.username, location: @gate.name)
+    assert_equal before, location_state
+    assert_equal @gate.name, response.dig(:ship, :location)
     assert_equal @destination.name, response[:player_location]
     assert_equal ['player'], response.dig(:location_sync, :ignored_for)
   end

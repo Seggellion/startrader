@@ -55,6 +55,8 @@ class Admin::UserOverviewTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Scheduled travel"
     assert_includes response.body, "No journey on record"
     assert_includes response.body, "UTC"
+    assert_select "[data-location-instrumentation]", 3
+    assert_includes response.body, "by an unrecorded source"
     assert_equal before, snapshot, "the admin page must not write"
   end
 
@@ -76,6 +78,7 @@ class Admin::UserOverviewTest < ActionDispatch::IntegrationTest
     assert_select "[data-membership-id='#{memberships.last.id}'] [data-legacy-coordinates]", text: /x=1.5/
     assert_select "[data-membership-id='#{memberships.last.id}']", text: /Resolves \(Location ##{@locations['Beta'].id}\)/
     assert_operator response.body.scan("Unknown — no location recorded").size, :>=, 4
+    assert_includes response.body, "Not recorded (before instrumentation"
   end
 
   test "stale catalog names, unlinked ships and missing memberships are labelled" do

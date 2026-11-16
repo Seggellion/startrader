@@ -25,6 +25,15 @@
       <%= render_field.call("Named location", membership.location_name, missing: "Unknown — no location recorded") %>
       <%= render_field.call("Star system", membership.payload&.dig("star_system_name").presence, missing: "Unknown") %>
       <%= render_field.call("Classification", membership.payload&.dig("classification").presence, missing: "Unknown") %>
+      <div data-location-instrumentation>
+        <p class="<%= label_class %>">Location last changed</p>
+        <% if su.location_updated_at %>
+          <p class="mt-1 text-sm font-medium text-slate-900"><%= admin_utc(su.location_updated_at) %></p>
+          <p class="text-xs text-slate-500">by <%= su.location_source.presence&.humanize || "an unrecorded source" %></p>
+        <% else %>
+          <p class="mt-1 text-sm text-slate-400">Not recorded (before instrumentation, or never changed since)</p>
+        <% end %>
+      </div>
       <div>
         <p class="<%= label_class %>">Location catalog</p>
         <% if !membership.location_known? %>

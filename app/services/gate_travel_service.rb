@@ -224,8 +224,8 @@ class GateTravelService
         ship_travel_type: "gate_travel"
       )
 
-      user_ship.update!(location_name: origin_location.name, status: "in_transit")
-      user_ship.shard_user&.update_current_location!(origin_location)
+      LocationSync.both!(ship: user_ship, player: user_ship.shard_user, location: origin_location,
+        source: 'travel_departure', status: "in_transit")
       travel
     end
   end

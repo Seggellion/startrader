@@ -81,11 +81,16 @@ module Api
       user_ship = UserShip.find_by(guid: params[:ship_guid])
       raise ActiveRecord::RecordNotFound, 'Ship not found.' unless user_ship
 
-      result = UserShip.transaction do
+      # M03 (F-20): delivery is an explicit location change under the ship lock.
+      # It never overrides an unfinished journey and does not move the player.
+      result = TravelLifecycle.with_ship(user_ship) do
+        if user_ship.ship_travels.where(completed_at_tick: nil).exists?
+          raise TravelLifecycle::Error.new('in_transit', 'Ship has an unfinished journey; it cannot be delivered until the journey ends.')
+        end
         cargos = user_ship.user_ship_cargos.includes(:commodity).to_a
         message = build_delivery_message(location.name, cargos)
 
-        user_ship.update!(location_name: location.name)
+        LocationSync.ship!(user_ship, location, source: 'delivery')
         cargos.each(&:destroy!)
         user_ship.recalculate_used_scu!
 

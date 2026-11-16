@@ -41,13 +41,14 @@ class TravelRepairLifecycleTest < ActiveSupport::TestCase
     assert_equal 'completed',TravelRequestReceipt.find_by!(travel_guid:travel.travel_guid).outcome
   end
 
-  test 'arrival preserves player legitimately elsewhere' do
+  # M03 / Q1: arrival lands the ship's own player even if a writer diverged it
+  # during flight (previously the player was left behind and soft-locked).
+  test 'arrival lands the ship player even when diverged during flight' do
     travel=gate_start
     @player.reload.update_current_location!(@origin)
     complete(travel)
-    assert_equal @origin.name,@player.reload.current_location_name
-    e=assert_raises(TravelLifecycle::Error){GateTravelService.new(ship_guid:@hull.guid).call}
-    assert_equal 'location_mismatch',e.code
+    assert_equal @destination.name,@player.reload.current_location_name
+    assert_equal 'travel_arrival',@player.location_source
     assert_equal @destination.name,@hull.reload.location_name
   end
 

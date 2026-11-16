@@ -17,7 +17,7 @@ class Api::StatusLocationSyncTest < ActionDispatch::IntegrationTest
 
   test 'flat and nested status replies return canonical completed location and ignored report warning' do
     complete_gate
-    before = [@hull.reload.attributes, @player.reload.attributes]
+    before = location_state
     [payload, {trade: payload}].each do |body|
       post '/api/status', params: body, as: :json
       assert_response :success
@@ -25,7 +25,7 @@ class Api::StatusLocationSyncTest < ActionDispatch::IntegrationTest
       assert_equal @destination.name, reply['player_location']
       assert_equal @destination.name, reply.dig('ship', 'location')
       assert_equal 'stale_location', reply.dig('location_sync', 'code')
-      assert_equal before, [@hull.reload.attributes, @player.reload.attributes]
+      assert_equal before, location_state
     end
   end
 

@@ -72,17 +72,26 @@ class ShardUser < ApplicationRecord
     Location.find_by(name: current_location_name) if current_location_name.present?
   end
 
-  def update_current_location!(location)
+  # Merges the named-location payload, preserving any other keys (including
+  # legacy x/y/z). Records when and by which authority the location changed;
+  # see LocationSync::SOURCES. Unchanged locations do not touch the markers.
+  def update_current_location!(location, source: nil)
     raise ArgumentError, "location is required" if location.blank?
 
-    payload = (last_location || {}).dup
+    previous = last_location.is_a?(Hash) ? last_location.stringify_keys : {}
+    payload = previous.dup
     payload["id"] = location.id
     payload["name"] = location.name
     payload["location_name"] = location.name
     payload["star_system_name"] = location.star_system_name
     payload["classification"] = location.classification
 
-    update!(last_location: payload)
+    attributes = { last_location: payload }
+    if previous["id"] != location.id || previous["name"] != location.name
+      attributes[:location_updated_at] = Time.current
+      attributes[:location_source] = source&.to_s
+    end
+    update!(attributes)
   end
 
   private

@@ -67,8 +67,8 @@ class TravelService
         rabbitmq_environment: @rabbitmq_environment
       )
 
-      user_ship.update!(location_name: @from_location.name, status: "in_transit")
-      user_ship.shard_user&.update_current_location!(@from_location)
+      LocationSync.both!(ship: user_ship, player: user_ship.shard_user, location: @from_location,
+        source: 'travel_departure', status: "in_transit")
       TravelRequestReceipt.record!(travel,context)
       travel
     end

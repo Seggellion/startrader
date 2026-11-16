@@ -13,11 +13,12 @@ class ShipTravelArrivalProcessor
       if @travel.user_ship.ship_travels.where(completed_at_tick:nil).count != 1
         raise TravelLifecycle::Error.new('invalid_state','Duplicate unfinished journeys need review.')
       end
-      @travel.user_ship.update!(location_name:@travel.to_location.name,status:arrival_status)
-      player=@travel.user_ship.shard_user
-      if player && (player.current_location.nil? || player.current_location.id==@travel.from_location_id)
-        player.update_current_location!(@travel.to_location)
-      end
+      # M03 / Q1: departure normalizes the ship's player to the origin and status
+      # cannot move either record while the journey is unfinished, so arrival
+      # lands the ship and its own player together. (The former "player still at
+      # origin" condition left players behind whenever any writer diverged them.)
+      LocationSync.both!(ship:@travel.user_ship, player:@travel.user_ship.shard_user,
+        location:@travel.to_location, source:'travel_arrival', status:arrival_status)
       TravelRequestReceipt.finish!(@travel,'completed',@current_tick)
       if @notify
         TravelArrivalEvent.create!(event_guid:SecureRandom.uuid,travel_guid:@travel.travel_guid,

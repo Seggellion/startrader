@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_11_04_010000) do
+ActiveRecord::Schema[8.0].define(version: 2026_11_16_010000) do
   create_schema "cable"
 
   # These are extensions that must be enabled in order to support this database
@@ -429,6 +429,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_04_010000) do
     t.datetime "updated_at", null: false
     t.string "shard_name"
     t.bigint "wallet_balance", default: 0
+    t.datetime "location_updated_at"
+    t.string "location_source"
     t.index ["shard_id"], name: "index_shard_users_on_shard_id"
     t.index ["user_id", "shard_id"], name: "index_shard_users_on_user_id_and_shard_id_unique", unique: true
     t.index ["user_id"], name: "index_shard_users_on_user_id"

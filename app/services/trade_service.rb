@@ -108,7 +108,8 @@ class TradeService
         TravelLifecycle.with_status_ship(user_ship, shard_user) do
           location_sync = StatusLocationSync.new(ship: user_ship, player: shard_user,
             reported_location: resolved_location)
-          if location_sync.managed_ship? &&
+          # Q4/v173: a ship with any travel history keeps its identity.
+          if location_sync.travel_history? &&
               [user_ship.user_id, user_ship.shard_id, user_ship.shard_user_id, user_ship.ship_id] !=
                 [user.id, shard.id, shard_user.id, ship.id]
             raise TravelLifecycle::Error.new('status_identity_conflict',
@@ -125,7 +126,7 @@ class TradeService
           shard_user.shard_name = shard.name
           shard_user.wallet_balance = wallet_balance if wallet_balance.present?
           shard_user.save! if shard_user.changed?
-          shard_user.update_current_location!(location_sync.player_location) if location_sync.player_location
+          LocationSync.player!(shard_user, location_sync.player_location, source: 'client_status')
 
           unless location_sync.managed_ship?
             assign_authoritative_status_user_ship!(
@@ -248,8 +249,8 @@ class TradeService
         sync = StatusLocationSync.new(ship: user_ship, player: shard_user,
           reported_location: resolved_location)
         sync.log(request_id: request_id)
-        shard_user.update_current_location!(sync.player_location) if sync.player_location
-        user_ship&.update!(location_name: sync.ship_location.name) if sync.ship_location
+        LocationSync.player!(shard_user, sync.player_location, source: 'client_status')
+        LocationSync.ship!(user_ship, sync.ship_location, source: 'client_status')
         sync
       end
     end

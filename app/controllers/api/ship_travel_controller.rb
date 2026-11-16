@@ -667,10 +667,8 @@ end
         return
       end
 
-      ActiveRecord::Base.transaction do
-        user_ship.update!(location_name: request_location.name)
-        shard_user.update_current_location!(request_location)
-      end
+      # Both locations were unknown: initialize them from the request (repair).
+      LocationSync.both!(ship: user_ship, player: shard_user, location: request_location, source: 'repair')
     end
 
     def resolve_current_location_for_travel(shard_user, user_ship, from_location_name, to_location_name)

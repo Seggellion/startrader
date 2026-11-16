@@ -56,9 +56,16 @@ module TravelRepairFixtures
     walk_to_gate! if @hull.reload.location_name == @origin.name
     GateTravelService.new(ship_guid:@hull.guid,gateway_name:'Repair B Gateway',travel_guid:guid).call.travel
   end
+  # Location and identity fields that a status report must not change once the
+  # server owns them. Since Q1 an idle status may legitimately sync other ship
+  # metadata (touch, shard name), so whole-record equality is too strict.
+  def location_state
+    [@hull.reload.attributes.slice('location_name','status','user_id','shard_id','shard_user_id','ship_id'),
+     @player.reload.attributes.slice('last_location','location_updated_at','location_source','wallet_balance')]
+  end
   def walk_to_gate!
     @hull.update!(location_name:@gate.name)
-    @player.reload.update_current_location!(@gate)
+    @player.reload.update_current_location!(@gate, source: 'travel_arrival')
   end
   def saved_trip(ship=@hull, **attrs)
     ShipTravel.create!({user_ship:ship,from_location:@origin,to_location:@destination,travel_guid:SecureRandom.uuid,

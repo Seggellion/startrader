@@ -35,8 +35,10 @@ class StatusLocationSyncConcurrencyTest < ActiveSupport::TestCase
 
   def report(ship_guid: @hull.guid)
     TradeService.status(ship_guid: ship_guid, ship_model: @catalog_ship.model, shard_uuid: @shard.channel_uuid,
-      player_guid: @user.uid, player_name: @user.username, location: @origin.name)
+      player_guid: @user.uid, player_name: @user.username, location: @gate.name)
   end
+  # The stale report names the jump's actual origin (the gateway); under Q2 the
+  # fixture walks to the gate, so the station is no longer a journey origin.
 
   test 'status racing arrival cannot restore stale origin after completion' do
     travel = gate_start
@@ -69,7 +71,7 @@ class StatusLocationSyncConcurrencyTest < ActiveSupport::TestCase
       -> { ShipTravelArrivalProcessor.new(travel: ShipTravel.find(travel.id), current_tick: 108).call })
     assert_equal @destination.name, @player.reload.current_location_name
     assert_equal @destination.name, @hull.reload.location_name
-    assert_equal @origin.name, other.reload.location_name
+    assert_equal @gate.name, other.reload.location_name # an unrelated idle ship may be initialized by status
   ensure
     other&.destroy!
   end

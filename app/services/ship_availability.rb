@@ -78,7 +78,7 @@ class ShipAvailability
     ship_location = user_ship.location || Location.find_by(name: user_ship.location_name)
     return unless ship_location
 
-    shard_user.update_current_location!(ship_location)
+    LocationSync.player!(shard_user, ship_location, source: 'repair')
     ship_location
   end
 end
