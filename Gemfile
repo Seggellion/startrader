@@ -60,7 +60,6 @@ gem 'google-cloud-storage'
 gem 'rack-cors'
 # Custom Gems
 
-gem 'byebug'
 gem "shopify_api"
 gem 'sitemap_generator'
 gem 'omniauth-twitch'
@@ -70,6 +69,8 @@ gem 'bunny'
 
 
 group :development, :test do
+  # M06 / S3: debugger breakpoints must never load in production.
+  gem 'byebug'
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ]
 end

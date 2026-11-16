@@ -24,3 +24,11 @@ Owner answers recorded 2026-11-16 (UTC) in the Claude Code session: P0, P1, P2 a
 | **Q7** | 15 000-credit grant | out of scope | Leave unchanged | DEFAULT (deferred) |
 
 Defaults D1–D6 from the discovery apply as written in the playbook.
+
+## Security containment decisions (M06), owner answers 2026-11-16
+
+| ID | Finding | Decision | Status |
+|---|---|---|---|
+| **S1** | F-10: `POST /api/increment_tick` unauthenticated; `POST /api/set_tick` crashes | Keep both routes but require `X-Secret-Guid`; unauthenticated calls get 401 and never touch the tick; `set_tick` returns 501 instead of crashing. Tick mechanics unchanged. | APPROVED |
+| **S2** | F-11: `GET/POST /users` unauthenticated; two dead `minecraft_uuid` routes | Admin-only `/users` JSON routes; remove the two dead member routes | APPROVED |
+| **S3** | F-23: routed `MovesController#create` with a live `byebug` | Remove the route and action; move the `byebug` gem to `:development, :test`; leave `.byebug_history` untouched | APPROVED |

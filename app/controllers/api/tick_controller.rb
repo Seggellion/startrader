@@ -1,16 +1,15 @@
 module Api
     class TickController < ApplicationController
+      # M06 / S1 (F-10): tick mutation requires the integration secret.
+      include SecretGuidAuth
       skip_before_action :verify_authenticity_token
   
       # POST /api/set_tick
       def set
-        new_tick = params[:tick].to_i
-        Tick.set_current(new_tick)
-        render json: { 
-          message: "Tick set to #{Tick.current}", 
-          current_tick: Tick.current,
-          current_sequence: Tick.current_sequence
-        }
+        # Tick.set_current never existed; setting an arbitrary tick is not
+        # supported. Return a clear answer instead of a NoMethodError.
+        render json: { error: "Setting the tick is not supported; use the admin tick controls.",
+          current_tick: Tick.current }, status: :not_implemented
       end
   
       # POST /api/increment_tick

@@ -47,13 +47,8 @@ Rails.application.routes.draw do
     end
   end
 
-  # Users
-  resources :users do
-    member do
-      get :edit_minecraft_uuid
-      patch :update_minecraft_uuid
-    end
-  end
+  # Users (JSON, admin-only since M06 / S2; dead minecraft_uuid member routes removed)
+  resources :users
 
   # Products & Cart
   resources :products, only: [:index, :show], param: :handle do
@@ -117,8 +112,8 @@ Rails.application.routes.draw do
       end
     end
 
+    # M06 / S3: the broken moves#create route (live byebug) was removed; use POST /api/travel.
     resources :user_ships, only: [] do
-      post :move, to: 'moves#create'
       get :location, to: 'locations#show'
     end
 
