@@ -9,7 +9,12 @@ class StatusLocationAuditTest < ActiveSupport::TestCase
     @there = Location.create!(name: "Audit There", classification: "city", star_system_name: "Stanton")
     @hull = Ship.create!(model: "Audit Hull", slug: "audit-hull", scu: 4)
     @shard = Shard.create!(name: "Audit Shard", region: "us", channel_uuid: "Audit-UUID")
-    Shard.create!(name: "Audit Shard twin", region: "us", channel_uuid: " audit-uuid ")
+    # The audit must detect variants that predate the M04 unique index (it is the
+    # pre-migration production check), so this fixture drops the index inside
+    # the test transaction (PostgreSQL DDL rolls back) and bypasses validation.
+    Shard.connection.execute("DROP INDEX IF EXISTS index_shards_on_normalized_channel_uuid")
+    Shard.insert_all!([{ name: "Audit Shard twin", region: "us", channel_uuid: " audit-uuid ",
+      created_at: Time.current, updated_at: Time.current }])
     @user = User.create!(username: "Secret Pilot Name", uid: "secret-uid", twitch_id: "secret-twitch", user_type: "player")
 
     @aligned = player_with_ship("aligned-guid", player_at: @here, ship_at: @here)

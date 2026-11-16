@@ -625,13 +625,16 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     assert_equal @location.name, @user_ship.reload.location_name
   end
 
-  test "status with unknown location returns error and preserves existing locations" do
+  # F-18 (M04): HTTP 200 with an explicit warning; saved locations are kept.
+  test "status with unknown location warns and preserves existing locations" do
     @shard_user.update_current_location!(@location)
 
     post "/api/status", params: base_status_payload.merge(location: "Not A Real Place"), as: :json
 
-    assert_response :bad_request
-    assert_equal({ "status" => "error", "message" => "Location not found: Not A Real Place" }, response_json)
+    assert_response :success
+    assert_equal "success", response_json["status"]
+    assert_equal "unresolved", response_json["location_resolution"]
+    assert_equal "location_unresolved", response_json["warnings"].first["code"]
     assert_equal @location.name, @shard_user.reload.current_location_name
     assert_equal @location.name, @user_ship.reload.location_name
   end
@@ -755,14 +758,15 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     assert_equal({ "status" => "error", "message" => "player_name is required" }, response_json)
   end
 
-  test "status creates unknown shard_uuid" do
-    assert_difference("Shard.count", 1) do
+  # Decision Q3 (M04): unknown shards are refused, as /api/travel does.
+  test "status refuses an unknown shard_uuid" do
+    assert_no_difference(["Shard.count", "ShardUser.count"]) do
       post "/api/status", params: base_status_payload.merge(shard_uuid: "unknown"), as: :json
     end
 
-    assert_response :success
-    assert_equal "success", response_json["status"]
-    assert_equal "Shard unknown", Shard.find_by!(channel_uuid: "unknown").name
+    assert_response :not_found
+    assert_equal "error", response_json["status"]
+    assert_match(/Shard not found/, response_json["message"])
   end
 
   test "status creates unknown ship model when creating ship" do
@@ -775,14 +779,17 @@ class Api::TradesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Unknown Model", UserShip.find_by!(guid: "new-status-ship-guid").ship.model
   end
 
+  # Q3: the second shard is admin-registered. Q4: a ship without travel history
+  # may move to it, but the reassignment is reported.
   test "status creates unknown shard_user and reassigns existing ship" do
-    post "/api/status", params: base_status_payload.merge(shard_uuid: "unknown"), as: :json
+    other_shard = Shard.create!(name: "OtherRegisteredShard", region: "us", channel_uuid: "other-registered")
+    post "/api/status", params: base_status_payload.merge(shard_uuid: "other-registered"), as: :json
 
     assert_response :success
-    created_shard = Shard.find_by!(channel_uuid: "unknown")
-    created_shard_user = ShardUser.find_by!(user: @user, shard_id: created_shard.id)
-    assert_equal created_shard, @user_ship.reload.shard
+    created_shard_user = ShardUser.find_by!(user: @user, shard_id: other_shard.id)
+    assert_equal other_shard, @user_ship.reload.shard
     assert_equal created_shard_user, @user_ship.shard_user
+    assert_includes response_json["warnings"].map { |w| w["code"] }, "ship_reparented"
   end
 
   test "status creates unknown ship with valid ship model" do

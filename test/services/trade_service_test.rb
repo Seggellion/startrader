@@ -180,29 +180,28 @@ class TradeServiceTest < ActiveSupport::TestCase
     assert_equal new_location.name, @user_ship.reload.location_name
   end
 
-  test "status with unknown location raises validation error and preserves locations" do
+  # F-18 (M04): an unrecognized optional location degrades instead of aborting.
+  test "status with unknown location keeps locations, applies the rest and warns" do
     @shard_user.update_current_location!(@location)
 
-    error = assert_raises(TradeService::ValidationError) do
-      TradeService.status(**status_payload(location: "Not A Real Place"))
-    end
+    result = TradeService.status(**status_payload(location: "Not A Real Place", wallet_balance: 54_321))
 
-    assert_equal "Location not found: Not A Real Place", error.message
-    assert_equal @location.name, @shard_user.reload.current_location_name
+    assert_equal "success", result[:status]
+    assert_equal "unresolved", result[:location_resolution]
+    assert_equal ["location_unresolved"], result[:warnings].map { |w| w[:code] }
+    assert_equal 54_321, @shard_user.reload.wallet_balance
+    assert_equal @location.name, @shard_user.current_location_name
     assert_equal @location.name, @user_ship.reload.location_name
   end
 
-  test "status with unknown location does not create unknown ship" do
-    assert_no_difference("UserShip.count") do
-      assert_raises(TradeService::ValidationError) do
-        TradeService.status(
-          **status_payload(
-            ship_guid: "new-ship-with-bad-location",
-            location: "Not A Real Place"
-          )
-        )
-      end
+  # F-18 (M04): the ship is still registered; it simply gets no location.
+  test "status with unknown location registers the ship without inventing a location" do
+    result = nil
+    assert_difference("UserShip.count", 1) do
+      result = TradeService.status(**status_payload(ship_guid: "new-ship-with-bad-location", location: "Not A Real Place"))
     end
+    assert_equal "unresolved", result[:location_resolution]
+    assert_nil UserShip.find_by!(guid: "new-ship-with-bad-location").location_name
   end
 
   test "status preserves shard user serialized data when updating location and wallet" do
@@ -336,17 +335,19 @@ class TradeServiceTest < ActiveSupport::TestCase
     assert_equal "shard_uuid is required", error.message
   end
 
-  test "status creates unknown shard uuid" do
-    result = nil
-
-    assert_difference("Shard.count", 1) do
-      result = TradeService.status(**status_payload(shard_uuid: "unknown"))
+  # Decision Q3 (M04): status never creates shards; variants of a known UUID match.
+  test "status refuses an unknown shard uuid and matches case variants" do
+    assert_no_difference(["Shard.count", "ShardUser.count", "UserShip.count", "User.count"]) do
+      error = assert_raises(ActiveRecord::RecordNotFound) do
+        TradeService.status(**status_payload(shard_uuid: "unknown", ship_guid: "unknown-shard-ship"))
+      end
+      assert_match(/Shard not found/, error.message)
     end
 
-    created_shard = Shard.find_by!(channel_uuid: "unknown")
-    assert_equal "success", result[:status]
-    assert_equal "Shard unknown", created_shard.name
-    assert_equal "unknown", created_shard.region
+    assert_no_difference("Shard.count") do
+      result = TradeService.status(**status_payload(shard_uuid: "  #{@shard.channel_uuid.upcase} "))
+      assert_equal "success", result[:status]
+    end
   end
 
   test "status creates unknown ship with valid model and player guid" do
@@ -455,10 +456,24 @@ class TradeServiceTest < ActiveSupport::TestCase
       )
     )
 
+    # F-05 (M04): usernames are unique case-insensitively (DB index), so the new
+    # player cannot take the same name. They get a disambiguated name and a
+    # warning; the original player is untouched.
     new_user = User.find_by!(twitch_id: "different-player-guid")
     assert_equal "success", result[:status]
     refute_equal @user.id, new_user.id
-    assert_equal @user.username, new_user.username
+    assert_match(/\A#{Regexp.escape(@user.username)}-[A-Za-z0-9]+\z/, new_user.username)
+    assert_equal ["username_conflict"], result[:warnings].map { |w| w[:code] }
+    assert_equal "TestPilot", @user.reload.username
+  end
+
+  test "status keeps an existing player's name when a rename collides with another account (F-05)" do
+    User.create!(username: "Collider", twitch_id: "collider-twitch", uid: "collider-uid", user_type: "player")
+    result = TradeService.status(**status_payload(player_name: "COLLIDER", wallet_balance: 77_777))
+    assert_equal "success", result[:status]
+    assert_equal ["username_conflict"], result[:warnings].map { |w| w[:code] }
+    assert_equal "TestPilot", @user.reload.username
+    assert_equal 77_777, @shard_user.reload.wallet_balance
   end
 
   test "repeated status calls for same new ship guid do not create duplicates" do
@@ -474,6 +489,8 @@ class TradeServiceTest < ActiveSupport::TestCase
   end
 
   test "repeated status calls for new status records are idempotent" do
+    # Decision Q3: the shard is registered by an administrator, not by status.
+    Shard.create!(name: "Idempotent Shard", region: "us", channel_uuid: "idempotent-shard-guid")
     payload = status_payload(
       ship_guid: "idempotent-new-status-ship-guid",
       ship_model: "RSI Zeus CL",
@@ -483,7 +500,7 @@ class TradeServiceTest < ActiveSupport::TestCase
     )
 
     assert_difference("User.count", 1) do
-      assert_difference("Shard.count", 1) do
+      assert_no_difference("Shard.count") do
         assert_difference("ShardUser.count", 1) do
           assert_difference("Ship.count", 1) do
             assert_difference("UserShip.count", 1) do

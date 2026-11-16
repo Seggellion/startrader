@@ -48,6 +48,9 @@ class StarTraderShipSync
       ship: user_ship.ship
     )
   rescue ActiveRecord::RecordNotUnique
+    # F-17: retry a recognized creation race a bounded number of times.
+    @attempts = (@attempts || 0) + 1
+    raise if @attempts >= TradeService::MAX_STATUS_ATTEMPTS
     retry
   end
 
@@ -63,7 +66,7 @@ class StarTraderShipSync
   end
 
   def resolve_shard!
-    shard = Shard.find_by(channel_uuid: shard_uuid)
+    shard = Shard.lookup_channel_uuid(shard_uuid)
     raise ActiveRecord::RecordNotFound, "Shard not found" unless shard
 
     shard

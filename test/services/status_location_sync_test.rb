@@ -161,6 +161,8 @@ class StatusLocationSyncTest < ActiveSupport::TestCase
 
   test 'status cannot reassign travel managed ship identity to evade location protection' do
     complete_gate
+    # Q3: the target shard must be registered, so the identity guard is what refuses.
+    Shard.create!(name: 'Unrelated Shard', region: 'us', channel_uuid: 'unrelated-shard')
     before = [@hull.reload.attributes, @player.reload.attributes,
       User.count, Shard.count, ShardUser.count, Ship.count]
     error = assert_raises(TravelLifecycle::Error) do
