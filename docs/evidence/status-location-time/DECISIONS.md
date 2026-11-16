@@ -41,3 +41,10 @@ Defaults D1–D6 from the discovery apply as written in the playbook.
 | **R2** | Backup verification by `pg:backups:capture` plus Heroku Completed status (no download of production data) | APPROVED |
 | **R3** | Production smoke is read-only only (no test identity, no status/Jump writes) | APPROVED |
 | **R4** | Proceed despite the pre-existing prod RabbitMQ outage (no prod deliveries since 2026-11-05 15:14 UTC); treat it as a baseline, not a rollback trigger; owner follow-up | APPROVED |
+
+## Closeout decisions (M10), owner answers 2026-11-16
+
+| ID | Decision | Status |
+|---|---|---|
+| **C1** | Land the closeout evidence on `main` as a **documented docs-only exception**: GitHub/local `main` advance to documentation-only commit(s) after the deployed `3d7e1dc`, whose runtime tree is identical (verified `git diff --name-only 3d7e1dc <closeout>` lists only `docs/`). **No redeploy**; production stays v179 `3d7e1dc`. | APPROVED |
+| **C2** | Do not create a physical main checkout. The `main` branch reference equals GitHub `main`; the canonical checkout `/home/dusti/startrader` stays on `codex/restore-bare-jump` with the owner's uncommitted `config/initializers/cors.rb` change and untracked files untouched. | APPROVED |
