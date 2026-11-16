@@ -42,7 +42,10 @@ class TravelRepairConcurrencyTest < ActiveSupport::TestCase
     assert_equal 1,results.map{|r|r.last}.count(&:request_replayed)
   end
   test 'simultaneous ordinary and gate starts with different GUIDs allow only one' do
-    target=@gate
+    # Decision Q2: a Jump departs only from its gateway, so both racing starts
+    # depart from the gateway (the ordinary trip heads back to the station).
+    walk_to_gate!
+    target=@origin
     ordinary=-> {
       calculator=Struct.new(:calculate).new(2)
       TravelTimeCalculator.stub(:new,calculator) do

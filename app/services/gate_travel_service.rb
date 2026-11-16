@@ -49,6 +49,12 @@ class GateTravelService
     raise StandardError, "No user found for ship_guid #{ship_guid}" unless user
     raise StandardError, "No ship found for ship_guid #{ship_guid}" unless ship
     raise StandardError, "No shard found for ship_guid #{ship_guid}" unless shard
+    # A Jump moves ship and player together; without a linked membership there
+    # is no player to move (discovery F-15). Refused before any lock or write.
+    unless user_ship.shard_user
+      raise TravelLifecycle::Error.new('shard_membership_missing',
+        'Jump was not started. This ship is not linked to a shard membership; send *status first.')
+    end
 
     intent_error = nil
     result = TravelLifecycle.with_ship(user_ship) do
@@ -71,6 +77,7 @@ class GateTravelService
 
       origin_location = resolved_origin_gateway(current_location)
       validate_gateway_location!(origin_location)
+      validate_at_origin_gateway!(user_ship, current_location, origin_location)
 
       origin_star_system = origin_location.star_system_name.to_s.strip
       target_star_system = target_star_system_from(origin_location)
@@ -115,6 +122,20 @@ class GateTravelService
 
   attr_reader :ship_guid, :gateway_name, :travel_guid, :start_tick, :rabbitmq_environment,
     :expected_origin_location, :expected_destination_location
+
+  # Decision Q2 (2026-11-16): a Jump departs only from the gateway the ship is
+  # actually at. A named gateway elsewhere in the system is refused rather than
+  # used as an instant relocation (discovery F-02). Raised as an IntentError so a
+  # due arrival processed by the availability check still commits.
+  def validate_at_origin_gateway!(user_ship, current_location, origin_location)
+    return if origin_location.id == current_location.id
+
+    raise IntentError.new('jump_not_at_gateway',
+      "Jump was not started. Ship is at #{current_location.name}, not #{origin_location.name}; travel to the gateway before jumping.",
+      {user_ship_id:user_ship.id, current_location:current_location.name,
+       player_location:user_ship.shard_user&.current_location_name,
+       current_star_system:current_location.star_system_name, requested_gateway:origin_location.name})
+  end
 
   def validate_intent!(user_ship, current_location, arrival_location)
     state = {user_ship_id:user_ship.id, current_location:current_location.name, player_location:user_ship.shard_user&.current_location_name,

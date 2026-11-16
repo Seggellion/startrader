@@ -49,8 +49,16 @@ module TravelRepairFixtures
     Tick.delete_all
     Setting.delete_all
   end
+  # Decision Q2: a Jump departs only from the gateway the ship is at. When the
+  # hull is still at the fixture's start station, walk ship and player to the
+  # gateway first, as a completed ordinary trip would.
   def gate_start(guid=SecureRandom.uuid)
+    walk_to_gate! if @hull.reload.location_name == @origin.name
     GateTravelService.new(ship_guid:@hull.guid,gateway_name:'Repair B Gateway',travel_guid:guid).call.travel
+  end
+  def walk_to_gate!
+    @hull.update!(location_name:@gate.name)
+    @player.reload.update_current_location!(@gate)
   end
   def saved_trip(ship=@hull, **attrs)
     ShipTravel.create!({user_ship:ship,from_location:@origin,to_location:@destination,travel_guid:SecureRandom.uuid,

@@ -22,7 +22,9 @@ class TravelRepairLifecycleTest < ActiveSupport::TestCase
   test 'preexisting mismatch rejects remote gateway without any state writes' do
     @player.update_current_location!(@destination)
     before=[@hull.reload.attributes,@player.reload.attributes]
-    e=assert_raises(TravelLifecycle::Error){gate_start}
+    # Called directly: gate_start would first walk the ship to the gateway (Q2).
+    e=assert_raises(TravelLifecycle::Error){
+      GateTravelService.new(ship_guid:@hull.guid,gateway_name:'Repair B Gateway',travel_guid:SecureRandom.uuid).call}
     assert_equal 'location_mismatch',e.code
     assert_equal before,[@hull.reload.attributes,@player.reload.attributes]
     assert_empty ShipTravel.all
@@ -100,14 +102,15 @@ class TravelRepairLifecycleTest < ActiveSupport::TestCase
   end
 
   test 'gateway ship save failure rolls back journey receipt and player relocation' do
+    walk_to_gate!
     before=assets
     callback=-> { raise 'injected save failure' if status=='in_transit' }
     UserShip.set_callback(:update,:before,callback)
     assert_raises(RuntimeError){gate_start}
     assert_empty ShipTravel.all
     assert_empty TravelRequestReceipt.all
-    assert_equal @origin.name,@player.reload.current_location_name
-    assert_equal @origin.name,@hull.reload.location_name
+    assert_equal @gate.name,@player.reload.current_location_name
+    assert_equal @gate.name,@hull.reload.location_name
     assert_equal before,assets
   ensure
     UserShip.skip_callback(:update,:before,callback)

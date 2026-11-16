@@ -1,4 +1,5 @@
 require "test_helper"
+require "minitest/mock"
 require_relative "../../support/orbital_fixtures"
 
 class Api::GateTravelControllerTest < ActionDispatch::IntegrationTest
@@ -176,8 +177,11 @@ class Api::GateTravelControllerTest < ActionDispatch::IntegrationTest
     assert_equal @arrival_gateway, ShipTravel.find_by!(travel_guid: response_json["travel_guid"]).to_location
   end
 
+  # Decision Q2 (2026-11-16): these name-resolution tests previously started at
+  # Ruin Station and asserted an instant relocation to the named gateway. The
+  # ship now starts at that gateway; off-gateway selection is refused below.
   test "ship in Pyro can enter Nyx Gateway without parenthetical suffix" do
-    @user_ship.update!(location_name: @pyro_location.name)
+    @user_ship.update!(location_name: @nyx_gateway_in_pyro.name)
 
     post_gate_travel(ship_guid: @user_ship.guid, gateway_name: "Nyx Gateway")
 
@@ -194,7 +198,7 @@ class Api::GateTravelControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "ship in Pyro can enter Stanton Gateway without parenthetical suffix" do
-    @user_ship.update!(location_name: @pyro_location.name)
+    @user_ship.update!(location_name: @arrival_gateway.name)
 
     post_gate_travel(ship_guid: @user_ship.guid, gateway_name: "Stanton Gateway")
 
@@ -204,7 +208,7 @@ class Api::GateTravelControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "full parenthetical gateway form still works" do
-    @user_ship.update!(location_name: @pyro_location.name)
+    @user_ship.update!(location_name: @nyx_gateway_in_pyro.name)
 
     post_gate_travel(ship_guid: @user_ship.guid, gateway_name: "Nyx Gateway (Pyro)")
 
@@ -243,13 +247,42 @@ class Api::GateTravelControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "unqualified gateway lookup selects the match in the current star system" do
-    @user_ship.update!(location_name: @pyro_location.name)
+    @user_ship.update!(location_name: @nyx_gateway_in_pyro.name)
 
     post_gate_travel(ship_guid: @user_ship.guid, gateway_name: "Nyx Gateway")
 
     assert_response :success
     assert_equal @nyx_gateway_in_pyro.name, response_json["origin_location"]
     refute_equal @nyx_gateway_in_stanton.name, response_json["origin_location"]
+  end
+
+  test "named gateway the ship is not at is refused without side effects (decision Q2, F-02)" do
+    @user_ship.update!(location_name: @pyro_location.name)
+    @shard_user.update_current_location!(@pyro_location)
+    before = [@user_ship.reload.attributes, @shard_user.reload.attributes]
+
+    post_gate_travel(ship_guid: @user_ship.guid, gateway_name: "Nyx Gateway")
+
+    assert_response :unprocessable_entity
+    assert_equal "jump_not_at_gateway", response_json["code"]
+    assert_equal @pyro_location.name, response_json["current_location"]
+    assert_equal @nyx_gateway_in_pyro.name, response_json["requested_gateway"]
+    assert_equal 0, ShipTravel.count
+    assert_equal 0, TravelRequestReceipt.count
+    assert_equal before, [@user_ship.reload.attributes, @shard_user.reload.attributes]
+  end
+
+  test "jump by a ship with no shard membership returns a clear domain error and changes nothing (F-15)" do
+    @user_ship.update_columns(shard_user_id: nil)
+    before = @user_ship.reload.attributes
+
+    post_gate_travel(ship_guid: @user_ship.guid)
+
+    assert_response :unprocessable_entity
+    assert_equal "shard_membership_missing", response_json["code"]
+    refute_match(/undefined method|NoMethodError/, response_json["message"])
+    assert_equal 0, ShipTravel.count
+    assert_equal before, @user_ship.reload.attributes
   end
 
   test "ambiguous destination gateway data returns a useful JSON error" do
