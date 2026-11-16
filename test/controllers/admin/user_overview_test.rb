@@ -56,6 +56,7 @@ class Admin::UserOverviewTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "No journey on record"
     assert_includes response.body, "UTC"
     assert_select "[data-location-instrumentation]", 3
+    assert_select "[data-multi-ship-note]", 3
     assert_includes response.body, "by an unrecorded source"
     assert_equal before, snapshot, "the admin page must not write"
   end

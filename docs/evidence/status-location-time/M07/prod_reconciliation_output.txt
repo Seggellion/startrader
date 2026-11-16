@@ -1,0 +1,27 @@
+BEGIN
+SET
+== diverged idle pairs, split by whether the ship has travel receipts and by multi-ship players
+ has_receipts | multi_ship_player | diverged_pairs | players 
+--------------+-------------------+----------------+---------
+ f            | t                 |             61 |      33
+ t            | t                 |              3 |       3
+(2 rows)
+
+== players with more than one ship
+ players_with_multiple_ships 
+-----------------------------
+                          41
+(1 row)
+
+== unfinished journeys
+ unfinished | paused_zero 
+------------+-------------
+          1 |           1
+(1 row)
+
+ read_only 
+-----------
+ on
+(1 row)
+
+ROLLBACK

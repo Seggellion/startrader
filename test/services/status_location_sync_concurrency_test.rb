@@ -51,6 +51,20 @@ class StatusLocationSyncConcurrencyTest < ActiveSupport::TestCase
     assert_empty ShipTravel.all
   end
 
+  # M07: a status report racing a Jump departure. Whichever commits first,
+  # exactly one journey exists and ship and player end together at the gateway
+  # (the stale report names the gate, which is also the origin).
+  test 'status racing gate departure leaves one journey and aligned origin' do
+    walk_to_gate!
+    results = race(-> { report },
+      -> { GateTravelService.new(ship_guid: @hull.guid, gateway_name: 'Repair B Gateway', travel_guid: 'race-departure').call })
+    assert_equal 1, ShipTravel.where(completed_at_tick: nil).count
+    assert_equal @gate.name, @hull.reload.location_name
+    assert_equal @gate.name, @player.reload.current_location_name
+    assert_equal 'in_transit', @hull.status
+    refute results.any? { |r| r.is_a?(Exception) }
+  end
+
   test 'status racing pause cannot relocate or lose paused journey' do
     travel = gate_start
     race(-> { report }, -> { ShipTravel.find(travel.id).interdict!(100) })

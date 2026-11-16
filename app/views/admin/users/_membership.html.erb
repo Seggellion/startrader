@@ -53,6 +53,9 @@
     </div>
 
     <% if membership.comparisons.any? %>
+      <% if membership.comparisons.size > 1 %>
+        <p class="mt-5 text-xs text-slate-500" data-multi-ship-note>This player has several ships and can only be beside one of them, so “Diverged” on a parked ship is expected. It needs review only when the player should be with that ship.</p>
+      <% end %>
       <div class="mt-5 overflow-x-auto rounded-lg border border-slate-200">
         <table class="min-w-full divide-y divide-slate-200 text-sm">
           <thead class="bg-slate-50">
