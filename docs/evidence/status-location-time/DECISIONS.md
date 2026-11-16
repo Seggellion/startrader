@@ -32,3 +32,12 @@ Defaults D1–D6 from the discovery apply as written in the playbook.
 | **S1** | F-10: `POST /api/increment_tick` unauthenticated; `POST /api/set_tick` crashes | Keep both routes but require `X-Secret-Guid`; unauthenticated calls get 401 and never touch the tick; `set_tick` returns 501 instead of crashing. Tick mechanics unchanged. | APPROVED |
 | **S2** | F-11: `GET/POST /users` unauthenticated; two dead `minecraft_uuid` routes | Admin-only `/users` JSON routes; remove the two dead member routes | APPROVED |
 | **S3** | F-23: routed `MovesController#create` with a live `byebug` | Remove the route and action; move the `byebug` gem to `:development, :test`; leave `.byebug_history` untouched | APPROVED |
+
+## Release decisions (M08/M09), owner answers 2026-11-16
+
+| ID | Decision | Status |
+|---|---|---|
+| **R1** | GO: deploy RC `3d7e1dc` to Heroku `star-trader` (v179) using the maintenance sequence. No staging app exists; alternative qualification is the green merged suite, migration rehearsals and race tests. | APPROVED |
+| **R2** | Backup verification by `pg:backups:capture` plus Heroku Completed status (no download of production data) | APPROVED |
+| **R3** | Production smoke is read-only only (no test identity, no status/Jump writes) | APPROVED |
+| **R4** | Proceed despite the pre-existing prod RabbitMQ outage (no prod deliveries since 2026-11-05 15:14 UTC); treat it as a baseline, not a rollback trigger; owner follow-up | APPROVED |

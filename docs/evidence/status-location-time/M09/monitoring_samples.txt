@@ -1,0 +1,10 @@
+# M09 monitoring samples (read-only; aggregate counts only)
+# columns: tick | tick_failure_count | last_tick_completed_age_s | failed_delayed_jobs | unfinished_journeys | dup_unfinished_ships | pending_arrival_events | shard_users_with_location_source
+05:18:50 | db:  811577 | 0 | 11 | 0 | 1 | 0 | 4 | 0 | router_5xx=0 | api_4xx: none | /api/status: none | app_error_markers=0
+05:23:22 | db:  811589 | 0 | 70 | 0 | 1 | 0 | 4 | 0 | router_5xx=0 | api_4xx: none | /api/status: none | app_error_markers=0
+05:27:52 | db:  811601 | 0 | 55 | 0 | 1 | 0 | 4 | 0 | router_5xx=0 | api_4xx: none | /api/status: none | app_error_markers=0
+05:32:25 | db:  811612 | 0 | 38 | 0 | 1 | 0 | 4 | 0 | router_5xx=0 | api_4xx: none | /api/status: none | app_error_markers=0
+05:36:57 | db:  811624 | 0 | 22 | 0 | 1 | 0 | 4 | 0 | router_5xx=0 | api_4xx: none | /api/status: none | app_error_markers=0
+05:41:27 | db:  811636 | 0 | 6 | 0 | 1 | 0 | 4 | 0 | router_5xx=0 | api_4xx: none | /api/status: none | app_error_markers=0
+
+# loop exit code 1 is a script artefact: the final '[ $i -lt 6 ] && sleep' evaluates false on iteration 6.

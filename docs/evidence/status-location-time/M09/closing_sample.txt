@@ -1,0 +1,32 @@
+# Closing sample 2026-11-16T14:38:25Z (read-only)
+release: v179 Deploy 3d7e1dc2; web.1 up since 05:11:23Z; worker.1 up since 05:12:18Z; maintenance off
+                    m                    |       v        
+ tick                                    | 812978
+ failure_count                           | 0
+ last_recovered_at                       | never
+ last_tick_failed_at                     | never
+ last_tick_error_class                   | none
+ failed_delayed_jobs                     | 0
+ pending_tick_jobs                       | 1
+ unfinished_journeys                     | 1
+ paused_zero_journeys                    | 1
+ paused_saved_remaining_ticks_sum        | 49
+ dup_unfinished_ships                    | 0
+ casefold_shard_dupes                    | 0
+ shards                                  | 6
+ users                                   | 124
+ shard_users                             | 155
+ user_ships                              | 229
+ location_changes_recorded_since_release | 0
+ location_changes_by_source              | none
+ receipts_completed_since_release        | 0
+ arrival_events_pending                  | 4
+ arrival_events_pending_by_env           | prod=4
+ arrival_events_sent_since_release       | 0
+ latest_migration                        | 20261116020000
+ read_only                               | on
+
+paused journey rows modified since release: 0 (untouched; last updated 2026-11-13)
+shard_users / user_ships written since release: 0 / 0 (no player gameplay traffic observed)
+router (log window 14:22:20-14:38:46Z): 77 x 200, 2 x 304, 0 x 5xx; API paths: /api/ships x2
+app markers in window: arrival_delivery_failed=12 (4 known prod events retrying), all release-specific markers = 0

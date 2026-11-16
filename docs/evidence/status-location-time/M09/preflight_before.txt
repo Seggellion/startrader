@@ -1,0 +1,24 @@
+BEGIN
+SET
+             metric             |     value      
+--------------------------------+----------------
+ casefold_shard_dupe_groups     | 0
+ shards                         | 6
+ unfinished_journeys            | 1
+ paused_zero_journeys           | 1
+ ships_with_multiple_unfinished | 0
+ tick_current                   | 811553
+ tick_running                   | true
+ tick_failure_count             | 0
+ tick_last_completed_age_s      | 18
+ failed_delayed_jobs            | 0
+ pending_arrival_events         | 4
+ shard_users                    | 155
+ user_ships                     | 229
+ users                          | 124
+ latest_migration               | 20261104010000
+ has_location_columns           | 0
+ read_only                      | on
+(17 rows)
+
+ROLLBACK

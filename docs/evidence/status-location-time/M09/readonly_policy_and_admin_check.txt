@@ -1,0 +1,1 @@
+RESULT={"read_only":"on","ships":229,"status_location_blocked_now_in_flight":1,"ships_with_travel_history_identity_protected":30,"paused_arrival_at_unix_all_nil":true,"admin_overview_rendered":15,"admin_overview_errors":{}}

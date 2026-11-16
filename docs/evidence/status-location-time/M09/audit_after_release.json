@@ -1,0 +1,60 @@
+{
+  "generated_at_unix": 1794806168,
+  "shard_users": {
+    "total": 155,
+    "storage_types": {
+      "sql_null": 1,
+      "string": 154
+    },
+    "decoded_shapes": {
+      "ActiveSupport::HashWithIndifferentAccess": 155
+    },
+    "key_sets": {
+      "classification,id,location_name,name,star_system_name": 154,
+      "": 1
+    },
+    "with_coordinate_keys": 0,
+    "with_location_name": 154,
+    "location_not_in_catalog": 0,
+    "missing_shard": 0
+  },
+  "shards": {
+    "total": 6,
+    "without_channel_uuid": 0,
+    "case_or_whitespace_variant_groups": 0,
+    "shards_in_variant_groups": 0
+  },
+  "ships": {
+    "total": 229,
+    "location_blank": 0,
+    "location_not_in_catalog": 0,
+    "without_shard_user": 0,
+    "shard_user_owned_by_other_user": 0,
+    "shard_mismatch_with_shard_user": 0
+  },
+  "pairs": {
+    "aligned": 163,
+    "diverged": 64,
+    "unknown": 1,
+    "in_transit": 0,
+    "interdicted": 1
+  },
+  "receipts": {
+    "by_outcome": {
+      "completed": 155,
+      "pending": 1,
+      "cancelled": 4
+    },
+    "ships_with_receipts": 30,
+    "ships_status_locked_while_idle": 29,
+    "players_status_locked_while_idle": 27
+  },
+  "journeys": {
+    "unfinished": 1,
+    "paused": 1,
+    "paused_zero_sentinel": 1,
+    "gate_travel": 0,
+    "ships_with_multiple_unfinished": 0
+  },
+  "transaction_read_only": "on"
+}

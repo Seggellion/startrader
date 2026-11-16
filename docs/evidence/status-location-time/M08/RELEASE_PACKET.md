@@ -63,3 +63,20 @@ Prepared 2026-11-16 (UTC). No secrets are stored here. Decision references: `../
 ## Success thresholds
 
 0 new `5xx` classes; status error rate not above the M00 baseline (which was inconclusive, so any sustained 5xx is a trigger); tick heartbeat within 30 s; `failure_count` 0; unfinished journeys unchanged except for natural progress; the audit task runs and reports `transaction_read_only: on`.
+
+## Post-release record (completed 2026-11-16)
+
+| Item | Observed |
+|---|---|
+| GitHub `main` | `3d7e1dc2eed92d1f0a482d3e77951f698a5ec2ab` (fast-forward from `4f42a56`) |
+| Local `main` branch | `3d7e1dc` (fast-forward from `fecb49f`; branch reference only; see M10 about the physical main checkout) |
+| Production | Heroku `star-trader` **v179** "Deploy 3d7e1dc2", released 05:10:41 UTC |
+| Backup | `b006`, Completed 05:06:58 UTC (623.46 KB) |
+| Migrations | `20261024170000`, `20261116010000`, `20261116020000` applied (exit 0), confirmed via `schema_migrations` |
+| Maintenance window | 05:08:02 → 05:12:13 UTC (4 min 11 s); game-clock pause ~05:07:51 → ~05:15:00 UTC |
+| Tests | merged tree 675 runs, 7073 assertions, 0 failures/errors; reproductions: only R-6 fails, by design (Q6) |
+| API verification | `/up`, `/`, `/api/commodities` 200; `updated-at-unix` integer; live policy: 1 of 229 ships blocked (the in-flight one), N-01 resolved |
+| Admin verification | overview rendered for 15 real users, 0 errors (READ ONLY transaction); authenticated browser session not exercised (read-only smoke scope) |
+| Monitoring | 9 h 26 min; no release-specific regression; tick cadence ~24 s/tick, unchanged; watchdog never recovered |
+| Outstanding | **production RabbitMQ outage (pre-existing since 2026-11-05)**; changed status and Jump paths not yet exercised by live traffic |
+| Rollback readiness | `heroku rollback v178 -a star-trader` remains valid (v178 tolerates the additive schema); backup `b006` available; not triggered |
