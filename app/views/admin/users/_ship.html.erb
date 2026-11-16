@@ -1,0 +1,113 @@
+<% ship = row.user_ship %>
+<% journey = row.journey %>
+<% state = row.state %>
+<article class="p-5" data-ship-id="<%= ship.id %>">
+  <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+    <div>
+      <h3 class="text-base font-semibold text-slate-950"><%= ship.ship&.model.presence || ship.ship_slug.presence || "Unknown ship" %></h3>
+      <p class="mt-1 font-mono text-xs text-slate-500 break-all"><%= ship.guid.presence || "No GUID" %></p>
+    </div>
+    <div class="flex items-center gap-2">
+      <%= ship_status_badge(ship.status) %>
+      <%= link_to "Edit ship", edit_admin_user_ship_path(ship), class: "text-sm font-semibold text-cyan-700 hover:text-cyan-900" %>
+    </div>
+  </div>
+
+  <% if row.membership_mismatch %>
+    <p class="mt-3 text-sm font-semibold text-rose-700">Needs review: this ship points at a membership that belongs to another player.</p>
+  <% elsif ship.shard_user_id.nil? %>
+    <p class="mt-3 text-sm font-semibold text-rose-700">Needs review: this ship is not linked to any shard membership.</p>
+  <% end %>
+
+  <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <%= render_field.call("UserShip ID", ship.id) %>
+    <%= render_field.call("Shard", ship.shard&.name || ship.shard_name.presence) %>
+    <div>
+      <p class="<%= label_class %>">Ship location</p>
+      <% if ship.location_name.blank? %>
+        <p class="mt-1 text-sm text-amber-700">Unknown — no location recorded</p>
+      <% elsif row.stale_location? %>
+        <p class="mt-1 text-sm font-semibold text-rose-700" data-stale-location>Stale — “<%= ship.location_name %>” is not in the location catalog</p>
+      <% else %>
+        <p class="mt-1 text-sm font-medium text-slate-900"><%= ship.location_name %></p>
+      <% end %>
+    </div>
+    <%= render_field.call("Cargo", "#{ship.used_scu.to_i} / #{ship.total_scu.to_i} SCU") %>
+    <%= render_field.call("Created", admin_utc(ship.created_at)) %>
+    <%= render_field.call("Updated (bumped by every status call)", admin_utc(ship.updated_at)) %>
+  </div>
+
+  <div class="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4" data-journey>
+    <% if journey.nil? %>
+      <p class="text-sm text-slate-600">No journey on record</p>
+      <p class="mt-1 text-xs text-slate-500">Arrived journeys are deleted, so this does not mean the ship has never travelled.</p>
+    <% else %>
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="text-sm font-semibold text-slate-900"><%= state.label %></span>
+        <span class="text-sm text-slate-600">· <%= journey.from_location&.name || "Unknown" %> → <%= journey.to_location&.name || "Unknown" %></span>
+        <%= link_to "Journey #{journey.id}", admin_ship_travel_path(journey), class: "text-sm font-semibold text-cyan-700 hover:text-cyan-900" %>
+      </div>
+      <% remaining = state.state == "interdicted" ? journey.remaining_ticks_from_arrival.to_i : [journey.arrival_tick.to_i - o.tick, 0].max %>
+      <dl class="mt-3 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
+        <div><dt class="<%= label_class %>">Type</dt><dd><%= journey.ship_travel_type == "gate_travel" ? "Jump (gate travel)" : "Ordinary travel" %></dd></div>
+        <div><dt class="<%= label_class %>">Departure tick</dt><dd><%= journey.departure_tick %></dd></div>
+        <div>
+          <dt class="<%= label_class %>">Arrival tick</dt>
+          <dd data-arrival-tick>
+            <% if journey.is_paused? && journey.arrival_tick.to_i.zero? %>
+              0 <span class="text-amber-700">(interdicted sentinel, not an arrival deadline)</span>
+            <% else %>
+              <%= journey.arrival_tick %>
+            <% end %>
+          </dd>
+        </div>
+        <div><dt class="<%= label_class %>">Current tick</dt><dd><%= o.tick %></dd></div>
+        <div>
+          <dt class="<%= label_class %>">Remaining</dt>
+          <dd>
+            <% if state.state == "interdicted" %>
+              No scheduled arrival while interdicted; <%= remaining %> saved ticks
+              (about <%= [remaining, 1].max * o.seconds_per_tick %> s after resume)
+            <% else %>
+              <%= remaining %> ticks (about <%= remaining * o.seconds_per_tick %> s at the configured cadence)
+            <% end %>
+          </dd>
+        </div>
+        <div><dt class="<%= label_class %>">Interdictions</dt><dd><%= journey.interdiction_count %><%= " (last at tick #{journey.last_interdicted_tick})" if journey.last_interdicted_tick %></dd></div>
+        <div><dt class="<%= label_class %>">Interdict window</dt><dd><%= journey.interdict_window_percent %>%</dd></div>
+        <div><dt class="<%= label_class %>">Broker environment</dt><dd><%= journey.rabbitmq_environment %></dd></div>
+      </dl>
+      <% if state.warnings.any? %>
+        <ul class="mt-3 space-y-1 text-sm text-rose-700">
+          <% state.warnings.each do |warning| %><li><strong>Needs review:</strong> <%= warning %></li><% end %>
+        </ul>
+      <% end %>
+    <% end %>
+  </div>
+
+  <details class="mt-3">
+    <summary class="cursor-pointer text-sm font-semibold text-slate-600">Cargo (<%= ship.user_ship_cargos.size %>)</summary>
+    <% if ship.user_ship_cargos.any? %>
+      <table class="mt-2 min-w-full divide-y divide-slate-200 text-sm">
+        <thead><tr>
+          <th class="px-3 py-2 text-left text-xs font-semibold text-slate-500">Commodity</th>
+          <th class="px-3 py-2 text-left text-xs font-semibold text-slate-500">SCU</th>
+          <th class="px-3 py-2 text-left text-xs font-semibold text-slate-500">Buy price</th>
+          <th class="px-3 py-2 text-left text-xs font-semibold text-slate-500">Sell price</th>
+        </tr></thead>
+        <tbody class="divide-y divide-slate-200">
+          <% ship.user_ship_cargos.each do |cargo| %>
+            <tr>
+              <td class="px-3 py-2"><%= cargo.commodity&.name || cargo.commodity_name.presence || "Unknown commodity" %></td>
+              <td class="px-3 py-2"><%= cargo.scu.nil? ? "Not recorded" : cargo.scu %></td>
+              <td class="px-3 py-2"><%= cargo.buy_price.nil? ? "Not recorded" : number_to_currency(cargo.buy_price, unit: "") %></td>
+              <td class="px-3 py-2"><%= cargo.sell_price.nil? ? "Not recorded" : number_to_currency(cargo.sell_price, unit: "") %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="mt-2 text-sm text-slate-500">No cargo recorded for this ship.</p>
+    <% end %>
+  </details>
+</article>

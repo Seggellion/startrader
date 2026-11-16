@@ -31,7 +31,7 @@
       if avatar_value.present? && (avatar_value.match?(/\Ahttps?:\/\//) || avatar_value.start_with?("/") || avatar_value.match?(/\.(png|jpg|jpeg|gif|webp|svg)\z/i))
         avatar_value
       else
-        "https://crafatar.com/avatars/#{user.uid}?size=128&overlay"
+        nil # local initials instead of a third-party avatar keyed by the user's UID
       end
     end
   end
@@ -138,7 +138,11 @@
             data-sort-last-login="<%= last_login_sort %>">
             <div class="min-w-0">
               <%= link_to admin_user_path(user), class: "group flex min-w-0 items-center gap-3 rounded-md outline-none focus:ring-2 focus:ring-cyan-400/40" do %>
-                <%= image_tag avatar_source.call(user), alt: "#{user.username.presence || "User"} avatar", class: "h-11 w-11 shrink-0 rounded-full border border-slate-700 bg-slate-800 object-cover" %>
+                <% if (avatar_url = avatar_source.call(user)) %>
+                  <%= image_tag avatar_url, alt: "#{user.username.presence || "User"} avatar", class: "h-11 w-11 shrink-0 rounded-full border border-slate-700 bg-slate-800 object-cover" %>
+                <% else %>
+                  <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-700 bg-slate-800 text-sm font-bold text-slate-200" aria-hidden="true"><%= admin_initials(user) %></span>
+                <% end %>
                 <span class="min-w-0">
                   <span class="block truncate font-semibold text-white group-hover:text-cyan-200"><%= user.username.presence || "Unnamed user" %></span>
                   <span class="block truncate text-sm text-slate-400"><%= real_name.presence || "No profile name" %></span>

@@ -1,0 +1,91 @@
+<% su = membership.shard_user %>
+<section class="<%= panel_class %>" data-membership-id="<%= su.id %>" aria-labelledby="membership-<%= su.id %>">
+  <div class="flex flex-col gap-2 border-b border-slate-200 p-5 sm:flex-row sm:items-start sm:justify-between">
+    <div>
+      <h2 id="membership-<%= su.id %>" class="text-lg font-semibold text-slate-950"><%= membership.shard&.name || su.shard_name.presence || "No shard" %></h2>
+      <p class="mt-1 font-mono text-xs text-slate-500 break-all"><%= membership.shard&.channel_uuid.presence || "No shard UUID" %></p>
+    </div>
+    <%= link_to "Edit membership", edit_admin_shard_user_path(su), class: "text-sm font-semibold text-cyan-700 hover:text-cyan-900" %>
+  </div>
+
+  <div class="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4">
+    <%= render_field.call("Membership ID", su.id) %>
+    <%= render_field.call("Shard ID", su.shard_id) %>
+    <%= render_field.call("Wallet balance", admin_credits(su.wallet_balance)) %>
+    <%= render_field.call("Karma", su.karma) %>
+    <%= render_field.call("Fame", su.fame) %>
+    <%= render_field.call("Murder count", su.murder_count) %>
+    <%= render_field.call("Member since", admin_utc(su.created_at)) %>
+    <%= render_field.call("Record updated (also bumped by trades)", admin_utc(su.updated_at)) %>
+  </div>
+
+  <div class="border-t border-slate-200 p-5" data-player-location>
+    <h3 class="text-sm font-semibold text-slate-950">Player location</h3>
+    <div class="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <%= render_field.call("Named location", membership.location_name, missing: "Unknown — no location recorded") %>
+      <%= render_field.call("Star system", membership.payload&.dig("star_system_name").presence, missing: "Unknown") %>
+      <%= render_field.call("Classification", membership.payload&.dig("classification").presence, missing: "Unknown") %>
+      <div>
+        <p class="<%= label_class %>">Location catalog</p>
+        <% if !membership.location_known? %>
+          <p class="mt-1 text-sm text-amber-700">No location to resolve</p>
+        <% elsif membership.stale_location? %>
+          <p class="mt-1 text-sm font-semibold text-rose-700" data-stale-location>Stale — “<%= membership.location_name %>” is not in the location catalog</p>
+        <% else %>
+          <p class="mt-1 text-sm font-medium text-emerald-700">Resolves (Location #<%= membership.location.id %>)</p>
+        <% end %>
+      </div>
+      <% if membership.coordinates.any? %>
+        <div class="sm:col-span-2 lg:col-span-4" data-legacy-coordinates>
+          <p class="<%= label_class %>">Legacy coordinate keys (from the retired Minecraft integration; not used by StarTrader)</p>
+          <p class="mt-1 font-mono text-sm text-slate-700"><%= membership.coordinates.map { |k, v| "#{k}=#{v}" }.join("  ") %></p>
+        </div>
+      <% end %>
+    </div>
+
+    <% if membership.comparisons.any? %>
+      <div class="mt-5 overflow-x-auto rounded-lg border border-slate-200">
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+          <thead class="bg-slate-50">
+            <tr>
+              <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500">Ship</th>
+              <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500">Player location</th>
+              <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500">Ship location</th>
+              <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500">Agreement</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200">
+            <% membership.comparisons.each do |c| %>
+              <tr data-comparison="<%= c.status %>" data-ship-id="<%= c.ship_row.user_ship.id %>">
+                <td class="px-4 py-2 text-slate-700"><%= c.ship_row.user_ship.ship&.model || "Unknown ship" %></td>
+                <td class="px-4 py-2 text-slate-700"><%= c.player_location || "Unknown" %></td>
+                <td class="px-4 py-2 text-slate-700"><%= c.ship_location || "Unknown" %></td>
+                <td class="px-4 py-2"><%= comparison_badge(c.status) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <p class="mt-4 text-sm text-slate-500">No ships on this shard.</p>
+    <% end %>
+
+    <details class="mt-4">
+      <summary class="cursor-pointer text-sm font-semibold text-slate-600">Raw stored location payload</summary>
+      <p class="mt-2 text-xs text-slate-500">Stored as: <%= membership.storage %></p>
+      <pre class="mt-2 max-h-64 overflow-auto rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700"><%= admin_pretty_json(membership.raw_location) %></pre>
+    </details>
+    <details class="mt-2">
+      <summary class="cursor-pointer text-sm font-semibold text-slate-600">Inventory, currency and stats</summary>
+      <pre class="mt-2 max-h-64 overflow-auto rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700"><%= admin_pretty_json(membership.stores) %></pre>
+    </details>
+  </div>
+
+  <% if membership.ships.any? %>
+    <div class="divide-y divide-slate-200 border-t border-slate-200">
+      <% membership.ships.each do |row| %>
+        <%= render "admin/users/ship", row: row, o: o, render_field: render_field, label_class: label_class %>
+      <% end %>
+    </div>
+  <% end %>
+</section>

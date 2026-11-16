@@ -2,14 +2,18 @@
 module Admin
   class UsersController < ApplicationController
     before_action :require_admin
-    before_action :set_user, only: [:show, :edit, :update]
+    before_action :set_user, only: [:edit, :update]
 
     def index
       @users = User.includes(user_ships: [:ship, :user_ship_cargos, { active_travel: :to_location }])
                    .order(created_at: :desc)
     end
 
+    # Read-only overview; Admin::UserOverview loads everything in bounded queries.
     def show
+      response.set_header("Cache-Control", "no-store")
+      @user = User.find(params[:id])
+      @overview = Admin::UserOverview.new(@user)
     end
 
     def edit

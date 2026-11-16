@@ -1,210 +1,145 @@
+<%#
+  Admin user overview (discovery F-09 / F-21). Light-modern tokens from
+  admin/user_ships/edit. All data comes from Admin::UserOverview (@overview);
+  do not add per-record queries here.
+%>
 <%
-  page_class = "min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8"
-  panel_class = "rounded-lg border border-slate-800 bg-slate-900/80 shadow-xl shadow-black/20"
-  label_class = "text-xs font-semibold uppercase tracking-wide text-slate-500"
-  value_class = "mt-1 text-sm font-medium text-slate-100"
+  o = @overview
+  panel_class = "rounded-lg border border-slate-200 bg-white shadow-sm"
+  label_class = "text-xs font-semibold text-slate-500"
+  value_class = "mt-1 text-sm font-medium text-slate-900"
   muted_value_class = "mt-1 text-sm text-slate-400"
-  button_class = "rounded-md border border-cyan-400/30 px-3 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-400/10 hover:text-white"
-  th_class = "px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400"
-  td_class = "px-4 py-4 align-top text-sm text-slate-300"
-
-  role = (@user.user_type == 0 || @user.user_type.to_s == "0" || @user.user_type.to_s == "admin") ? "Administrator" : "User"
-  active_ship = @user.active_ship
-  active_travel = active_ship&.active_travel
-  destination_name = active_travel&.to_location&.name
-  active_ship_name = active_ship&.ship&.model.presence || active_ship&.ship_slug.presence || (active_ship ? "Unknown ship" : "No active ship")
-  active_location = if active_ship.blank?
-    "No active ship"
-  elsif active_travel
-    state = TravelState.new(active_travel)
-    "#{state.label}: #{destination_name.presence || 'Unknown destination'}"
-  elsif active_ship.status.to_s == "in_transit"
-    ["Traveling to #{destination_name.presence || "Unknown destination"}", active_travel&.arrival_tick.present? ? "Arriving at tick #{active_travel.arrival_tick}" : nil].compact.join(" ")
-  else
-    active_ship.location_name.presence || "Unknown location"
-  end
-
-  status_badge_class = lambda do |status|
-    case status.to_s
-    when "in_transit"
-      "border border-sky-400/30 bg-sky-400/10 text-sky-200"
-    when "docked", "landed", "available"
-      "border border-emerald-400/30 bg-emerald-400/10 text-emerald-200"
-    when "destroyed", "disabled"
-      "border border-rose-400/30 bg-rose-400/10 text-rose-200"
-    else
-      "border border-slate-600 bg-slate-800 text-slate-300"
+  button_class = "inline-flex items-center rounded-md border border-cyan-500 px-3 py-2 text-sm font-semibold text-cyan-700 transition hover:bg-cyan-50"
+  chip_class = "rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm"
+  render_field = lambda do |label, value, missing: "Not recorded", mono: false|
+    content_tag(:div) do
+      safe_join([
+        content_tag(:p, label, class: label_class),
+        content_tag(:p, value.nil? || value == "" ? missing : value,
+          class: [(value.nil? || value == "") ? muted_value_class : value_class, (mono ? "font-mono break-all" : nil)].compact.join(" "))
+      ])
     end
   end
-
-  avatar_source = lambda do |user|
-    if user.respond_to?(:avatar) && user.avatar.respond_to?(:attached?) && user.avatar.attached?
-      url_for(user.avatar)
-    else
-      avatar_value = user.has_attribute?(:avatar) ? user[:avatar].to_s : ""
-      if avatar_value.present? && (avatar_value.match?(/\Ahttps?:\/\//) || avatar_value.start_with?("/") || avatar_value.match?(/\.(png|jpg|jpeg|gif|webp|svg)\z/i))
-        avatar_value
-      else
-        "https://crafatar.com/avatars/#{user.uid}?size=128&overlay"
-      end
-    end
-  end
-
-  pretty_json = lambda do |value|
-    JSON.pretty_generate(value.presence || {})
-  rescue JSON::GeneratorError, TypeError
-    value.to_s
-  end
+  role = @user.admin? ? "Administrator" : "Player"
 %>
 
-<div class="<%= page_class %>">
-  <div class="mx-auto max-w-7xl space-y-6">
-    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+<div class="mx-auto max-w-7xl space-y-6" data-admin-user-overview="<%= @user.id %>">
+  <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <div class="flex items-center gap-4">
+      <span class="flex h-16 w-16 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-xl font-bold text-slate-600" aria-hidden="true"><%= admin_initials(@user) %></span>
       <div>
-        <%= link_to "Back to Users", admin_users_path, class: "text-sm font-semibold text-cyan-300 hover:text-cyan-100" %>
-        <h1 class="mt-3 text-3xl font-bold text-white"><%= @user.username.presence || "User ##{@user.id}" %></h1>
-        <p class="mt-2 text-sm text-slate-400">Profile, account metadata, inventory, and fleet details.</p>
+        <%= link_to "Back to Users", admin_users_path, class: "text-sm font-semibold text-cyan-700 hover:text-cyan-900" %>
+        <h1 class="mt-1 text-3xl font-bold text-slate-950"><%= @user.username.presence || "User ##{@user.id}" %></h1>
+        <p class="mt-1 text-sm text-slate-500">User #<%= @user.id %> · <%= role %> · times shown in UTC</p>
       </div>
-      <%= link_to "Edit User", edit_admin_user_path(@user), class: button_class %>
     </div>
+    <div class="flex flex-wrap gap-2">
+      <%= link_to "Edit User", edit_admin_user_path(@user), class: button_class %>
+      <%= link_to "All Shard Memberships", admin_shard_users_path, class: button_class %>
+    </div>
+  </div>
 
-    <div class="<%= panel_class %> p-5">
-      <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-        <div class="flex items-center gap-4">
-          <%= image_tag avatar_source.call(@user), alt: "#{@user.username.presence || "User"} avatar", class: "h-20 w-20 rounded-full border border-slate-700 bg-slate-800 object-cover" %>
-          <div>
-            <p class="text-xl font-bold text-white"><%= @user.username.presence || "Unnamed user" %></p>
-            <p class="mt-1 font-mono text-sm text-slate-400"><%= @user.uid.presence || "No UID" %></p>
-            <% if role == "Administrator" %>
-              <span class="mt-3 inline-flex rounded-full border border-amber-300/30 bg-amber-300/10 px-2.5 py-1 text-xs font-semibold text-amber-200">Administrator</span>
-            <% else %>
-              <span class="mt-3 inline-flex rounded-full border border-slate-600 bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-300">User</span>
+  <section aria-label="Status summary" class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+    <% [["Simulation tick", o.tick, nil],
+        ["Shard memberships", o.memberships.size, nil],
+        ["Ships", o.ship_count, nil],
+        ["In transit", o.in_transit_count, nil],
+        ["Interdicted", o.interdicted_count, (o.interdicted_count.positive? ? "text-amber-700" : nil)],
+        ["Location mismatches", o.divergence_count, (o.divergence_count.positive? ? "text-rose-700" : "text-emerald-700")]].each do |label, value, tone| %>
+      <div class="<%= chip_class %>" data-summary="<%= label.parameterize %>">
+        <p class="<%= label_class %>"><%= label %></p>
+        <p class="mt-1 text-2xl font-bold <%= tone || 'text-slate-900' %>"><%= value %></p>
+      </div>
+    <% end %>
+  </section>
+
+  <div class="grid gap-6 lg:grid-cols-3">
+    <div class="space-y-6 lg:col-span-2">
+      <section class="<%= panel_class %>" aria-labelledby="identity-heading">
+        <div class="border-b border-slate-200 p-5">
+          <h2 id="identity-heading" class="text-lg font-semibold text-slate-950">Identity</h2>
+        </div>
+        <div class="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3">
+          <%= render_field.call("User ID", @user.id) %>
+          <%= render_field.call("Username", @user.username.presence) %>
+          <%= render_field.call("Role", role) %>
+          <%= render_field.call("Twitch ID", @user.twitch_id.presence, mono: true) %>
+          <%= render_field.call("UID", @user.uid.presence, mono: true) %>
+          <%= render_field.call("Provider", @user.provider.presence) %>
+          <%= render_field.call("Account created", admin_utc(@user.created_at)) %>
+          <%= render_field.call("Record updated", admin_utc(@user.updated_at)) %>
+          <%= render_field.call("Last sign-in (OAuth only, not gameplay)", admin_utc(@user.last_login, missing: "Never")) %>
+          <%= render_field.call("Last record write (approximate)", admin_utc(o.last_record_write_at)) %>
+          <%= render_field.call("Linked shards", o.memberships.map { |m| m.shard&.name || m.shard_user.shard_name }.compact.join(", ").presence, missing: "No shard memberships") %>
+          <%= render_field.call("Platform wallet (legacy field, not gameplay credits)", admin_credits(@user.wallet_balance)) %>
+        </div>
+      </section>
+
+      <% if o.memberships.empty? %>
+        <section class="<%= panel_class %> p-5">
+          <h2 class="text-lg font-semibold text-slate-950">Shard memberships</h2>
+          <p class="mt-2 text-sm text-slate-500">No shard memberships. This user has never synchronized with a shard.</p>
+        </section>
+      <% end %>
+
+      <% o.memberships.each do |membership| %>
+        <%= render "admin/users/membership", membership: membership, o: o, panel_class: panel_class,
+              label_class: label_class, render_field: render_field %>
+      <% end %>
+
+      <% if o.unlinked_ships.any? %>
+        <section class="<%= panel_class %>" data-unlinked-ships>
+          <div class="border-b border-slate-200 p-5">
+            <h2 class="text-lg font-semibold text-slate-950">Ships not linked to this user's memberships</h2>
+            <p class="mt-1 text-sm text-rose-700">Needs review: these ships have no shard membership, or point at another player's membership.</p>
+          </div>
+          <div class="divide-y divide-slate-200">
+            <% o.unlinked_ships.each do |row| %>
+              <%= render "admin/users/ship", row: row, o: o, render_field: render_field, label_class: label_class %>
             <% end %>
           </div>
-        </div>
-        <div class="rounded-lg border border-slate-800 bg-slate-950/70 px-4 py-3 text-right">
-          <p class="<%= label_class %>">Wallet Balance</p>
-          <p class="mt-1 text-2xl font-bold text-emerald-200"><%= number_to_currency(@user.wallet_balance || 0) %></p>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid gap-6 lg:grid-cols-3">
-      <div class="<%= panel_class %> p-5 lg:col-span-2">
-        <h2 class="text-lg font-semibold text-white">Account Details</h2>
-        <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <% {
-            "Provider" => @user.provider,
-            "Twitch ID" => @user.twitch_id,
-            "First Name" => @user.first_name,
-            "Last Name" => @user.last_name,
-            "Country" => @user.country,
-            "Role" => role,
-            "Last Login" => (@user.last_login ? @user.last_login.strftime("%b %d, %Y %H:%M") : "Never"),
-            "Created At" => (@user.created_at ? @user.created_at.strftime("%b %d, %Y %H:%M") : nil),
-            "Updated At" => (@user.updated_at ? @user.updated_at.strftime("%b %d, %Y %H:%M") : nil)
-          }.each do |label, value| %>
-            <div>
-              <p class="<%= label_class %>"><%= label %></p>
-              <p class="<%= value.present? ? value_class : muted_value_class %>"><%= value.presence || "-" %></p>
-            </div>
-          <% end %>
-        </div>
-      </div>
-
-      <div class="<%= panel_class %> p-5">
-        <h2 class="text-lg font-semibold text-white">Active Ship</h2>
-        <div class="mt-5 space-y-4">
-          <div>
-            <p class="<%= label_class %>">Ship</p>
-            <p class="<%= value_class %>"><%= active_ship_name %></p>
-          </div>
-          <div>
-            <p class="<%= label_class %>">Status</p>
-            <span class="mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold <%= status_badge_class.call(active_ship&.status) %>"><%= (active_ship&.status.presence || "No active ship").to_s.titleize %></span>
-          </div>
-          <div>
-            <p class="<%= label_class %>">Location / Destination</p>
-            <p class="<%= value_class %>"><%= active_location %></p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid gap-6 lg:grid-cols-2">
-      <div class="<%= panel_class %> p-5">
-        <h2 class="text-lg font-semibold text-white">Global Inventory JSON</h2>
-        <pre class="mt-4 max-h-96 overflow-auto rounded-md border border-slate-800 bg-slate-950 p-4 text-xs text-slate-300"><%= pretty_json.call(@user.global_inventory) %></pre>
-      </div>
-      <div class="<%= panel_class %> p-5">
-        <h2 class="text-lg font-semibold text-white">Purchased Items JSON</h2>
-        <pre class="mt-4 max-h-96 overflow-auto rounded-md border border-slate-800 bg-slate-950 p-4 text-xs text-slate-300"><%= pretty_json.call(@user.purchased_items) %></pre>
-      </div>
-    </div>
-
-    <div class="<%= panel_class %>">
-      <div class="border-b border-slate-800 p-5">
-        <h2 class="text-lg font-semibold text-white">User Ships</h2>
-        <p class="mt-1 text-sm text-slate-400">All ships registered to this player, including cargo where available.</p>
-      </div>
-
-      <% if @user.user_ships.any? %>
-        <div class="divide-y divide-slate-800">
-          <% @user.user_ships.each do |user_ship| %>
-            <section class="p-5">
-              <div class="grid gap-4 lg:grid-cols-4">
-                <% {
-                  "Ship" => (user_ship.ship&.model.presence || user_ship.ship_slug.presence || "Unknown ship"),
-                  "GUID" => user_ship.guid,
-                  "Shard" => user_ship.shard_name,
-                  "Status" => user_ship.status,
-                  "Location" => (user_ship.location_name.presence || "Unknown location"),
-                  "Total SCU" => user_ship.total_scu,
-                  "Used SCU" => user_ship.used_scu,
-                  "Created At" => (user_ship.created_at ? user_ship.created_at.strftime("%b %d, %Y %H:%M") : nil),
-                  "Updated At" => (user_ship.updated_at ? user_ship.updated_at.strftime("%b %d, %Y %H:%M") : nil)
-                }.each do |label, value| %>
-                  <div>
-                    <p class="<%= label_class %>"><%= label %></p>
-                    <p class="<%= value.present? ? value_class : muted_value_class %>"><%= value.presence || "-" %></p>
-                  </div>
-                <% end %>
-              </div>
-
-              <div class="mt-5 overflow-x-auto rounded-lg border border-slate-800">
-                <table class="min-w-full divide-y divide-slate-800">
-                  <thead class="bg-slate-950/70">
-                    <tr>
-                      <th class="<%= th_class %>">Commodity</th>
-                      <th class="<%= th_class %>">SCU</th>
-                      <th class="<%= th_class %>">Buy Price</th>
-                      <th class="<%= th_class %>">Sell Price</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-800">
-                    <% if user_ship.user_ship_cargos.any? %>
-                      <% user_ship.user_ship_cargos.each do |cargo| %>
-                        <tr class="bg-slate-950/30">
-                          <td class="<%= td_class %>"><%= cargo.commodity_name.presence || "Unknown commodity" %></td>
-                          <td class="<%= td_class %>"><%= cargo.scu || 0 %></td>
-                          <td class="<%= td_class %>"><%= number_to_currency(cargo.buy_price || 0) %></td>
-                          <td class="<%= td_class %>"><%= number_to_currency(cargo.sell_price || 0) %></td>
-                        </tr>
-                      <% end %>
-                    <% else %>
-                      <tr>
-                        <td colspan="4" class="px-4 py-5 text-sm text-slate-500">No cargo recorded for this ship.</td>
-                      </tr>
-                    <% end %>
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          <% end %>
-        </div>
-      <% else %>
-        <p class="p-5 text-sm text-slate-500">No user ships found.</p>
+        </section>
       <% end %>
     </div>
+
+    <aside class="space-y-6" aria-label="Diagnostics">
+      <section class="<%= panel_class %> p-5">
+        <h2 class="text-lg font-semibold text-slate-950">Synchronization summary</h2>
+        <dl class="mt-4 space-y-3 text-sm">
+          <div class="flex justify-between gap-3"><dt class="text-slate-500">Mismatched ship/player pairs</dt><dd class="font-semibold"><%= o.divergence_count %></dd></div>
+          <div class="flex justify-between gap-3"><dt class="text-slate-500">Memberships with unknown location</dt><dd class="font-semibold"><%= o.unknown_player_location_count %></dd></div>
+          <div class="flex justify-between gap-3"><dt class="text-slate-500">Case-variant shard UUID groups</dt><dd class="font-semibold"><%= o.shard_uuid_variant_groups %></dd></div>
+          <div class="flex justify-between gap-3"><dt class="text-slate-500">Twitch ID equals UID</dt><dd class="font-semibold"><%= o.identity[:twitch_id_matches_uid] ? "Yes" : "No" %></dd></div>
+        </dl>
+      </section>
+
+      <details class="<%= panel_class %> p-5" data-diagnostics>
+        <summary class="cursor-pointer text-lg font-semibold text-slate-950">Tick chain</summary>
+        <% tc = o.tick_control %>
+        <% if tc %>
+          <dl class="mt-4 space-y-2 text-sm">
+            <% {"Running" => (tc.running? ? "Yes" : "No"),
+                "Seconds per tick" => o.seconds_per_tick,
+                "Last tick started" => admin_utc(tc.last_tick_started_at),
+                "Last tick completed" => admin_utc(tc.last_tick_completed_at),
+                "Last tick failed" => admin_utc(tc.last_tick_failed_at, missing: "Never"),
+                "Last error class" => (tc.last_tick_error_class.presence || "None"),
+                "Last heartbeat" => admin_utc(tc.last_heartbeat_at),
+                "Failure count" => tc.failure_count,
+                "Last recovered" => admin_utc(tc.last_recovered_at, missing: "Never"),
+                "Heartbeat stale?" => (tc.stale? ? "Yes" : "No")}.each do |label, value| %>
+              <div class="flex justify-between gap-3"><dt class="text-slate-500"><%= label %></dt><dd class="text-right font-medium"><%= value %></dd></div>
+            <% end %>
+          </dl>
+        <% else %>
+          <p class="mt-3 text-sm text-slate-500">No tick control record.</p>
+        <% end %>
+      </details>
+
+      <details class="<%= panel_class %> p-5">
+        <summary class="cursor-pointer text-lg font-semibold text-slate-950">Not yet instrumented</summary>
+        <p class="mt-3 text-sm text-slate-500">The schema does not yet record these, so this page does not show them: last successful status synchronization, when the player location last changed, and which authority (client status, departure, arrival, repair) changed it.</p>
+      </details>
+    </aside>
   </div>
 </div>
