@@ -1,0 +1,86 @@
+BEGIN
+SET
+== A. shard_users.last_location storage type (F-07 / P-03)
+ stored_as | count 
+-----------+-------
+ sql_null  |     1
+ string    |   154
+(2 rows)
+
+== B. decoded payload shape (P-02): named / coordinates / empty
+ undecodable_or_null | empty_object | has_name | has_coordinate_keys | coordinates_only 
+---------------------+--------------+----------+---------------------+------------------
+                   1 |            0 |      154 |                   0 |                0
+(1 row)
+
+== C. case/whitespace-variant shard channel_uuid groups (F-04 / P-04)
+ variant_groups | shards_in_variant_groups 
+----------------+--------------------------
+              0 |                        0
+(1 row)
+
+ shards_total | shards_without_uuid | status_autocreated_name_pattern 
+--------------+---------------------+---------------------------------
+            6 |                   0 |                               1
+(1 row)
+
+== D. ship location names missing from the catalog (U-04)
+ ships_total | ship_location_blank | ship_location_not_in_catalog | ship_without_shard_user 
+-------------+---------------------+------------------------------+-------------------------
+         229 |                   0 |                            0 |                       0
+(1 row)
+
+== E. ship vs player divergence (P-05), split by unfinished journey
+ unfinished | pairs | player_unknown | diverged | aligned 
+------------+-------+----------------+----------+---------
+ f          |   228 |              1 |       64 |     163
+ t          |     1 |              0 |        1 |       0
+(2 rows)
+
+== F. N-01 impact: ships/players status-locked by receipts with no unfinished journey
+ ships_with_receipts | ships_locked_idle | players_with_receipt_ships 
+---------------------+-------------------+----------------------------
+                  30 |                29 |                         28
+(1 row)
+
+  outcome  | count 
+-----------+-------
+ cancelled |     4
+ completed |   155
+ pending   |     1
+(3 rows)
+
+== G. unfinished journeys
+ unfinished | paused | paused_zero_sentinel | gate 
+------------+--------+----------------------+------
+          1 |      1 |                    1 |    0
+(1 row)
+
+== H. identity integrity (section 9.3)
+ duplicate_twitch_id_groups 
+----------------------------
+                          0
+(1 row)
+
+ users_total 
+-------------
+         124
+(1 row)
+
+== I. schema migration markers
+    version     
+----------------
+ 20261101010000
+ 20261101010100
+ 20261101010200
+ 20261101010300
+ 20261104010000
+(5 rows)
+
+ read_only 
+-----------
+ on
+(1 row)
+
+ROLLBACK
+-- Captured 2026-11-16 UTC via heroku pg:psql -a star-trader (release v178). Aggregate counts only.

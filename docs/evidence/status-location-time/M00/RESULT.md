@@ -1,6 +1,6 @@
 # M00 — Revalidate checkout, decisions, tests, and deployment authority
 
-**Verdict: BLOCKED (gate G0 not met).** Two reasons: no authorized isolated test database is available, and the integration base needs an owner decision because GitHub `main` and production are on divergent lines. Under the playbook's M00 rule, no feature code has been edited.
+**Verdict: PASS (gate G0 met), 2026-11-16.** M00 started BLOCKED: there was no authorized test database, and the integration base was undecided. The owner then answered P0, P1, P2 and Q1 (see `DECISIONS.md`). After that, the isolated baseline ran, all seven reproductions produced observed results, and the read-only production audit ran. Q2, Q3, Q4 and Q6 are still pending. They gate M02 and M04, not M01. No feature code was edited in M00.
 
 Recorded: 2026-11-16 (UTC), Claude Code session.
 Inputs: `docs/STARTRADER_STATUS_LOCATION_TIME_DISCOVERY.md` (sha256 `043742d4bfff8e5f…`, 15 Nov 2026) and `docs/STARTRADER_STATUS_LOCATION_TIME_REPAIR_PLAYBOOK.md` (sha256 `1e8f0aec0e049d33…`). The playbook was copied unchanged from the uploaded, untracked file in the main checkout. The original stays in place.
@@ -64,22 +64,46 @@ Static revalidation by source reading. No tests were run (see §4).
 
 ## 4. Tests
 
-**Tests actually run: none.**
+Profile: `.env.terminal-test` (decision P1). It is referenced through `CODEX_ENV_FILE=/home/dusti/startrader/.env.terminal-test` and was never copied. Loopback PostgreSQL `star_trader_terminal_test`, `PARALLEL_WORKERS=1`, `TICK_BOOTSTRAP=false`. Raw logs are kept locally in the ignored `tmp/slt/`.
 
 | Command | Result |
 |---|---|
-| `bin/codex_db_doctor` | `pg_isready`: accepting on `/var/run/postgresql:5432`. `psql -w -d star_trader_test` → **`fe_sendauth: no password supplied`**. No `.env.codex` exists in this worktree. |
-| `bin/codex_test` | Not run (database not preparable) |
-| R-1 … R-6 | Not run. They remain **predictions** — and are now partly obsolete: R-1's departure half should pass at `c73b582` (F-01 fixed), and R-2 should pass (F-03 fixed). R-3 (F-18), R-4 (F-04), R-5 (F-05) and R-6 (F-13) are still predicted to fail. A new reproduction is required for N-01 (status location after a completed journey). |
+| `bin/codex_db_doctor` (no profile) | `fe_sendauth: no password supplied` (the original blocker) |
+| `bin/codex_db_doctor --require-connection` (with profile) | connected as the limited test role; "Codex database access works" |
+| `bin/codex_test` (full suite, `c73b582`) | **621 runs, 6484 assertions, 33 failures, 25 errors, 0 skips** |
+| `bin/codex_test docs/evidence/status-location-time/M00/repro_test.rb` | **7 runs, 19 assertions, 5 failures, 0 errors** — all five failures were predicted |
 
-Credentials found in other local `.env.*` profiles were **not** used, per the kickoff instruction. Earlier projects ran on `.env.terminal-test` (PostgreSQL 18 loopback, `star_trader_terminal_test`) and on a disposable PostgreSQL 16 cluster (`docs/STARTRADER_JUMP_TRAVEL_REPAIR_STATUS.md`). Reusing either needs explicit owner authorization (decision P1).
+**Baseline classification.** The 58 failing identities (written to `tmp/slt/m00_baseline_identities.txt`) **match exactly** the 58 identities recorded in `docs/discovery/jump_travel_repair_regressions.json`. That is 0 new and 0 missing. By class: Admin::Data 9, Menus 6, Api::Commodities 6, TradeService 5, MenuItems 5, Api::Trades 5, Admin::Terminals 5, Admin::Commodities 4, Admin::ProductionFacilities 3, Admin::Outposts 2, Admin::ContactMessages 2, Admin::Cities 2, TickRunner 1, ShardUser 1, MarketPriceUpdater 1, Admin::Dashboard 1. Many of these are the failures that GitHub `main`'s `61331ac` ("Repair full regression suite…") fixed on the other line, so the M08 merge of `origin/main` should shrink this set. G2 for every milestone is **"no new identities versus this 58-identity baseline"** until that merge. Note: `bin/codex_test` labels this run `[Rails database preparation failure]` because test output contains `ActiveRecord::`. That label is a classifier artefact. `db:prepare` succeeded.
 
-Historical baseline for comparison: v173 recorded the status group at *64 tests, 2 failures, 1 error*. The jump-repair M6 full-suite candidate recorded *523 runs, 33 failures / 25 errors, matching 58 fresh baseline identities*. **The full suite is not green on the production line**, so G2 has to compare against a fresh baseline, not expect zero.
+**Pre-fix reproductions (observed).**
 
-## 5. Production read-only evidence (P-01…P-05)
+| Test | Predicted | Observed |
+|---|---|---|
+| R-1 / F-01 Jump aligns player at departure and arrival | PASS (fixed v172) | **PASS** |
+| R-2 / F-03 in-flight conflicting status location ignored, journey untouched | PASS (fixed v173) | **PASS** |
+| R-3 / F-18 unresolvable location degrades | FAIL | **FAIL** — `400 {"message":"Location not found: Not A Real Place"}`, wallet not applied |
+| R-4 / F-04 case-variant `shard_uuid` | FAIL | **FAIL** — `Shard.count` +1 (expected 0 difference) |
+| R-5 / F-05 username collision | FAIL | **FAIL** — `422 "Validation failed: Username has already been taken"` |
+| R-6 / F-13 paused countdown consistency | FAIL | **FAIL** — `travel.time_remaining` 50, `ship.time_remaining` 0 |
+| N-01 idle status after a completed journey | FAIL | **FAIL** — location stayed `"Repro Here"` (expected `"Repro There"`) |
 
-* `heroku logs -n 1500 -a star-trader` (read-only): the buffer covered only 2026-11-16 01:11–01:30Z. It contained **zero `/api/status` requests**, and zero `location_update failed`, `status_location_ignored` or `status_identity_conflict` markers. **Inconclusive.** No log drain with history appears to exist. The scratch copy was deleted immediately and only counts were kept.
-* No production database query was run. The read-only audit (`jsonb_typeof`, case-folded `channel_uuid` duplicates, divergence) needs explicit authorization (decision P2). An existing reviewed tool is available: `docs/discovery/read_only_travel_audit.rb`.
+## 5. Production read-only evidence (decision P2)
+
+`heroku pg:psql -a star-trader -f docs/evidence/status-location-time/M00/prod_readonly_audit.sql`. Run inside `BEGIN TRANSACTION READ ONLY` with a 20 s statement timeout and closed with `ROLLBACK`. The output confirmed `transaction_read_only = on`. Aggregate counts only, saved as `M00/prod_readonly_audit_output.txt`.
+
+| Probe | Result | Conclusion |
+|---|---|---|
+| `last_location` storage | 154 `string` (double-encoded), 1 SQL NULL, **0 native objects** | F-07 confirmed in production. P-03 (mixed representation) **refuted**: every row is a string. |
+| Payload shape | 154 have a name, **0 have any `x/y/z` key** | P-02 **refuted**: no legacy coordinates exist in production |
+| Case/whitespace-variant `channel_uuid` groups | **0** (6 shards, 1 with the auto-created `Shard …` name pattern) | P-04 **refuted** for now. F-04 is latent, not yet fired. A unique index is currently safe. |
+| Ship location missing from the catalog | 0 of 229; 0 ships without `shard_user` | U-04 clean |
+| **Ship vs player divergence** | idle: **64 of 228 pairs diverged** (163 aligned, 1 player unknown); in flight: 1 of 1 diverged | P-05 **confirmed**. 28% of idle ships disagree with their player. |
+| **N-01 impact** | 30 ships have receipts; **29 idle ships (28 players) are permanently status-locked** | N-01 **confirmed** as live impact. Receipt outcomes: 155 completed, 4 cancelled, 1 pending. |
+| Unfinished journeys | 1 (paused, `arrival_tick = 0` sentinel, not gate) | consistent with the protected 5071 record |
+| Duplicate `twitch_id` groups | 0 (124 users) | §9.3 risk not realized |
+| Migrations | `20261101010000…0300` and `20261104010000` present; **`20261024170000` (widen cargo prices, from GitHub `main`) absent** | the M08 merge of `main` brings in one pending migration. It must be reviewed as part of the release. |
+
+Production logs (`heroku logs -n 1500`) covered only a 19-minute window with no status traffic. **Inconclusive** for the 400/422 rate. The sample was deleted after counting.
 
 ## 6. External client contract (Q6 evidence gathered)
 
@@ -92,11 +116,13 @@ Historical baseline for comparison: v173 recorded the status group at *64 tests,
 |---|---|
 | Correct repository and all worktrees identified | ✅ |
 | Working state preserved | ✅ No user file touched. The only writes are this worktree's branch switch and new docs/evidence files. |
-| Isolated `bin/codex_test` baseline accessible | ❌ **BLOCKED — P1** |
-| Recovery and production topology established | ⚠️ Production identity verified; integration base needs a decision (**P0**); backup not yet verified (M08) |
+| Isolated `bin/codex_test` baseline accessible | ✅ 621 runs. 58 known identities, 0 new. |
+| Recovery and production topology established | ✅ Production identity verified; integration base decided (P0). Backup/restore verification is assigned to M08/G3. |
 
 ## 8. Next gate
 
-M00 → PASS requires: **P0** (integration base) and **P1** (test-database profile) answered, then a green-or-classified `bin/codex_test` baseline on `claude/status-location-time-repair`, plus observed results for the revised reproductions (R-3…R-6, N-01). M01 (admin view, read-only) can start immediately after that. It does not depend on Q1–Q4.
+**M00 PASS → M01 may start.** M01 is the read-only admin rebuild plus an audit task. It depends on no pending decision.
+Pending decisions and what they block: **Q2** → M02 gateway rejection. **Q3, Q4** → M04. **Q6** → the M02/M05 compatibility of changed keys. Never require `travel_guid`.
+Scope note for M03/M04, from Q1 and N-01: narrow `StatusLocationSync` so that only an *unfinished* journey makes a ship/player "managed". Completed and cancelled receipts must no longer block idle status sync. This is the most direct fix for objective 1, and it affects 29 production ships.
 
 Rollback for M00: no application, schema or data changes. To undo, return this worktree to its former branch: `git switch claude/startrader-discovery-fa1f6d`.
